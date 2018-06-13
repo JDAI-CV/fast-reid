@@ -92,7 +92,8 @@ def train_classification(**kwargs):
 
     # get optimizer
     optimizer = torch.optim.SGD(
-        model.optim_policy(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum
+        model.optim_policy(), lr=args.lr, weight_decay=args.weight_decay,
+        momentum=args.momentum, nesterov=True
     )
 
     def adjust_lr(optimizer, ep, decay_ep, gamma):

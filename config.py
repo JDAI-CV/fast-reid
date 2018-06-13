@@ -21,12 +21,12 @@ class DefaultConfig(object):
     width = 192
 
     # optimization options
-    optim = 'SGD'
-    max_epoch = 100
+    optim = 'Adam'
+    max_epoch = 60
     train_batch = 128
     test_batch = 128
     lr = 0.1
-    step_size = 60
+    step_size = 40
     gamma = 0.1
     weight_decay = 5e-4
     momentum = 0.9
