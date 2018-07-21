@@ -17,8 +17,8 @@ class DefaultConfig(object):
 
     # dataset options
     dataset = 'market'
-    height = 384
-    width = 192
+    height = 256
+    width = 128
 
     # optimization options
     optim = 'Adam'
@@ -32,16 +32,16 @@ class DefaultConfig(object):
     momentum = 0.9
     margin = 0.3
     num_instances = 4
+    num_gpu = 1
 
     # model options
-    model_name = 'ResNetBuilder'
+    model_name = 'softmax'  # softmax, triplet, softmax_triplet
     last_stride = 1
 
     # miscs
     print_freq = 30
     eval_step = 50
     save_dir = '/DATA/pytorch-ckpt/market'
-    gpu = 0, 1
     workers = 10
     start_epoch = 0
 
@@ -56,4 +56,4 @@ class DefaultConfig(object):
                 if not k.startswith('_')}
 
 
-args = DefaultConfig()
+opt = DefaultConfig()

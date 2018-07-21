@@ -19,7 +19,7 @@ reid baseline model for exploring softmax and triplet hard loss's influence.
 | loss | rank1 | map |
 | --- | --| ---|
 | triplet hard | 89.9% | 76.8% | 
-| softmax | 87% | 65% |
-|triplet + softmax | 89.7% | 76.2% |
+| softmax | 87.9% | 70.1% |
+|triplet + softmax | 92% | 78.1% |
 
 

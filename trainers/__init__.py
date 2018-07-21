@@ -10,4 +10,4 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .evaluator import ResNetEvaluator
-from .trainer import ResNetClsTrainer, ResNetTriTrainer, ResNetClsTriTrainer
+from .trainer import cls_tripletTrainer, tripletTrainer, clsTrainer

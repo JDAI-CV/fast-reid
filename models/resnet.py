@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 
 import math
 
-import torch
+import torch as th
 from torch import nn
 
 
@@ -98,7 +98,7 @@ class ResNet(nn.Module):
         return x
 
     def load_param(self, model_path):
-        param_dict = torch.load(model_path)
+        param_dict = th.load(model_path)
         for i in param_dict:
             if 'fc' in i:
                 continue
@@ -117,5 +117,6 @@ class ResNet(nn.Module):
 if __name__ == "__main__":
     net = ResNet(last_stride=2)
     import torch
+
     x = net(torch.zeros(1, 3, 256, 128))
     print(x.shape)

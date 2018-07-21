@@ -16,328 +16,147 @@ from pprint import pprint
 
 import numpy as np
 import torch
-from datasets.samplers import RandomIdentitySampler
 from tensorboardX import SummaryWriter
 from torch import nn
 from torch.backends import cudnn
 from torch.utils.data import DataLoader
 
-from config import args
+from config import opt
 from datasets import data_manager
 from datasets.data_loader import ImageData
-from models import ResNetBuilder
-from trainers import ResNetClsTrainer, ResNetTriTrainer, ResNetClsTriTrainer, ResNetEvaluator
+from datasets.samplers import RandomIdentitySampler
+from models import get_baseline_model
+from trainers import clsTrainer, cls_tripletTrainer, tripletTrainer, ResNetEvaluator
 from utils.loss import TripletLoss
 from utils.serialization import Logger
 from utils.serialization import save_checkpoint
 from utils.transforms import TrainTransform, TestTransform
 
 
-def train_classification(**kwargs):
-    args._parse(kwargs)
+def train(**kwargs):
+    opt._parse(kwargs)
 
     # set random seed and cudnn benchmark
-    torch.manual_seed(args.seed)
+    torch.manual_seed(opt.seed)
 
     use_gpu = torch.cuda.is_available()
-    sys.stdout = Logger(osp.join(args.save_dir, 'log_train.txt'))
+    sys.stdout = Logger(osp.join(opt.save_dir, 'log_train.txt'))
 
     print('=========user config==========')
-    pprint(args._state_dict())
+    pprint(opt._state_dict())
     print('============end===============')
 
     if use_gpu:
-        print('currently using GPU {}'.format(args.gpu))
+        print('currently using GPU')
         cudnn.benchmark = True
-        torch.cuda.manual_seed_all(args.seed)
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
+        torch.cuda.manual_seed_all(opt.seed)
     else:
         print('currently using cpu')
 
-    print('initializing dataset {}'.format(args.dataset))
-    dataset = data_manager.init_dataset(name=args.dataset)
+    print('initializing dataset {}'.format(opt.dataset))
+    dataset = data_manager.init_dataset(name=opt.dataset)
 
     pin_memory = True if use_gpu else False
 
-    tb_writer = SummaryWriter(osp.join(args.save_dir, 'tb_log'))
+    summary_writer = SummaryWriter(osp.join(opt.save_dir, 'tensorboard_log'))
 
-    trainloader = DataLoader(
-        ImageData(dataset.train, TrainTransform(args.height, args.width)),
-        batch_size=args.train_batch, shuffle=True, num_workers=args.workers,
-        pin_memory=pin_memory, drop_last=True
-    )
+    if 'triplet' in opt.model_name:
+        trainloader = DataLoader(
+            ImageData(dataset.train, TrainTransform(opt.height, opt.width)),
+            sampler=RandomIdentitySampler(dataset.train, opt.num_instances),
+            batch_size=opt.train_batch, num_workers=opt.workers,
+            pin_memory=pin_memory, drop_last=True
+        )
+    else:
+        trainloader = DataLoader(
+            ImageData(dataset.train, TrainTransform(opt.height, opt.width)),
+            batch_size=opt.train_batch, shuffle=True, num_workers=opt.workers,
+            pin_memory=pin_memory
+        )
 
     queryloader = DataLoader(
-        ImageData(dataset.query, TestTransform(args.height, args.width)),
-        batch_size=args.test_batch, num_workers=args.workers,
+        ImageData(dataset.query, TestTransform(opt.height, opt.width)),
+        batch_size=opt.test_batch, num_workers=opt.workers,
         pin_memory=pin_memory
     )
 
     galleryloader = DataLoader(
-        ImageData(dataset.gallery, TestTransform(args.height, args.width)),
-        batch_size=args.test_batch, num_workers=args.workers,
+        ImageData(dataset.gallery, TestTransform(opt.height, opt.width)),
+        batch_size=opt.test_batch, num_workers=opt.workers,
         pin_memory=pin_memory
     )
 
     print('initializing model ...')
-    model = ResNetBuilder(num_classes=dataset.num_train_pids)
+    if opt.model_name == 'softmax' or opt.model_name == 'softmax_triplet':
+        model, optim_policy = get_baseline_model(dataset.num_train_pids)
+    elif opt.model_name == 'triplet':
+        model, optim_policy = get_baseline_model(num_classes=None)
     print('model size: {:.5f}M'.format(sum(p.numel()
                                            for p in model.parameters()) / 1e6))
 
-    cls_criterion = nn.CrossEntropyLoss()
+    xent_criterion = nn.CrossEntropyLoss()
+    tri_criterion = TripletLoss(opt.margin)
 
-    def xent_criterion(cls_scores, targets):
-        cls_loss = cls_criterion(cls_scores, targets)
+    def cls_criterion(cls_scores, targets):
+        cls_loss = xent_criterion(cls_scores, targets)
         return cls_loss
 
-    # get optimizer
-    optimizer = torch.optim.SGD(
-        model.optim_policy(), lr=args.lr, weight_decay=args.weight_decay,
-        momentum=args.momentum, nesterov=True
-    )
+    def triplet_criterion(feat, targets):
+        triplet_loss, _, _ = tri_criterion(feat, targets)
+        return triplet_loss
 
-    def adjust_lr(optimizer, ep, decay_ep, gamma):
-        decay = gamma ** float(ep // decay_ep)
-        for g in optimizer.param_groups:
-            g['lr'] = args.lr * decay * g.get('lr_multi', 1)
-
-    start_epoch = args.start_epoch
-    if use_gpu:
-        model = nn.DataParallel(model).cuda()
-
-    # get trainer and evaluator
-    reid_trainer = ResNetClsTrainer(model, xent_criterion, tb_writer)
-    reid_evaluator = ResNetEvaluator(model)
-
-    # start training
-    best_rank1 = -np.inf
-    best_epoch = 0
-    for epoch in range(start_epoch, args.max_epoch):
-        if args.step_size > 0:
-            adjust_lr(optimizer, epoch + 1, args.step_size, args.gamma)
-        reid_trainer.train(epoch, trainloader, optimizer, args.print_freq)
-
-        # skip if not save model
-        if args.eval_step > 0 and (epoch + 1) % args.eval_step == 0 or (epoch + 1) == args.max_epoch:
-            rank1 = reid_evaluator.evaluate(queryloader, galleryloader)
-            is_best = rank1 > best_rank1
-            if is_best:
-                best_rank1 = rank1
-                best_epoch = epoch + 1
-
-            if use_gpu:
-                state_dict = model.module.state_dict()
-            else:
-                state_dict = model.state_dict()
-            save_checkpoint({
-                'state_dict': state_dict,
-                'epoch': epoch + 1,
-            }, is_best=is_best, save_dir=args.save_dir, filename='checkpoint_ep' + str(epoch + 1) + '.pth.tar')
-
-    print(
-        'Best rank-1 {:.1%}, achived at epoch {}'.format(best_rank1, best_epoch))
-
-
-def train_triplet(**kwargs):
-    args._parse(kwargs)
-
-    # set random seed and cudnn benchmark
-    torch.manual_seed(args.seed)
-
-    use_gpu = torch.cuda.is_available()
-    sys.stdout = Logger(osp.join(args.save_dir, 'log_train.txt'))
-
-    print('=========user config==========')
-    pprint(args._state_dict())
-    print('============end===============')
-
-    if use_gpu:
-        print('currently using GPU {}'.format(args.gpu))
-        cudnn.benchmark = True
-        torch.cuda.manual_seed_all(args.seed)
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-    else:
-        print('currently using cpu')
-
-    print('initializing dataset {}'.format(args.dataset))
-    dataset = data_manager.init_dataset(name=args.dataset)
-
-    pin_memory = True if use_gpu else False
-
-    tb_writer = SummaryWriter(osp.join(args.save_dir, 'tb_log'))
-
-    trainloader = DataLoader(
-        ImageData(dataset.train, TrainTransform(args.height, args.width)),
-        sampler=RandomIdentitySampler(dataset.train, args.num_instances),
-        batch_size=args.train_batch, num_workers=args.workers,
-        pin_memory=pin_memory, drop_last=True
-    )
-
-    queryloader = DataLoader(
-        ImageData(dataset.query, TestTransform(args.height, args.width)),
-        batch_size=args.test_batch, num_workers=args.workers,
-        pin_memory=pin_memory
-    )
-
-    galleryloader = DataLoader(
-        ImageData(dataset.gallery, TestTransform(args.height, args.width)),
-        batch_size=args.test_batch, num_workers=args.workers,
-        pin_memory=pin_memory
-    )
-
-    print('initializing model ...')
-    model = ResNetBuilder()
-    print('model size: {:.5f}M'.format(sum(p.numel()
-                                           for p in model.parameters()) / 1e6))
-
-    tri_criterion = TripletLoss(margin=args.margin)
-
-    def tri_hard(feat, targets):
-        tri_loss, _, _ = tri_criterion(feat, targets)
-        return tri_loss
-
-    # get optimizer
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-    )
-
-    def adjust_lr_exp(optimizer, base_lr, ep, total_ep, start_decay_ep, gamma):
-        if ep < start_decay_ep:
-            return
-        lr_decay = gamma ** (float(ep - start_decay_ep) /
-                             (total_ep - start_decay_ep))
-        for g in optimizer.param_groups:
-            g['lr'] = base_lr * lr_decay
-
-    start_epoch = args.start_epoch
-    if use_gpu:
-        model = nn.DataParallel(model).cuda()
-
-    # get trainer and evaluator
-    reid_trainer = ResNetTriTrainer(model, tri_hard, tb_writer)
-    reid_evaluator = ResNetEvaluator(model)
-
-    # start training
-    best_rank1 = -np.inf
-    best_epoch = 0
-    for epoch in range(start_epoch, args.max_epoch):
-        if args.step_size > 0:
-            adjust_lr_exp(optimizer, args.lr, epoch + 1, args.max_epoch, args.step_size, args.gamma)
-        reid_trainer.train(epoch, trainloader, optimizer, args.print_freq)
-
-        # skip if not save model
-        if args.eval_step > 0 and (epoch + 1) % args.eval_step == 0 or (epoch + 1) == args.max_epoch:
-            rank1 = reid_evaluator.evaluate(queryloader, galleryloader)
-            is_best = rank1 > best_rank1
-            if is_best:
-                best_rank1 = rank1
-                best_epoch = epoch + 1
-
-            if use_gpu:
-                state_dict = model.module.state_dict()
-            else:
-                state_dict = model.state_dict()
-            save_checkpoint({
-                'state_dict': state_dict,
-                'epoch': epoch + 1,
-            }, is_best=is_best, save_dir=args.save_dir, filename='checkpoint_ep' + str(epoch + 1) + '.pth.tar')
-
-    print(
-        'Best rank-1 {:.1%}, achived at epoch {}'.format(best_rank1, best_epoch))
-
-
-def train_cls_triplet(**kwargs):
-    args._parse(kwargs)
-
-    # set random seed and cudnn benchmark
-    torch.manual_seed(args.seed)
-
-    use_gpu = torch.cuda.is_available()
-    sys.stdout = Logger(osp.join(args.save_dir, 'log_train.txt'))
-
-    print('=========user config==========')
-    pprint(args._state_dict())
-    print('============end===============')
-
-    if use_gpu:
-        print('currently using GPU {}'.format(args.gpu))
-        cudnn.benchmark = True
-        torch.cuda.manual_seed_all(args.seed)
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-    else:
-        print('currently using cpu')
-
-    print('initializing dataset {}'.format(args.dataset))
-    dataset = data_manager.init_dataset(name=args.dataset)
-
-    pin_memory = True if use_gpu else False
-
-    tb_writer = SummaryWriter(osp.join(args.save_dir, 'tb_log'))
-
-    trainloader = DataLoader(
-        ImageData(dataset.train, TrainTransform(args.height, args.width)),
-        sampler=RandomIdentitySampler(dataset.train, args.num_instances),
-        batch_size=args.train_batch, num_workers=args.workers,
-        pin_memory=pin_memory, drop_last=True
-    )
-
-    queryloader = DataLoader(
-        ImageData(dataset.query, TestTransform(args.height, args.width)),
-        batch_size=args.test_batch, num_workers=args.workers,
-        pin_memory=pin_memory
-    )
-
-    galleryloader = DataLoader(
-        ImageData(dataset.gallery, TestTransform(args.height, args.width)),
-        batch_size=args.test_batch, num_workers=args.workers,
-        pin_memory=pin_memory
-    )
-
-    print('initializing model ...')
-    model = ResNetBuilder(num_classes=dataset.num_train_pids)
-    print('model size: {:.5f}M'.format(sum(p.numel()
-                                           for p in model.parameters()) / 1e6))
-
-    cls_criterion = nn.CrossEntropyLoss()
-    tri_criterion = TripletLoss(margin=args.margin)
-
-    def xent_tri_criterion(cls_scores, global_feat, targets):
-        cls_loss = cls_criterion(cls_scores, targets)
-        tri_loss, dist_ap, dist_an = tri_criterion(global_feat, targets)
-        loss = cls_loss + tri_loss
+    def cls_tri_criterion(cls_scores, feat, targets):
+        cls_loss = xent_criterion(cls_scores, targets)
+        triplet_loss, _, _ = tri_criterion(feat, targets)
+        loss = cls_loss + triplet_loss
         return loss
 
     # get optimizer
     optimizer = torch.optim.Adam(
-        model.parameters(), lr=args.lr, weight_decay=args.weight_decay
+        optim_policy, lr=opt.lr, weight_decay=opt.weight_decay,
     )
 
-    def adjust_lr_exp(optimizer, base_lr, ep, total_ep, start_decay_ep, gamma):
-        if ep < start_decay_ep:
-            return
-        lr_decay = gamma ** (float(ep - start_decay_ep) /
-                             (total_ep - start_decay_ep))
-        for g in optimizer.param_groups:
-            g['lr'] = base_lr * lr_decay
+    def adjust_lr(optimizer, ep):
+        if ep < 20:
+            lr = 1e-4 * (ep + 1) / 2
+        elif ep < 80:
+            lr = 1e-3 * opt.num_gpu
+        elif 80 <= ep <= 180:
+            lr = 1e-4 * opt.num_gpu
+        elif 180 <= ep <= 300:
+            lr = 1e-5 * opt.num_gpu
+        elif 300 <= ep <= 320:
+            lr = 1e-4 * (ep - 300 + 1) / 2 * opt.num_gpu
+        elif 380 <= ep <= 480:
+            lr = 1e-4 * opt.num_gpu
+        else:
+            lr = 1e-5 * opt.num_gpu
+        for p in optimizer.param_groups:
+            p['lr'] = lr
 
-    start_epoch = args.start_epoch
+    start_epoch = opt.start_epoch
     if use_gpu:
         model = nn.DataParallel(model).cuda()
 
     # get trainer and evaluator
-    reid_trainer = ResNetClsTriTrainer(model, xent_tri_criterion, tb_writer)
+    if opt.model_name == 'softmax':
+        reid_trainer = clsTrainer(opt, model, optimizer, cls_criterion, summary_writer)
+    elif opt.model_name == 'softmax_triplet':
+        reid_trainer = cls_tripletTrainer(opt, model, optimizer, cls_tri_criterion, summary_writer)
+    elif opt.model_name == 'triplet':
+        reid_trainer = tripletTrainer(opt, model, optimizer, triplet_criterion, summary_writer)
     reid_evaluator = ResNetEvaluator(model)
 
     # start training
     best_rank1 = -np.inf
     best_epoch = 0
-    for epoch in range(start_epoch, args.max_epoch):
-        if args.step_size > 0:
-            adjust_lr_exp(optimizer, args.lr, epoch + 1, args.max_epoch, args.step_size, args.gamma)
-        reid_trainer.train(epoch, trainloader, optimizer, args.print_freq)
+    for epoch in range(start_epoch, opt.max_epoch):
+        if opt.step_size > 0:
+            adjust_lr(optimizer, epoch + 1)
+        reid_trainer.train(epoch, trainloader)
 
         # skip if not save model
-        if args.eval_step > 0 and (epoch + 1) % args.eval_step == 0 or (epoch + 1) == args.max_epoch:
+        if opt.eval_step > 0 and (epoch + 1) % opt.eval_step == 0 or (epoch + 1) == opt.max_epoch:
             rank1 = reid_evaluator.evaluate(queryloader, galleryloader)
             is_best = rank1 > best_rank1
             if is_best:
@@ -351,49 +170,49 @@ def train_cls_triplet(**kwargs):
             save_checkpoint({
                 'state_dict': state_dict,
                 'epoch': epoch + 1,
-            }, is_best=is_best, save_dir=args.save_dir, filename='checkpoint_ep' + str(epoch + 1) + '.pth.tar')
+            }, is_best=is_best, save_dir=opt.save_dir, filename='checkpoint_ep' + str(epoch + 1) + '.pth.tar')
 
     print(
         'Best rank-1 {:.1%}, achived at epoch {}'.format(best_rank1, best_epoch))
 
 
 def test(**kwargs):
-    args._parse(kwargs)
+    opt._parse(kwargs)
 
     # set random seed and cudnn benchmark
-    torch.manual_seed(args.seed)
+    torch.manual_seed(opt.seed)
 
     use_gpu = torch.cuda.is_available()
-    sys.stdout = Logger(osp.join(args.save_dir, 'log_train.txt'))
+    sys.stdout = Logger(osp.join(opt.save_dir, 'log_train.txt'))
 
     if use_gpu:
-        print('currently using GPU {}'.format(args.gpu))
+        print('currently using GPU {}'.format(opt.gpu))
         cudnn.benchmark = True
-        torch.cuda.manual_seed_all(args.seed)
-        os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+        torch.cuda.manual_seed_all(opt.seed)
+        os.environ["CUDA_VISIBLE_DEVICES"] = opt.gpu
     else:
         print('currently using cpu')
 
-    print('initializing dataset {}'.format(args.dataset))
-    dataset = data_manager.init_dataset(name=args.dataset)
+    print('initializing dataset {}'.format(opt.dataset))
+    dataset = data_manager.init_dataset(name=opt.dataset)
 
     pin_memory = True if use_gpu else False
 
     queryloader = DataLoader(
-        ImageData(dataset.query, TestTransform(args.height, args.width)),
-        batch_size=args.test_batch, num_workers=args.workers,
+        ImageData(dataset.query, TestTransform(opt.height, opt.width)),
+        batch_size=opt.test_batch, num_workers=opt.workers,
         pin_memory=pin_memory
     )
 
     galleryloader = DataLoader(
-        ImageData(dataset.gallery, TestTransform(args.height, args.width)),
-        batch_size=args.test_batch, num_workers=args.workers,
+        ImageData(dataset.gallery, TestTransform(opt.height, opt.width)),
+        batch_size=opt.test_batch, num_workers=opt.workers,
         pin_memory=pin_memory
     )
 
     print('loading model ...')
-    model = ResNetBuilder(num_classes=dataset.num_train_pids)
-    # ckpt = torch.load(args.load_model)
+    model, optim_policy = get_baseline_model(dataset.num_train_pids)
+    # ckpt = torch.load(opt.load_model)
     # model.load_state_dict(ckpt['state_dict'])
     print('model size: {:.5f}M'.format(sum(p.numel()
                                            for p in model.parameters()) / 1e6))

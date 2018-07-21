@@ -12,43 +12,52 @@ from __future__ import unicode_literals
 from bases.base_trainer import BaseTrainer
 
 
-class ResNetClsTrainer(BaseTrainer):
-    def __init__(self, model, criterion, tb_writer):
-        super().__init__(model, criterion, tb_writer)
+class clsTrainer(BaseTrainer):
+    def __init__(self, opt, model, optimizer, criterion, summary_writer):
+        super().__init__(opt, model, optimizer, criterion, summary_writer)
 
     def _parse_data(self, inputs):
         imgs, pids, _ = inputs
-        return imgs.cuda(), pids.cuda()
+        self.data = imgs.cuda()
+        self.target = pids.cuda()
 
-    def _forward(self, inputs, targets):
-        cls_score, _ = self.model(inputs)
-        loss = self.criterion(cls_score, targets)
-        return loss
+    def _forward(self):
+        score, _ = self.model(self.data)
+        self.loss = self.criterion(score, self.target)
 
-
-class ResNetTriTrainer(BaseTrainer):
-    def __init__(self, model, criterion, tb_writer):
-        super().__init__(model, criterion, tb_writer)
-
-    def _parse_data(self, inputs):
-        imgs, pids, _ = inputs
-        return imgs.cuda(), pids.cuda()
-
-    def _forward(self, inputs, targets):
-        feat = self.model(inputs)
-        loss = self.criterion(feat, targets)
-        return loss
+    def _backward(self):
+        self.loss.backward()
 
 
-class ResNetClsTriTrainer(BaseTrainer):
-    def __init__(self, model, criterion, tb_writer):
-        super().__init__(model, criterion, tb_writer)
+class tripletTrainer(BaseTrainer):
+    def __init__(self, opt, model, optimizer, criterion, summary_writer):
+        super().__init__(opt, model, optimizer, criterion, summary_writer)
 
     def _parse_data(self, inputs):
         imgs, pids, _ = inputs
-        return imgs.cuda(), pids.cuda()
+        self.data = imgs.cuda()
+        self.target = pids.cuda()
 
-    def _forward(self, inputs, targets):
-        cls_score, feat = self.model(inputs)
-        loss = self.criterion(cls_score, feat, targets)
-        return loss
+    def _forward(self):
+        feat = self.model(self.data)
+        self.loss = self.criterion(feat, self.target)
+
+    def _backward(self):
+        self.loss.backward()
+
+
+class cls_tripletTrainer(BaseTrainer):
+    def __init__(self, opt, model, optimizer, criterion, summary_writer):
+        super().__init__(opt, model, optimizer, criterion, summary_writer)
+
+    def _parse_data(self, inputs):
+        imgs, pids, _ = inputs
+        self.data = imgs.cuda()
+        self.target = pids.cuda()
+
+    def _forward(self):
+        score, feat = self.model(self.data)
+        self.loss = self.criterion(score, feat, self.target)
+
+    def _backward(self):
+        self.loss.backward()

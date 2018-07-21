@@ -9,4 +9,5 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from .resnet_reid import ResNetBuilder
+from .baseline_model import ResNetBuilder
+from .networks import get_baseline_model

@@ -9,6 +9,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import itertools
+
 import torch.nn.functional as F
 from torch import nn
 
@@ -22,7 +24,7 @@ def weights_init_kaiming(m):
         nn.init.constant_(m.bias, 0.0)
     elif classname.find('Conv') != -1:
         nn.init.kaiming_normal_(m.weight, a=0, mode='fan_in')
-        if hasattr(m, 'bias'):
+        if m.bias is not None:
             nn.init.constant_(m.bias, 0.0)
     elif classname.find('BatchNorm') != -1:
         if m.affine:
@@ -58,24 +60,35 @@ class ResNetBuilder(nn.Module):
             self.classifier.apply(weights_init_classifier)
 
     def forward(self, x):
-        feat = self.base(x)
-        global_feat = F.avg_pool2d(feat, feat.shape[2:])  # (b, 2048, 1, 1)
+        global_feat = self.base(x)
+        global_feat = F.avg_pool2d(global_feat, global_feat.shape[2:])  # (b, 2048, 1, 1)
         global_feat = global_feat.view(global_feat.shape[0], -1)
         if self.training and self.num_classes is not None:
-            global_feat = self.bottleneck(global_feat)
-            cls_score = self.classifier(global_feat)
+            feat = self.bottleneck(global_feat)
+            cls_score = self.classifier(feat)
             return cls_score, global_feat
         else:
             return global_feat
 
-    def optim_policy(self):
+    def get_optim_policy(self):
         base_param_group = self.base.parameters()
-        other_param_group = list()
-        other_param_group.extend(list(self.bottleneck.parameters()))
-        other_param_group.extend(list(self.classifier.parameters()))
-        return [
-            {'params': base_param_group, 'lr_multi': 0.1},
-            {'params': other_param_group}
-        ]
+        if self.num_classes is not None:
+            add_param_group = itertools.chain(self.bottleneck.parameters(), self.classifier.parameters())
+            return [
+                {'params': base_param_group},
+                {'params': add_param_group}
+            ]
+        else:
+            return [
+                {'params': base_param_group}
+            ]
 
 
+if __name__ == '__main__':
+    net = ResNetBuilder(None)
+    net.cuda()
+    import torch as th
+    x = th.ones(2, 3, 256, 128).cuda()
+    y = net(x)
+    from IPython import embed
+    embed()

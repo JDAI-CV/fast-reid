@@ -15,12 +15,14 @@ from utils.meters import AverageMeter
 
 
 class BaseTrainer(object):
-    def __init__(self, model, criterion, tb_writer):
+    def __init__(self, opt, model, optimzier, criterion, summary_writer):
+        self.opt = opt
         self.model = model
+        self.optimizer= optimzier
         self.criterion = criterion
-        self.tb_writer = tb_writer
+        self.summary_writer = summary_writer
 
-    def train(self, epoch, data_loader, optimizer, print_freq=1):
+    def train(self, epoch, data_loader):
         self.model.train()
 
         batch_time = AverageMeter()
@@ -32,23 +34,23 @@ class BaseTrainer(object):
             data_time.update(time.time() - start)
 
             # model optimizer
-            inputs, targets = self._parse_data(inputs)
-            loss = self._forward(inputs, targets)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            self._parse_data(inputs)
+            self._forward()
+            self.optimizer.zero_grad()
+            self._backward()
+            self.optimizer.step()
 
             batch_time.update(time.time() - start)
-            losses.update(loss.item())
+            losses.update(self.loss.item())
 
             # tensorboard
             global_step = epoch * len(data_loader) + i
-            self.tb_writer.add_scalar('loss', loss.item(), global_step)
-            self.tb_writer.add_scalar('lr', optimizer.param_groups[0]['lr'], global_step)
+            self.summary_writer.add_scalar('loss', self.loss.item(), global_step)
+            self.summary_writer.add_scalar('lr', self.optimizer.param_groups[0]['lr'], global_step)
 
             start = time.time()
 
-            if (i + 1) % print_freq == 0:
+            if (i + 1) % self.opt.print_freq == 0:
                 print('Epoch: [{}][{}/{}]\t'
                       'Batch Time {:.3f} ({:.3f})\t'
                       'Data Time {:.3f} ({:.3f})\t'
@@ -57,7 +59,7 @@ class BaseTrainer(object):
                               batch_time.val, batch_time.mean,
                               data_time.val, data_time.mean,
                               losses.val, losses.mean))
-        param_group = optimizer.param_groups
+        param_group = self.optimizer.param_groups
         print('Epoch: [{}]\tEpoch Time {:.3f} s\tLoss {:.3e}\t'
               'Lr {:.2e}'
               .format(epoch, batch_time.sum, losses.mean, param_group[0]['lr']))
@@ -66,5 +68,8 @@ class BaseTrainer(object):
     def _parse_data(self, inputs):
         raise NotImplementedError
 
-    def _forward(self, inputs, targets):
+    def _forward(self):
+        raise NotImplementedError
+
+    def _backward(self):
         raise NotImplementedError
