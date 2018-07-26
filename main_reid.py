@@ -27,7 +27,7 @@ from datasets.data_loader import ImageData
 from datasets.samplers import RandomIdentitySampler
 from models import get_baseline_model
 from trainers import clsTrainer, cls_tripletTrainer, tripletTrainer, ResNetEvaluator
-from utils.loss import TripletLoss
+from utils.loss import TripletLoss, CrossEntropyLabelSmooth
 from utils.serialization import Logger
 from utils.serialization import save_checkpoint
 from utils.transforms import TrainTransform, TestTransform
@@ -94,7 +94,8 @@ def train(**kwargs):
     print('model size: {:.5f}M'.format(sum(p.numel()
                                            for p in model.parameters()) / 1e6))
 
-    xent_criterion = nn.CrossEntropyLoss()
+    # xent_criterion = nn.CrossEntropyLoss()
+    xent_criterion = CrossEntropyLabelSmooth(dataset.num_train_pids)
     tri_criterion = TripletLoss(opt.margin)
 
     def cls_criterion(cls_scores, targets):
@@ -113,7 +114,7 @@ def train(**kwargs):
 
     # get optimizer
     optimizer = torch.optim.Adam(
-        optim_policy, lr=opt.lr, weight_decay=opt.weight_decay,
+        optim_policy, lr=opt.lr, weight_decay=opt.weight_decay
     )
 
     def adjust_lr(optimizer, ep):
@@ -121,13 +122,15 @@ def train(**kwargs):
             lr = 1e-4 * (ep + 1) / 2
         elif ep < 80:
             lr = 1e-3 * opt.num_gpu
-        elif 80 <= ep <= 180:
+        elif ep < 180:
             lr = 1e-4 * opt.num_gpu
-        elif 180 <= ep <= 300:
+        elif ep < 300:
             lr = 1e-5 * opt.num_gpu
-        elif 300 <= ep <= 320:
-            lr = 1e-4 * (ep - 300 + 1) / 2 * opt.num_gpu
-        elif 380 <= ep <= 480:
+        elif ep < 320:
+            lr = 1e-5 * 0.1 ** ((ep - 320) / 80) * opt.num_gpu
+        elif ep < 400:
+            lr = 1e-6
+        elif ep < 480:
             lr = 1e-4 * opt.num_gpu
         else:
             lr = 1e-5 * opt.num_gpu
