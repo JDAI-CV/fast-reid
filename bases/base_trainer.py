@@ -60,7 +60,7 @@ class BaseTrainer(object):
                               data_time.val, data_time.mean,
                               losses.val, losses.mean))
         param_group = self.optimizer.param_groups
-        print('Epoch: [{}]\tEpoch Time {:.3f} s\tLoss {:.3e}\t'
+        print('Epoch: [{}]\tEpoch Time {:.3f} s\tLoss {:.3f}\t'
               'Lr {:.2e}'
               .format(epoch, batch_time.sum, losses.mean, param_group[0]['lr']))
         print()

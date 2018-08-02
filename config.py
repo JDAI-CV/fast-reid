@@ -37,6 +37,7 @@ class DefaultConfig(object):
     # model options
     model_name = 'softmax'  # softmax, triplet, softmax_triplet
     last_stride = 1
+    pretrained_model = '/home/test2/.torch/models/resnet50-19c8e357.pth'
 
     # miscs
     print_freq = 30
