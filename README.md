@@ -10,7 +10,7 @@ We support
 1. `cd` to folder where you want to download this repo
 2. Run `git clone https://github.com/L1aoXingyu/reid_baseline.git`
 3. Install dependencies:
-    - [pytorch](https://pytorch.org/)
+    - [pytorch 0.4](https://pytorch.org/)
     - torchvision
     - tensorflow (for tensorboard)
     - [tensorboardX](https://github.com/lanpa/tensorboardX)
