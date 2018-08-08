@@ -1,5 +1,5 @@
 # ReID_baseline
-Baseline model (with bottleneck) for person ReID (using softmax and triplet loss).
+Baseline model (with bottleneck) for person ReID (using softmax and triplet loss). This is PyTorch version, [mxnet version](https://github.com/L1aoXingyu/reid_baseline_gluon) is here.
 
 We support
 - multi-GPU training
