@@ -15,7 +15,8 @@ import numpy as np
 
 
 class AverageMeter(object):
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.n = 0
         self.sum = 0.0
         self.var = 0.0
@@ -40,6 +41,9 @@ class AverageMeter(object):
 
     def value(self):
         return self.mean, self.std
+
+    def get(self):
+        return self.name, self.val
 
     def reset(self):
         self.n = 0

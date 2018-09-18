@@ -1,7 +1,7 @@
 # encoding: utf-8
 """
-@author:  liaoxingyu
-@contact: xyliao1993@qq.com 
+@author:  sherlock
+@contact: sherlockliao01@gmail.com
 """
 
 from __future__ import absolute_import
