@@ -43,7 +43,7 @@ class AverageMeter(object):
         return self.mean, self.std
 
     def get(self):
-        return self.name, self.val
+        return self.name, self.mean
 
     def reset(self):
         self.n = 0

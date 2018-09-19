@@ -43,6 +43,7 @@ __C.train.sampler = 'softmax'
 __C.train.p_size = 32  # number of person in a single gpu
 __C.train.k_size = 4  # number of images per person
 __C.train.batch_size = 128
+__C.train.loss_fn = 'softmax'  # softmax, triplet, softmax_triplet
 __C.train.triplet_normalize = False
 
 __C.test = edict()
@@ -60,6 +61,7 @@ __C.misc = edict()
 __C.misc.log_interval = 10
 __C.misc.eval_step = 50
 __C.misc.save_step = 50
+__C.misc.save_dir = ''
 
 
 def update_config(config_file):

@@ -44,9 +44,15 @@ in `reid_baseline` folder if you want to train with softmax and triplet loss. Yo
 
 ## Results
 
-| loss | rank1 | map |
+**network architecture**
+ResNet50 -> global avg pooling -> BN(freeze beta) -> softmax (triplet)
+
+| config | Market1501 | CUHK03 |
 | --- | --| ---|
-| softmax | 87.9% | 70.1% |
-| triplet | 88.8% | 74.8% | 
+| bs(32) size(384,128) softmax | 92.2 (78.5) |  |
+| bs(64) size(384,128) softmax | 92.5 (79.6) | |
+| bs(32) size(256,128) softmax | 92.0 (78.4) | |
+| bs(64) size(256,128) softmax | 91.7 (78.3) | |
+| triplet | 88.8% | 74.8% |
 |triplet + softmax | 92.0% | 78.1% |
 

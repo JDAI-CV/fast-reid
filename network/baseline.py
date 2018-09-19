@@ -49,10 +49,11 @@ class Baseline(nn.Module):
         self.num_classes = num_classes
         self.bottleneck = nn.BatchNorm1d(self.in_planes)
         self.bottleneck.bias.requires_grad_(False)  # no shift
-        # nn.Linear(self.in_planes, 512),
-        # nn.BatchNorm1d(512),
-        # nn.LeakyReLU(0.1),
-        # nn.Dropout(p=0.5)
+        # self.bottleneck = nn.Sequential(
+        #     nn.Linear(self.in_planes, 512),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.1),
+        #     nn.Dropout(p=0.5)
         # )
         self.classifier = nn.Linear(self.in_planes, self.num_classes, bias=False)
 

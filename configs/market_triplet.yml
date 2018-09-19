@@ -4,7 +4,7 @@ dataset:
     name: market1501
 
 aug:
-    resize_size: [256, 128]
+    resize_size: [384, 128]
     random_mirror: True
     pad: 10
     random_crop: True
@@ -12,15 +12,17 @@ aug:
 train:
     optimizer: 'Adam'
     lr: 0.00035
-    num_epochs: 80
-    batch_size: 64
-    sampler: 'softmax'
+    num_epochs: 300
+    p_size: 16
+    k_size: 4
+    sampler: 'triplet'
     wd: 0.0005
-    step: [30, 55]
+    step: [80, 160]
     factor: 0.1
-    warmup_epoch: 5
+    warmup_epoch: 20
     warmup_begin_lr: 0.0000035
-    loss_fn: 'softmax'
+    loss_fn: 'triplet'
+
 
 test:
     batch_size: 128
@@ -28,11 +30,11 @@ test:
 network:
     name: 'Baseline'
     last_stride: 1
-    gpus: '1'
+    gpus: '0'
 
 misc:
-    eval_step: 20
-    save_step: 20
-    log_interval: 100
+    eval_step: 50
+    save_step: 50
+    log_interval: 20
 
 

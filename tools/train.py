@@ -22,6 +22,7 @@ import network
 from core.config import opt, update_config
 from core.loader import get_data_provider
 from core.solver import Solver
+from utils.loss import TripletLoss
 from utils.lr_scheduler import LRScheduler
 
 FORMAT = '[%(levelname)s]: %(message)s'
@@ -45,13 +46,29 @@ def train(args):
 
     optimizer = getattr(torch.optim, opt.train.optimizer)(net.parameters(), lr=opt.train.lr, weight_decay=opt.train.wd)
     ce_loss = nn.CrossEntropyLoss()
-    triplet_loss = None
+    triplet_loss = TripletLoss(margin=opt.train.margin)
 
-    def loss_fn(scores, feat, labels):
+    def ce_loss_func(scores, feat, labels):
         ce = ce_loss(scores, labels)
-        # triplet = triplet_loss(feat, labels)
-        # return ce + triplet
         return ce
+
+    def tri_loss_func(scores, feat, labels):
+        tri = triplet_loss(feat, labels)[0]
+        return tri
+
+    def ce_tri_loss_func(scores, feat, labels):
+        ce = ce_loss(scores, labels)
+        triplet = triplet_loss(feat, labels)[0]
+        return ce + triplet
+
+    if opt.train.loss_fn == 'softmax':
+        loss_fn = ce_loss_func
+    elif opt.train.loss_fn == 'triplet':
+        loss_fn = tri_loss_func
+    elif opt.train.loss_fn == 'softmax_triplet':
+        loss_fn = ce_tri_loss_func
+    else:
+        raise ValueError('Unknown loss func {}'.format(opt.train.loss_fn))
 
     lr_scheduler = LRScheduler(base_lr=opt.train.lr, step=opt.train.step,
                                factor=opt.train.factor, warmup_epoch=opt.train.warmup_epoch,
@@ -72,7 +89,7 @@ def main():
     args = parser.parse_args()
     if args.config_file is not None:
         update_config(args.config_file)
-
+    opt.misc.save_dir = args.save_dir
     os.environ["CUDA_VISIBLE_DEVICES"] = opt.network.gpus
     train(args)
 

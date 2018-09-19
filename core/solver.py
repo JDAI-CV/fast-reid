@@ -25,10 +25,8 @@ class Solver(object):
         self.net = net
         self.loss = AverageMeter('loss')
         self.acc = AverageMeter('acc')
-        self.batch_size = 0
 
     def fit(self, train_data, test_data, num_query, optimizer, criterion, lr_scheduler):
-        self.batch_size = train_data.batch_size
         best_rank1 = -np.inf
         for epoch in range(self.opt.train.num_epochs):
             self.loss.reset()
@@ -43,8 +41,7 @@ class Solver(object):
             tic = time.time()
             btic = time.time()
             for i, inputs in enumerate(train_data):
-                imgs, pids, _ = inputs
-                data = imgs.cuda()
+                data, pids, _ = inputs
                 label = pids.cuda()
                 score, feat = self.net(data)
                 loss = criterion(score, feat, label)
@@ -63,7 +60,7 @@ class Solver(object):
                     metric_name, metric_value = self.acc.get()
                     logging.info('Epoch[%d] Batch [%d]\tSpeed: %f samples/sec\t%s=%f\t'
                                  '%s=%f' % (
-                                     epoch, i + 1, self.batch_size * log_interval / (time.time() - btic),
+                                     epoch, i + 1, train_data.batch_size * log_interval / (time.time() - btic),
                                      loss_name, loss_value,
                                      metric_name, metric_value
                                  ))
@@ -71,7 +68,7 @@ class Solver(object):
 
             loss_name, loss_value = self.loss.get()
             metric_name, metric_value = self.acc.get()
-            throughput = int(self.batch_size * len(train_data) / (time.time() - tic))
+            throughput = int(train_data.batch_size * len(train_data) / (time.time() - tic))
 
             logging.info('[Epoch %d] training: %s=%f\t%s=%f' % (
                 epoch, loss_name, loss_value, metric_name, metric_value))
@@ -88,15 +85,14 @@ class Solver(object):
                 save_checkpoint({
                     'state_dict': state_dict,
                     'epoch': epoch + 1,
-                }, is_best=is_best, save_dir=self.opt.save_dir,
+                }, is_best=is_best, save_dir=self.opt.misc.save_dir,
                     filename=self.opt.network.name + str(epoch + 1) + '.pth.tar')
 
     def test_func(self, test_data, num_query):
         self.net.eval()
         feat, person, camera = list(), list(), list()
         for inputs in test_data:
-            imgs, pids, camids = inputs
-            data = imgs.cuda()
+            data, pids, camids = inputs
             with torch.no_grad():
                 outputs = self.net(data).cpu()
             feat.append(outputs)
@@ -119,7 +115,7 @@ class Solver(object):
 
         m, n = qf.shape[0], gf.shape[0]
         distmat = torch.pow(qf, 2).sum(dim=1, keepdim=True).expand(m, n) + \
-                  torch.pow(gf, 2).sum(dim=1, keepdim=True).expand(n, m).t()
+              torch.pow(gf, 2).sum(dim=1, keepdim=True).expand(n, m).t()
         distmat.addmm_(1, -2, qf, gf.t())
         distmat = distmat.numpy()
 
