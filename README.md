@@ -48,14 +48,14 @@ in `reid_baseline` folder if you want to train with softmax and triplet loss. Yo
 
 <img src='https://ws3.sinaimg.cn/large/006tNbRwly1fvh3ekjh12j315k0j4q58.jpg' width='500'>
 
-| config | Market1501 | CUHK03 |
-| --- | --| ---| --- |
-| bs(32) size(384,128) softmax | 92.2 (78.5) |  |
-| bs(64) size(384,128) softmax | 92.5 (79.6) | |
-| bs(32) size(256,128) softmax | 92.0 (78.4) | |
-| bs(64) size(256,128) softmax | 91.7 (78.3) | |
-| bs(128) size(256,128) softmax | 91.2 (77.4) | |
-| triplet(p=32,k=4) size(256,128) | 88.3 (73.8) | |
-| triplet(p=16,k=4)+softmax size(384,128) | 93.1 (82.0) | |
-| triplet(p=24,k=4)+softmax size(384,128) | 91.7 (79.0) | |
+| config | Market1501 |
+| --- | -- | 
+| bs(32) size(384,128) softmax | 92.2 (78.5) |  
+| bs(64) size(384,128) softmax | 92.5 (79.6) | 
+| bs(32) size(256,128) softmax | 92.0 (78.4) | 
+| bs(64) size(256,128) softmax | 91.7 (78.3) | 
+| bs(128) size(256,128) softmax | 91.2 (77.4) | 
+| triplet(p=32,k=4) size(256,128) | 88.3 (73.8) | 
+| triplet(p=16,k=4)+softmax size(384,128) | 93.1 (82.0) | 
+| triplet(p=24,k=4)+softmax size(384,128) | 91.7 (79.0) | 
 
