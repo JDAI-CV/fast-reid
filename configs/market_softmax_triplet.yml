@@ -8,16 +8,17 @@ aug:
     random_mirror: True
     pad: 10
     random_crop: True
+    random_erasing: True
 
 train:
     optimizer: 'Adam'
     lr: 0.00035
-    num_epochs: 300
+    num_epochs: 400
     p_size: 16
     k_size: 4
     sampler: 'triplet'
     wd: 0.0005
-    step: [80, 160]
+    step: [80, 180, 300]
     factor: 0.1
     warmup_epoch: 20
     warmup_begin_lr: 0.0000035

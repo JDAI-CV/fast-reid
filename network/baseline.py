@@ -41,20 +41,14 @@ class Baseline(nn.Module):
     in_planes = 2048
 
     def __init__(self, num_classes=10, last_stride=1, model_path='/home/test2/.torch/models/resnet50-19c8e357.pth'):
-        super().__init__()
+        super(Baseline, self).__init__()
         self.base = ResNet(last_stride)
         self.base.load_param(model_path)
-        self.gap = nn.AdaptiveAvgPool2d((1, 1))
-
+        self.gap = nn.AdaptiveAvgPool2d(1)
         self.num_classes = num_classes
+
         self.bottleneck = nn.BatchNorm1d(self.in_planes)
         self.bottleneck.bias.requires_grad_(False)  # no shift
-        # self.bottleneck = nn.Sequential(
-        #     nn.Linear(self.in_planes, 512),
-        #     nn.BatchNorm1d(512),
-        #     nn.LeakyReLU(0.1),
-        #     nn.Dropout(p=0.5)
-        # )
         self.classifier = nn.Linear(self.in_planes, self.num_classes, bias=False)
 
         self.bottleneck.apply(weights_init_kaiming)
@@ -63,19 +57,20 @@ class Baseline(nn.Module):
     def forward(self, x):
         global_feat = self.gap(self.base(x))  # (b, 2048, 1, 1)
         global_feat = global_feat.view(global_feat.shape[0], -1)  # flatten to (bs, 2048)
-        feat = self.bottleneck(global_feat)
+        feat = self.bottleneck(global_feat)  # normalize for angular softmax
         if self.training:
             cls_score = self.classifier(feat)
-            return cls_score, feat
+            return cls_score, global_feat  # global feature for triplet loss
         else:
             return feat
 
 
 if __name__ == '__main__':
-    net = Baseline()
+    # net = Baseline(751).cuda(1)
     import torch
 
-    x = torch.ones(2, 3, 256, 128)
+    net = ResNet(1).cuda(1)
+    x = torch.ones(128, 3, 256, 128).cuda(1)
     y = net(x)
     from IPython import embed
 

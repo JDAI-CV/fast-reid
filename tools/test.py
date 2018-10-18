@@ -17,6 +17,7 @@ from pprint import pprint
 
 import torch
 from torch import nn
+from torch.backends import cudnn
 
 import network
 from core.config import opt, update_config
@@ -40,7 +41,7 @@ def test(args):
     train_data, test_data, num_query = get_data_provider(opt)
 
     net = getattr(network, opt.network.name)(opt.dataset.num_classes, opt.network.last_stride)
-    net = net.load_state_dict(torch.load(args.load_model))
+    net.load_state_dict(torch.load(args.load_model)['state_dict'])
     net = nn.DataParallel(net).cuda()
 
     mod = Solver(opt, net)
@@ -59,6 +60,7 @@ def main():
         update_config(args.config_file)
 
     os.environ["CUDA_VISIBLE_DEVICES"] = opt.network.gpus
+    cudnn.benchmark = True
     test(args)
 
 

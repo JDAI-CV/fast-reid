@@ -62,3 +62,4 @@ class LRScheduler(object):
             count = sum([1 for s in self.step if s <= num_epoch])
             self.learning_rate = self.base_lr * pow(self.factor, count)
         return self.learning_rate
+

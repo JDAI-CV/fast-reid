@@ -17,6 +17,7 @@ from pprint import pprint
 
 import torch
 from torch import nn
+from torch.backends import cudnn
 
 import network
 from core.config import opt, update_config
@@ -42,7 +43,6 @@ def train(args):
     train_data, test_data, num_query = get_data_provider(opt)
 
     net = getattr(network, opt.network.name)(opt.dataset.num_classes, opt.network.last_stride)
-    net = nn.DataParallel(net).cuda()
 
     optimizer = getattr(torch.optim, opt.train.optimizer)(net.parameters(), lr=opt.train.lr, weight_decay=opt.train.wd)
     ce_loss = nn.CrossEntropyLoss()
@@ -73,7 +73,7 @@ def train(args):
     lr_scheduler = LRScheduler(base_lr=opt.train.lr, step=opt.train.step,
                                factor=opt.train.factor, warmup_epoch=opt.train.warmup_epoch,
                                warmup_begin_lr=opt.train.warmup_begin_lr)
-
+    net = nn.DataParallel(net).cuda()
     mod = Solver(opt, net)
     mod.fit(train_data=train_data, test_data=test_data, num_query=num_query, optimizer=optimizer,
             criterion=loss_fn, lr_scheduler=lr_scheduler)
@@ -91,6 +91,7 @@ def main():
         update_config(args.config_file)
     opt.misc.save_dir = args.save_dir
     os.environ["CUDA_VISIBLE_DEVICES"] = opt.network.gpus
+    cudnn.benchmark = True
     train(args)
 
 

@@ -4,16 +4,17 @@ dataset:
     name: market1501
 
 aug:
-    resize_size: [256, 128]
+    resize_size: [384, 128]
     random_mirror: True
     pad: 10
     random_crop: True
+    random_erasing: True
 
 train:
     optimizer: 'Adam'
     lr: 0.00035
     num_epochs: 80
-    batch_size: 64
+    batch_size: 32
     sampler: 'softmax'
     wd: 0.0005
     step: [30, 55]
@@ -28,7 +29,7 @@ test:
 network:
     name: 'Baseline'
     last_stride: 1
-    gpus: '1'
+    gpus: '0'
 
 misc:
     eval_step: 20

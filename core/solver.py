@@ -36,7 +36,7 @@ class Solver(object):
             lr = lr_scheduler.update(epoch)
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr
-            logging.info('learning rate update to {:.3e}'.format(lr))
+            logging.info('Epoch [{}] learning rate update to {:.3e}'.format(epoch, lr))
 
             tic = time.time()
             btic = time.time()
@@ -86,7 +86,7 @@ class Solver(object):
                     'state_dict': state_dict,
                     'epoch': epoch + 1,
                 }, is_best=is_best, save_dir=self.opt.misc.save_dir,
-                    filename=self.opt.network.name + str(epoch + 1) + '.pth.tar')
+                    filename=self.opt.network.name + '.pth.tar')
 
     def test_func(self, test_data, num_query):
         self.net.eval()

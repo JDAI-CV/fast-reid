@@ -72,9 +72,9 @@ def get_data_provider(opt):
 
     # data augmenter
     random_mirror = opt.aug.get('random_mirror', False)
-    random_erase = opt.aug.get('random_erase', False)
     pad = opt.aug.get('pad', False)
     random_crop = opt.aug.get('random_crop', False)
+    random_erasing = opt.aug.get('random_erasing', False)
 
     h, w = opt.aug.resize_size
     train_aug = list()
@@ -83,13 +83,12 @@ def get_data_provider(opt):
         train_aug.append(T.RandomHorizontalFlip())
     if pad:
         train_aug.append(T.Pad(padding=pad))
-    if random_erase:
-        train_aug.append(augmenter.RandomErase())
     if random_crop:
         train_aug.append(T.RandomCrop((h, w)))
-
     train_aug.append(T.ToTensor())
     train_aug.append(T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))
+    if random_erasing:
+        train_aug.append(augmenter.RandomErasing())
     train_aug = T.Compose(train_aug)
 
     test_aug = list()
