@@ -49,6 +49,12 @@ You can also modify your cfg parameters as follow
 python3 tools/train.py --config_file='configs/softmax.yml' INPUT.SIZE_TRAIN '(256, 128)' INPUT.SIZE_TEST '(256, 128)'
 ```
 
+## Test
+You can test your model's performance directly by running this command
+```bash
+python3 tools/test.py --config_file='configs/softmax.yml' TEST.WEIGHT '/save/trained_model/path'
+```
+
 ## Results
 
 **network architecture**
@@ -61,7 +67,5 @@ python3 tools/train.py --config_file='configs/softmax.yml' INPUT.SIZE_TRAIN '(25
 | --- | -- | -- | -- |
 | softmax, size=(384, 128), batch_size=64 | 92.5 (79.4) | 60.4 (56.1) | 84.6 (68.1) |
 | softmax, size=(256, 128), batch_size=64 | 92.0 (80.4) | 60.5 (55.5) | 84.1(68.4) |
-| softmax_triplet, size=(384, 128), batch_size=128(32 id x 4 imgs) | 93.2 (82.5) | - | 86.4 (73.1)
-| softmax_triplet, size=(256, 128), batch_size=128(32 id x 4 imgs) | 93.8 (83.2) | 65.9 (61.4) | -
-
-
+| softmax_triplet, size=(384, 128), batch_size=128(32 id x 4 imgs) | 93.2 (82.5) | - | 86.4 (73.1) |
+| softmax_triplet, size=(384, 128), batch_size=64(16 id x 4 imgs) | 93.8 (83.2) | 65.9 (61.4) | - |
