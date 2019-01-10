@@ -39,14 +39,14 @@ The designed architecture follows this guide [PyTorch-Project-Template](https://
     Then it will automatically download model in `~/.torch/models/`, you should set this path in `config/defaults.py` for all training or set in every single training config file in `configs/`.
 
 ## Train
-Most of the configuration files that we provide, you can run this command for training
+Most of the configuration files that we provide, you can run this command for training market1501
 ```bash
-python3 tools/train.py --config_file='configs/market1501_softmax_bs64.yml'
+python3 tools/train.py --config_file='configs/softmax.yml' DATASETS.NAMES "('market1501')"
 ```
 
 You can also modify your cfg parameters as follow
 ```bash
-python3 tools/train.py --config_file='configs/market1501_softmax_bs64.yml' INPUT.SIZE_TRAIN '(256, 128)' INPUT.SIZE_TEST '(256, 128)'
+python3 tools/train.py --config_file='configs/softmax.yml' INPUT.SIZE_TRAIN '(256, 128)' INPUT.SIZE_TEST '(256, 128)'
 ```
 
 ## Results
