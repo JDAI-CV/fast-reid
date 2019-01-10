@@ -4,64 +4,61 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import argparse
-import logging
 import os
 import sys
-from pprint import pprint
+from os import mkdir
 
 import torch
-from torch import nn
 from torch.backends import cudnn
 
-import network
-from core.config import opt, update_config
-from core.loader import get_data_provider
-from core.solver import Solver
-
-FORMAT = '[%(levelname)s]: %(message)s'
-logging.basicConfig(
-    level=logging.INFO,
-    format=FORMAT,
-    stream=sys.stdout
-)
-
-
-def test(args):
-    logging.info('======= user config ======')
-    logging.info(pprint(opt))
-    logging.info(pprint(args))
-    logging.info('======= end ======')
-
-    train_data, test_data, num_query = get_data_provider(opt)
-
-    net = getattr(network, opt.network.name)(opt.dataset.num_classes, opt.network.last_stride)
-    net.load_state_dict(torch.load(args.load_model)['state_dict'])
-    net = nn.DataParallel(net).cuda()
-
-    mod = Solver(opt, net)
-    mod.test_func(test_data, num_query)
+sys.path.append('.')
+from config import cfg
+from data import make_data_loader
+from engine.inference import inference
+from modeling import build_model
+from utils.logger import setup_logger
 
 
 def main():
-    parser = argparse.ArgumentParser(description='reid model testing')
-    parser.add_argument('--config_file', type=str, default=None,
-                        help='Optional config file for params')
-    parser.add_argument('--load_model', type=str, required=True,
-                        help='load trained model for testing')
+    parser = argparse.ArgumentParser(description="ReID Baseline Inference")
+    parser.add_argument(
+        "--config_file", default="", help="path to config file", type=str
+    )
+    parser.add_argument("opts", help="Modify config options using the command-line", default=None,
+                        nargs=argparse.REMAINDER)
 
     args = parser.parse_args()
-    if args.config_file is not None:
-        update_config(args.config_file)
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = opt.network.gpus
+    num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
+
+    if args.config_file != "":
+        cfg.merge_from_file(args.config_file)
+    cfg.merge_from_list(args.opts)
+    cfg.freeze()
+
+    output_dir = cfg.OUTPUT_DIR
+    if output_dir and not os.path.exists(output_dir):
+        mkdir(output_dir)
+
+    logger = setup_logger("reid_baseline", output_dir, 0)
+    logger.info("Using {} GPUS".format(num_gpus))
+    logger.info(args)
+
+    if args.config_file != "":
+        logger.info("Loaded configuration file {}".format(args.config_file))
+        with open(args.config_file, 'r') as cf:
+            config_str = "\n" + cf.read()
+            logger.info(config_str)
+    logger.info("Running with config:\n{}".format(cfg))
+
     cudnn.benchmark = True
-    test(args)
+
+    train_loader, val_loader, num_query, num_classes = make_data_loader(cfg)
+    model = build_model(cfg, num_classes)
+    model.load_state_dict(torch.load(cfg.TEST.WEIGHT))
+
+    inference(cfg, model, val_loader, num_query)
 
 
 if __name__ == '__main__':
