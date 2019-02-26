@@ -1,4 +1,6 @@
 # ReID_baseline
+**The results in CUHK03 is wrong becuase I use the same evaluation protocol with market1501 and duke. I will fix this later. You can use the right evaluation protocol to get accurate result.**
+
 Baseline model (with bottleneck) for person ReID (using softmax and triplet loss).
 
 We support
