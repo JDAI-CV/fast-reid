@@ -1,5 +1,5 @@
 MODEL:
-  PRETRAIN_PATH: '/export/home/lxy/.torch/models/resnet50-19c8e357.pth'
+  PRETRAIN_PATH: 'home/user01/.torch/models/resnet50-19c8e357.pth'
 
 
 INPUT:

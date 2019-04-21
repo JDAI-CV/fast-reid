@@ -5,43 +5,51 @@
 """
 
 import argparse
-import os
 import sys
+from bisect import bisect_right
 
 from torch.backends import cudnn
 
 sys.path.append('.')
 from config import cfg
-from data import make_data_loader
+from data import get_data_bunch
 from engine.trainer import do_train
-from modeling import build_model
 from layers import make_loss
-from solver import make_optimizer, WarmupMultiStepLR
-
-from utils.logger import setup_logger
+from modeling import build_model
+from utils.logger import Logger
+from fastai.vision import *
 
 
 def train(cfg):
     # prepare dataset
-    train_loader, val_loader, num_query, num_classes = make_data_loader(cfg)
-    # prepare model
-    model = build_model(cfg, num_classes)
+    data_bunch, test_labels, num_query = get_data_bunch(cfg)
 
-    optimizer = make_optimizer(cfg, model)
-    scheduler = WarmupMultiStepLR(optimizer, cfg.SOLVER.STEPS, cfg.SOLVER.GAMMA, cfg.SOLVER.WARMUP_FACTOR,
-                                  cfg.SOLVER.WARMUP_ITERS, cfg.SOLVER.WARMUP_METHOD)
+    # prepare model
+    model = build_model(cfg, data_bunch.c)
+
+    opt_func = partial(torch.optim.Adam)
+
+    def warmup_multistep(start: float, end: float, pct: float) -> float:
+        warmup_factor = 1
+        gamma = cfg.SOLVER.GAMMA
+        milestones = [1.0 * s / cfg.SOLVER.MAX_EPOCHS for s in cfg.SOLVER.STEPS]
+        warmup_iter = 1.0 * cfg.SOLVER.WARMUP_ITERS / cfg.SOLVER.MAX_EPOCHS
+        if pct < warmup_iter:
+            alpha = pct / warmup_iter
+            warmup_factor = cfg.SOLVER.WARMUP_FACTOR * (1 - alpha) + alpha
+        return start * warmup_factor * gamma ** bisect_right(milestones, pct)
+
+    lr_sched = Scheduler((cfg.SOLVER.BASE_LR, 0), cfg.SOLVER.MAX_EPOCHS, warmup_multistep)
 
     loss_func = make_loss(cfg)
-
-    arguments = {}
 
     do_train(
         cfg,
         model,
-        train_loader,
-        val_loader,
-        optimizer,
-        scheduler,
+        data_bunch,
+        test_labels,
+        opt_func,
+        lr_sched,
         loss_func,
         num_query
     )
@@ -64,20 +72,15 @@ def main():
     cfg.merge_from_list(args.opts)
     cfg.freeze()
 
-    output_dir = cfg.OUTPUT_DIR
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    logger = setup_logger("reid_baseline", output_dir, 0)
-    logger.info("Using {} GPUS".format(num_gpus))
-    logger.info(args)
+    sys.stdout = Logger(os.path.join(cfg.OUTPUT_DIR, 'log.txt'))
+    print(args)
 
     if args.config_file != "":
-        logger.info("Loaded configuration file {}".format(args.config_file))
+        print("Loaded configuration file {}".format(args.config_file))
         with open(args.config_file, 'r') as cf:
             config_str = "\n" + cf.read()
-            logger.info(config_str)
-    logger.info("Running with config:\n{}".format(cfg))
+            print(config_str)
+    print("Running with config:\n{}".format(cfg))
 
     cudnn.benchmark = True
     train(cfg)

@@ -4,4 +4,4 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from .build import make_data_loader
+from .build import get_data_bunch

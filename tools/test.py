@@ -1,6 +1,6 @@
 # encoding: utf-8
 """
-@author:  sherlock
+@author:  l1aoxingyu
 @contact: sherlockliao01@gmail.com
 """
 
@@ -14,10 +14,9 @@ from torch.backends import cudnn
 
 sys.path.append('.')
 from config import cfg
-from data import make_data_loader
+from data import get_data_bunch
 from engine.inference import inference
 from modeling import build_model
-from utils.logger import setup_logger
 
 
 def main():
@@ -54,11 +53,11 @@ def main():
 
     cudnn.benchmark = True
 
-    train_loader, val_loader, num_query, num_classes = make_data_loader(cfg)
-    model = build_model(cfg, num_classes)
+    train_databunch, test_databunch, num_query = get_data_bunch(cfg)
+    model = build_model(cfg, train_databunch.c)
     model.load_state_dict(torch.load(cfg.TEST.WEIGHT))
 
-    inference(cfg, model, val_loader, num_query)
+    inference(cfg, model, test_databunch, num_query)
 
 
 if __name__ == '__main__':
