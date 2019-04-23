@@ -17,24 +17,24 @@ DATALOADER:
 
 SOLVER:
   OPTIMIZER_NAME: 'Adam'
-  MAX_EPOCHS: 120
+  MAX_EPOCHS: 150
   BASE_LR: 0.00035
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.0005
   IMS_PER_BATCH: 64
 
-  STEPS: [40, 70]
+  STEPS: [40, 90]
   GAMMA: 0.1
 
   WARMUP_FACTOR: 0.01
   WARMUP_ITERS: 10
 
-  EVAL_PERIOD: 40
+  EVAL_PERIOD: 50
 
 TEST:
   IMS_PER_BATCH: 512
   WEIGHT: "path"
 
-OUTPUT_DIR: "/home/user01/l1aoxingyu/reid_baseline/logs/co-train/softmax_triplet_bs64_256x128"
+OUTPUT_DIR: "/home/user01/l1aoxingyu/reid_baseline/logs/co-train/test"
 
 

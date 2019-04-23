@@ -20,7 +20,7 @@ from utils.logger import Logger
 from fastai.vision import *
 
 
-def train(cfg):
+def train(cfg, log_path):
     # prepare dataset
     data_bunch, test_labels, num_query = get_data_bunch(cfg)
 
@@ -45,6 +45,7 @@ def train(cfg):
 
     do_train(
         cfg,
+        log_path,
         model,
         data_bunch,
         test_labels,
@@ -72,7 +73,8 @@ def main():
     cfg.merge_from_list(args.opts)
     cfg.freeze()
 
-    sys.stdout = Logger(os.path.join(cfg.OUTPUT_DIR, 'log.txt'))
+    log_path = Path(os.path.join(cfg.OUTPUT_DIR, 'log.txt'))
+    with log_path.open('w') as f: f.write('{}\n'.format(args))
     print(args)
 
     if args.config_file != "":
@@ -81,9 +83,10 @@ def main():
             config_str = "\n" + cf.read()
             print(config_str)
     print("Running with config:\n{}".format(cfg))
-
+    with log_path.open('a') as f: f.write('{}\n'.format(cfg))
     cudnn.benchmark = True
-    train(cfg)
+    train(cfg, log_path)
+
 
 
 if __name__ == '__main__':

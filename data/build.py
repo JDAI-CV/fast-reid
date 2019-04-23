@@ -57,12 +57,13 @@ def get_data_bunch(cfg):
         pid, _ = pat.search(file_path).groups()
         return prefix + '_' + pid
 
-    data_sampler = RandomIdentitySampler(train_names, cfg.SOLVER.IMS_PER_BATCH, cfg.DATALOADER.NUM_INSTANCE) \
-        if cfg.DATALOADER.SAMPLER == 'softmax_triplet' else None
     data_bunch = ImageDataBunch.from_name_func('datasets', train_names, label_func=get_labels, valid_pct=0,
                                                size=(256, 128), ds_tfms=ds_tfms, bs=cfg.SOLVER.IMS_PER_BATCH,
-                                               val_bs=cfg.TEST.IMS_PER_BATCH,
-                                               sampler=data_sampler)
+                                               val_bs=cfg.TEST.IMS_PER_BATCH)
+    if 'triplet' in cfg.DATALOADER.SAMPLER:
+        data_sampler = RandomIdentitySampler(train_names, cfg.SOLVER.IMS_PER_BATCH, cfg.DATALOADER.NUM_INSTANCE)
+        data_bunch.train_dl = data_bunch.train_dl.new(shuffle=False, sampler=data_sampler)
+
     data_bunch.add_test(test_fnames)
     data_bunch.normalize(imagenet_stats)
 
