@@ -1,9 +1,11 @@
 # encoding: utf-8
 """
 @author:  liaoxingyu
-@contact: liaoxingyu2@jd.com
+@contact: sherlockliao01@gmail.com
 """
 
+
+import numpy as np
 from fastai.vision import *
 from fastai.vision.image import *
 

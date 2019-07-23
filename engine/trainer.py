@@ -13,12 +13,12 @@ class TrackValue(Callback):
     log_path: Path
     total_iter: int
 
-    def on_batch_end(self, num_batch, last_loss, **kwargs:Any) ->None:
+    def on_batch_end(self, num_batch, last_loss, **kwargs:Any):
         if (num_batch+1) % (self.total_iter//3) == 0:
             with self.log_path.open('a') as f:
                 f.write('Iter [{}/{}], loss: {:.4f}\n'.format(num_batch, self.total_iter, last_loss.item()))
 
-    def on_epoch_end(self, epoch, smooth_loss, **kwargs:Any) ->None:
+    def on_epoch_end(self, epoch, smooth_loss, **kwargs:Any):
         with self.log_path.open('a') as f:
             f.write('Epoch {}, loss: {:.4f}\n\n'.format(epoch, smooth_loss.item()))
 
@@ -28,10 +28,10 @@ class LRScheduler(Callback):
     learn: Learner
     lr_sched: Scheduler
 
-    def on_train_begin(self, **kwargs:Any) ->None:
+    def on_train_begin(self, **kwargs:Any):
         self.opt = self.learn.opt
 
-    def on_epoch_begin(self, **kwargs:Any) ->None:
+    def on_epoch_begin(self, **kwargs:Any):
         self.opt.lr = self.lr_sched.step()
 
 

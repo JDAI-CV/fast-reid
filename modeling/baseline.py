@@ -40,7 +40,6 @@ class Baseline(nn.Module):
         self.base = ResNet(last_stride)
         self.base.load_param(model_path)
         self.gap = nn.AdaptiveAvgPool2d(1)
-        # self.gap = nn.AdaptiveMaxPool2d(1)
         self.num_classes = num_classes
 
         self.bottleneck = nn.BatchNorm1d(self.in_planes)
