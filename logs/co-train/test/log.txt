@@ -1,0 +1,47 @@
+2019-07-29 20:56:09,448 reid_baseline INFO: Using 1 GPUs.
+2019-07-29 20:56:09,449 reid_baseline INFO: Namespace(config_file='configs/softmax_triplet.yml', opts=[])
+2019-07-29 20:56:09,449 reid_baseline INFO: Loaded configuration file configs/softmax_triplet.yml
+2019-07-29 20:56:09,449 reid_baseline INFO: Running with config:
+DATALOADER:
+  NUM_INSTANCE: 4
+  NUM_WORKERS: 8
+  SAMPLER: softmax_triplet
+DATASETS:
+  NAMES: market1501
+INPUT:
+  PADDING: 10
+  PIXEL_MEAN: [0.485, 0.456, 0.406]
+  PIXEL_STD: [0.229, 0.224, 0.225]
+  PROB: 0.5
+  SIZE_TEST: [256, 128]
+  SIZE_TRAIN: [256, 128]
+MODEL:
+  DEVICE: cuda
+  LAST_STRIDE: 1
+  NAME: resnet50
+  PRETRAIN_PATH: /export/home/lxy/.cache/torch/checkpoints/resnet50-19c8e357.pth
+OUTPUT_DIR: logs/co-train/test
+SOLVER:
+  BASE_LR: 0.00035
+  BIAS_LR_FACTOR: 2
+  CHECKPOINT_PERIOD: 50
+  EVAL_PERIOD: 30
+  GAMMA: 0.1
+  IMS_PER_BATCH: 64
+  LOG_PERIOD: 100
+  MARGIN: 0.3
+  MAX_EPOCHS: 150
+  MOMENTUM: 0.9
+  OPTIMIZER_NAME: Adam
+  STEPS: (40, 90)
+  WARMUP_FACTOR: 0.01
+  WARMUP_ITERS: 10
+  WARMUP_METHOD: linear
+  WEIGHT_DECAY: 0.0005
+  WEIGHT_DECAY_BIAS: 0.0005
+TEST:
+  IMS_PER_BATCH: 512
+  WEIGHT: path
+2019-07-29 20:56:10,745 reid_baseline.train INFO: Start Training
+2019-07-29 20:56:37,530 reid_baseline.train INFO: Iter [60/185], loss: 8.0126
+2019-07-29 20:56:56,679 reid_baseline.train INFO: Iter [121/185], loss: 7.5083

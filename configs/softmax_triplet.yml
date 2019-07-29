@@ -1,5 +1,5 @@
 MODEL:
-  PRETRAIN_PATH: '/home/user01/.torch/models/resnet50-19c8e357.pth'
+  PRETRAIN_PATH: '/export/home/lxy/.cache/torch/checkpoints/resnet50-19c8e357.pth'
 
 
 INPUT:
@@ -29,12 +29,12 @@ SOLVER:
   WARMUP_FACTOR: 0.01
   WARMUP_ITERS: 10
 
-  EVAL_PERIOD: 50
+  EVAL_PERIOD: 30
 
 TEST:
   IMS_PER_BATCH: 512
   WEIGHT: "path"
 
-OUTPUT_DIR: "/home/user01/l1aoxingyu/reid_baseline/logs/co-train/test"
+OUTPUT_DIR: "logs/co-train/test"
 
 

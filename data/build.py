@@ -41,7 +41,8 @@ def get_data_bunch(cfg):
     query_path = 'datasets/Market-1501-v15.09.15/query'
     gallery_path = 'datasets/Market-1501-v15.09.15/bounding_box_test'
 
-    train_img_names = _process_dir(market_train_path) + _process_dir(duke_train_path)
+    # train_img_names = _process_dir(market_train_path) + _process_dir(duke_train_path)
+    train_img_names = _process_dir(market_train_path)
     train_names = [i[0] for i in train_img_names]
 
     query_names = _process_dir(query_path)
