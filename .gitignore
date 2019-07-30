@@ -4,3 +4,5 @@ __pycache__
 .vscode
 datasets
 csrc/eval_cylib/build/
+logs/
+*.ipynb

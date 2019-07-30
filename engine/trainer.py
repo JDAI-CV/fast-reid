@@ -81,6 +81,7 @@ class TestModel(LearnerCallback):
             self._logger.info("mAP: {:.1%}".format(mAP))
             for r in [1, 5, 10]:
                 self._logger.info("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
+            self.learn.save("model_{}".format(epoch))
 
 def do_train(
         cfg,

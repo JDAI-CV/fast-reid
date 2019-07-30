@@ -31,7 +31,7 @@ class CUHK03(BaseImageDataset):
     """
     dataset_dir = 'cuhk03'
 
-    def __init__(self, root='/export/home/lxy/DATA/reid', split_id=0, cuhk03_labeled=False,
+    def __init__(self, root='datasets', split_id=0, cuhk03_labeled=False,
                  cuhk03_classic_split=False, verbose=True,
                  **kwargs):
         super(CUHK03, self).__init__()

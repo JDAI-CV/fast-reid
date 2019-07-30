@@ -12,4 +12,3 @@ from config import cfg
 
 if __name__ == '__main__':
     data = get_data_bunch(cfg)
-    from IPython import embed; embed()

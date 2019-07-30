@@ -35,6 +35,6 @@ TEST:
   IMS_PER_BATCH: 512
   WEIGHT: "path"
 
-OUTPUT_DIR: "logs/co-train/test"
+OUTPUT_DIR: "logs/beijing/market+duke+bj/"
 
 

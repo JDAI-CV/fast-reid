@@ -77,16 +77,10 @@ def main():
     logger = setup_logger("reid_baseline", cfg.OUTPUT_DIR, 0)
     logger.info("Using {} GPUs.".format(num_gpus))
     logger.info(args)
-    # with log_path.open('w') as f: f.write('{}\n'.format(args))
-    # print(args)
 
     if args.config_file != "":
         logger.info("Loaded configuration file {}".format(args.config_file))
-        # with open(args.config_file, 'r') as cf:
-            # config_str = "\n" + cf.read()
-            # logger.info(config_str)
     logger.info("Running with config:\n{}".format(cfg))
-    # with log_path.open('a') as f: f.write('{}\n'.format(cfg))
 
     cudnn.benchmark = True
     train(cfg)
