@@ -27,6 +27,8 @@ def train(cfg):
 
     # prepare model
     model = build_model(cfg, data_bunch.c)
+    state_dict = torch.load("logs/beijing/market_duke_softmax_triplet_256_128_bs512/models/model_149.pth")
+    model.load_params_wo_fc(state_dict['model'])
 
     opt_func = partial(torch.optim.Adam)
 
@@ -40,7 +42,8 @@ def train(cfg):
             warmup_factor = cfg.SOLVER.WARMUP_FACTOR * (1 - alpha) + alpha
         return start * warmup_factor * gamma ** bisect_right(milestones, pct)
 
-    lr_sched = Scheduler((cfg.SOLVER.BASE_LR, 0), cfg.SOLVER.MAX_EPOCHS, warmup_multistep)
+    lr = cfg.SOLVER.BASE_LR * (cfg.SOLVER.IMS_PER_BATCH // 64)
+    lr_sched = Scheduler(lr, cfg.SOLVER.MAX_EPOCHS, warmup_multistep)
 
     loss_func = make_loss(cfg)
 

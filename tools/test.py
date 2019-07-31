@@ -16,12 +16,13 @@ sys.path.append('.')
 from config import cfg
 from data import get_data_bunch
 from engine.inference import inference
+from utils.logger import setup_logger
 from modeling import build_model
 
 
 def main():
     parser = argparse.ArgumentParser(description="ReID Baseline Inference")
-    parser.add_argument(
+    parser.add_argument('-cfg',
         "--config_file", default="", help="path to config file", type=str
     )
     parser.add_argument("opts", help="Modify config options using the command-line", default=None,
@@ -36,28 +37,25 @@ def main():
     cfg.merge_from_list(args.opts)
     cfg.freeze()
 
-    output_dir = cfg.OUTPUT_DIR
-    if output_dir and not os.path.exists(output_dir):
-        mkdir(output_dir)
+    if not os.path.exists(cfg.OUTPUT_DIR): os.makedirs(cfg.OUTPUT_DIR)
 
-    logger = setup_logger("reid_baseline", output_dir, 0)
+    logger = setup_logger("reid_baseline", cfg.OUTPUT_DIR, 0)
     logger.info("Using {} GPUS".format(num_gpus))
     logger.info(args)
 
     if args.config_file != "":
         logger.info("Loaded configuration file {}".format(args.config_file))
-        with open(args.config_file, 'r') as cf:
-            config_str = "\n" + cf.read()
-            logger.info(config_str)
     logger.info("Running with config:\n{}".format(cfg))
 
     cudnn.benchmark = True
 
-    train_databunch, test_databunch, num_query = get_data_bunch(cfg)
-    model = build_model(cfg, train_databunch.c)
-    model.load_state_dict(torch.load(cfg.TEST.WEIGHT))
+    data_bunch, test_labels, num_query = get_data_bunch(cfg)
+    model = build_model(cfg, data_bunch.c)
+    state_dict = torch.load(cfg.TEST.WEIGHT)
+    model.load_state_dict(state_dict['model'])
+    model.cuda()
 
-    inference(cfg, model, test_databunch, num_query)
+    inference(cfg, model, data_bunch, test_labels, num_query)
 
 
 if __name__ == '__main__':

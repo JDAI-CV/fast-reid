@@ -4,11 +4,13 @@
 @contact: sherlockliao01@gmail.com
 """
 
+import os
 import logging
 
 from data.datasets.eval_reid import evaluate
 from fastai.vision import *
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 
 
 @dataclass
@@ -16,12 +18,12 @@ class TrackValue(Callback):
     logger: logging.Logger
     total_iter: int
 
-    def on_batch_end(self, num_batch, last_loss, **kwargs):
-        if (num_batch+1) % (self.total_iter//3) == 0:
-            self.logger.info('Iter [{}/{}], loss: {:.4f}'.format(num_batch, self.total_iter, last_loss.item()))
+    # def on_batch_end(self, num_batch, last_loss, **kwargs):
+        # if (num_batch+1) % (self.total_iter//3) == 0:
+            # self.logger.info('Iter [{}/{}], loss: {:.4f}'.format(num_batch, self.total_iter, last_loss.item()))
 
     def on_epoch_end(self, epoch, smooth_loss, **kwargs):
-        self.logger.info('Epoch {}, loss: {:.4f}'.format(epoch, smooth_loss.item()))
+        self.logger.info('Epoch {}[Iter {}], loss: {:.4f}'.format(epoch, self.total_iter, smooth_loss.item()))
             
 
 @dataclass
@@ -113,4 +115,8 @@ def do_train(
             partial(TestModel, test_labels=test_labels, eval_period=eval_period, num_query=num_query, logger=logger)],
         callbacks=[TrackValue(logger, total_iter)])
 
-    learn.fit(epochs, lr=cfg.SOLVER.BASE_LR, wd=cfg.SOLVER.WEIGHT_DECAY)
+    learn.fit(epochs, wd=cfg.SOLVER.WEIGHT_DECAY)
+    learn.recorder.plot_losses()
+    plt.savefig(os.path.join(output_dir, "loss.jpg"))
+    learn.recorder.plot_lr()
+    plt.savefig(os.path.join(output_dir, "lr.jpg"))

@@ -22,39 +22,53 @@ def get_data_bunch(cfg):
         None
     )
 
-    def _process_dir(dir_path):
+    def _process_dir(dir_path, recursive=False):
         img_paths = []
-        if 'beijingStation' in dir_path:
+        if recursive:
             id_dirs = os.listdir(dir_path)
             for d in id_dirs:
                 img_paths.extend(glob.glob(os.path.join(dir_path, d, '*.jpg')))
         else:
             img_paths = glob.glob(os.path.join(dir_path, '*.jpg'))
-        pattern = re.compile(r'([-\d]+)_c(\d)')
-
-        pid_container = set()
+        pattern = re.compile(r'([-\d]+)_c(\d*)')
         v_paths = []
         for img_path in img_paths:
             pid, camid = map(int, pattern.search(img_path).groups())
+            pid = int(pid)
             if pid == -1: continue  # junk images are just ignored
-            pid_container.add(pid)
-            v_paths.append([img_path, pid, camid])
+            v_paths.append([img_path,pid,camid])
         return v_paths
+
 
     market_train_path = 'datasets/Market-1501-v15.09.15/bounding_box_train'
     duke_train_path = 'datasets/DukeMTMC-reID/bounding_box_train'
     cuhk03_train_path = 'datasets/cuhk03/'
     bjStation_train_path = 'datasets/beijingStation/20190720/train'
 
-    query_path = 'datasets/Market-1501-v15.09.15/query'
-    gallery_path = 'datasets/Market-1501-v15.09.15/bounding_box_test'
+    market_query_path = 'datasets/Market-1501-v15.09.15/query'
+    marker_gallery_path = 'datasets/Market-1501-v15.09.15/bounding_box_test'
+    bj_query_path = 'datasets/beijingStation/query'
+    bj_gallery_path = 'datasets/beijingStation/test'
 
-    train_img_names = _process_dir(market_train_path) + _process_dir(duke_train_path) + _process_dir(bjStation_train_path)
+    train_img_names = list()
+    for d in cfg.DATASETS.NAMES:
+        if d == 'market1501':
+            train_img_names.extend(_process_dir(market_train_path))
+        elif d == 'duke':
+            train_img_names.extend(_process_dir(duke_train_path))
+        elif d == 'beijing':
+            train_img_names.extend(_process_dir(bjStation_train_path, True))
+        else:
+            raise NameError("{} is not available".format(d))
+        
+    # train_img_names = _process_dir(market_train_path) + _process_dir(duke_train_path) + _process_dir(bjStation_train_path)
+    # train_img_names = _process_dir(market_train_path)
     # train_img_names = CUHK03().train
     train_names = [i[0] for i in train_img_names]
 
-    query_names = _process_dir(query_path)
-    gallery_names = _process_dir(gallery_path)
+    query_names = _process_dir(bj_query_path)
+    gallery_names = _process_dir(bj_gallery_path, True)
+
     test_fnames = []
     test_labels = []
     for i in query_names+gallery_names:

@@ -38,8 +38,10 @@ class Baseline(nn.Module):
     def __init__(self, num_classes, last_stride, model_path=None):
         super(Baseline, self).__init__()
         self.base = ResNet(last_stride)
-        if model_path is not None:
+        try:
             self.base.load_param(model_path)
+        except:
+            print("Not load imagenet pretrained model!")
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.num_classes = num_classes
 
@@ -59,3 +61,9 @@ class Baseline(nn.Module):
             return cls_score, global_feat  # global feature for triplet loss
         else:
             return feat
+
+    def load_params_wo_fc(self, state_dict):
+        for i in state_dict:
+            if 'classifier' in i:
+                continue
+            self.state_dict()[i].copy_(state_dict[i])

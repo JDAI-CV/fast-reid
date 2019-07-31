@@ -9,7 +9,7 @@ INPUT:
   PADDING: 10
 
 DATASETS:
-  NAMES: ('market1501')
+  NAMES: ("market1501",)
 
 DATALOADER:
   SAMPLER: 'softmax_triplet'
@@ -21,7 +21,7 @@ SOLVER:
   BASE_LR: 0.00035
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.0005
-  IMS_PER_BATCH: 64
+  IMS_PER_BATCH: 256
 
   STEPS: [40, 90]
   GAMMA: 0.1
@@ -35,6 +35,6 @@ TEST:
   IMS_PER_BATCH: 512
   WEIGHT: "path"
 
-OUTPUT_DIR: "logs/beijing/market+duke+bj/"
+OUTPUT_DIR: "logs/market/batch256/"
 
 
