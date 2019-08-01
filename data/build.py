@@ -11,6 +11,7 @@ import re
 from fastai.vision import *
 from .transforms import RandomErasing
 from .samplers import RandomIdentitySampler
+from .datasets import CUHK03
 
 
 def get_data_bunch(cfg):
@@ -39,7 +40,6 @@ def get_data_bunch(cfg):
             v_paths.append([img_path,pid,camid])
         return v_paths
 
-
     market_train_path = 'datasets/Market-1501-v15.09.15/bounding_box_train'
     duke_train_path = 'datasets/DukeMTMC-reID/bounding_box_train'
     cuhk03_train_path = 'datasets/cuhk03/'
@@ -58,12 +58,11 @@ def get_data_bunch(cfg):
             train_img_names.extend(_process_dir(duke_train_path))
         elif d == 'beijing':
             train_img_names.extend(_process_dir(bjStation_train_path, True))
+        elif d == 'cuhk03':
+            train_img_names.extend(CUHK03().train)
         else:
             raise NameError("{} is not available".format(d))
         
-    # train_img_names = _process_dir(market_train_path) + _process_dir(duke_train_path) + _process_dir(bjStation_train_path)
-    # train_img_names = _process_dir(market_train_path)
-    # train_img_names = CUHK03().train
     train_names = [i[0] for i in train_img_names]
 
     query_names = _process_dir(bj_query_path)
@@ -77,17 +76,17 @@ def get_data_bunch(cfg):
 
     def get_labels(file_path):
         """ Suitable for muilti-dataset training """
-        # if 'cuhk03' in file_path:
-            # prefix = 'cuhk'
-            # pid = file_path.split('/')[-1].split('_')[1]
-        # else:
-        prefix = file_path.split('/')[1]
-        pat = re.compile(r'([-\d]+)_c(\d)')
-        pid, _ = pat.search(file_path).groups()
+        if 'cuhk03' in file_path:
+            prefix = 'cuhk'
+            pid = '_'.join(file_path.split('/')[-1].split('_')[0:2])
+        else:
+            prefix = file_path.split('/')[1]
+            pat = re.compile(r'([-\d]+)_c(\d)')
+            pid, _ = pat.search(file_path).groups()
         return prefix + '_' + pid
 
     data_bunch = ImageDataBunch.from_name_func('datasets', train_names, label_func=get_labels, valid_pct=0,
-                                               size=(256, 128), ds_tfms=ds_tfms, bs=cfg.SOLVER.IMS_PER_BATCH,
+                                               size=cfg.INPUT.SIZE_TRAIN, ds_tfms=ds_tfms, bs=cfg.SOLVER.IMS_PER_BATCH,
                                                val_bs=cfg.TEST.IMS_PER_BATCH)
 
     if 'triplet' in cfg.DATALOADER.SAMPLER:

@@ -50,10 +50,11 @@ def main():
     cudnn.benchmark = True
 
     data_bunch, test_labels, num_query = get_data_bunch(cfg)
-    model = build_model(cfg, data_bunch.c)
-    state_dict = torch.load(cfg.TEST.WEIGHT)
-    model.load_state_dict(state_dict['model'])
-    model.cuda()
+    # model = build_model(cfg, data_bunch.c)
+    # state_dict = torch.load(cfg.TEST.WEIGHT)
+    # model.load_state_dict(state_dict['model'])
+    # model.cuda()
+    model = torch.jit.load("/export/home/lxy/reid_baseline/pcb_model_v0.2.pt")
 
     inference(cfg, model, data_bunch, test_labels, num_query)
 

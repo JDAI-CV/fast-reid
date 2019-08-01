@@ -34,7 +34,11 @@ class RandomIdentitySampler(Sampler):
         self.index_dic = defaultdict(list)
         for index, fname in enumerate(self.data_source):
             prefix = fname.split('/')[1]
-            pid, _ = pat.search(fname).groups()
+            try:
+                pid, _ = pat.search(fname).groups()
+            except:
+                prefix = fname.split('/')[4]
+                pid = '_'.join(fname.split('/')[-1].split('_')[:2])
             pid = prefix + '_' + pid
             self.index_dic[pid].append(index)
         self.pids = list(self.index_dic.keys())
