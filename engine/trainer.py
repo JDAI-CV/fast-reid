@@ -11,6 +11,7 @@ from data.datasets.eval_reid import evaluate
 from fastai.vision import *
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
+from fastai.basic_train import Learner
 
 
 @dataclass

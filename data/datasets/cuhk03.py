@@ -32,7 +32,7 @@ class CUHK03(BaseImageDataset):
     dataset_dir = 'cuhk03'
 
     def __init__(self, root='datasets', split_id=0, cuhk03_labeled=False,
-                 cuhk03_classic_split=False, verbose=True,
+                 cuhk03_classic_split=False, verbose=False,
                  **kwargs):
         super(CUHK03, self).__init__()
         self.dataset_dir = osp.join(root, self.dataset_dir)

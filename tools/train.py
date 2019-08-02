@@ -27,7 +27,7 @@ def train(cfg):
 
     # prepare model
     model = build_model(cfg, data_bunch.c)
-    # state_dict = torch.load("logs/beijing/market_duke_softmax_triplet_256_128_bs512/models/model_149.pth")
+    # state_dict = torch.load("logs/beijing/market_duke_softmax_triplet_256_128_bs256/models/model_149.pth")
     # model.load_params_wo_fc(state_dict['model'])
 
     opt_func = partial(torch.optim.Adam)
