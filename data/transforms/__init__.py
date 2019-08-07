@@ -4,4 +4,5 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from .transforms import *
+
+from .build import build_transforms

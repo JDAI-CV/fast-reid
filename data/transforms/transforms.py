@@ -6,9 +6,11 @@
 
 
 import numpy as np
+
 from fastai.vision import *
 from fastai.vision.image import *
 
+__all__ = ['RandomErasing']
 
 def _random_erasing(x, probability=0.5, sl=0.02, sh=0.4, r1=0.3,
                     mean=(np.array(imagenet_stats[1]) + 1) * imagenet_stats[0]):

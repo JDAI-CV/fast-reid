@@ -52,7 +52,7 @@ def main():
     data_bunch, test_labels, num_query = get_data_bunch(cfg)
     model = build_model(cfg, data_bunch.c)
     state_dict = torch.load(cfg.TEST.WEIGHT)
-    model.load_state_dict(state_dict['model'])
+    model.load_params_wo_fc(state_dict['model'])
     model.cuda()
     # model = torch.jit.load("/export/home/lxy/reid_baseline/pcb_model_v0.2.pt")
 

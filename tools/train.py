@@ -5,20 +5,22 @@
 """
 
 import argparse
-import sys
 import os
+import sys
 from bisect import bisect_right
 
 from torch.backends import cudnn
 
-sys.path.append('.')
+import sys
+sys.path.append(".")
 from config import cfg
 from data import get_data_bunch
 from engine.trainer import do_train
+from fastai.vision import *
 from layers import make_loss
 from modeling import build_model
+from solver import *
 from utils.logger import setup_logger
-from fastai.vision import *
 
 
 def train(cfg):
@@ -27,8 +29,6 @@ def train(cfg):
 
     # prepare model
     model = build_model(cfg, data_bunch.c)
-    # state_dict = torch.load("logs/beijing/market_duke_softmax_triplet_256_128_bs256/models/model_149.pth")
-    # model.load_params_wo_fc(state_dict['model'])
 
     opt_func = partial(torch.optim.Adam)
 
@@ -42,7 +42,8 @@ def train(cfg):
             warmup_factor = cfg.SOLVER.WARMUP_FACTOR * (1 - alpha) + alpha
         return start * warmup_factor * gamma ** bisect_right(milestones, pct)
 
-    lr = cfg.SOLVER.BASE_LR * (cfg.SOLVER.IMS_PER_BATCH // 64)
+    # lr = cfg.SOLVER.BASE_LR * (cfg.SOLVER.IMS_PER_BATCH // 64)
+    lr = cfg.SOLVER.BASE_LR
     lr_sched = Scheduler(lr, cfg.SOLVER.MAX_EPOCHS, warmup_multistep)
 
     loss_func = make_loss(cfg)

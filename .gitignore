@@ -2,7 +2,6 @@
 __pycache__
 .DS_Store
 .vscode
-datasets
 csrc/eval_cylib/build/
 logs/
-*.ipynb
+.ipynb_checkpoints

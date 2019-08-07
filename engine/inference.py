@@ -6,6 +6,7 @@
 import logging
 
 import torch
+import numpy as np
 import torch.nn.functional as F
 from data.datasets.eval_reid import evaluate
 from data.datasets.eval_threshold import eval_roc
@@ -62,7 +63,7 @@ def inference(
 
     # Compute ROC and AUC
     logger.info("Compute ROC Curve...")
-    fpr, tpr, fps, tps, p, n, thresholds = eval_roc(distmat, q_pids, g_pids, q_camids, g_camids)
+    fpr, tpr, fps, tps, p, n, thresholds = eval_roc(distmat, q_pids, g_pids, q_camids, g_camids, 0.1, 0.5)
     logger.info("positive samples: {}, negative samples: {}".format(p, n))
     for i, thresh in enumerate(thresholds):
         logger.info("threshold: {:.2f}, FP: {:.0f}({:.3f}), TP: {:.0f}({:.3f})".

@@ -9,19 +9,14 @@ import os
 import re
 
 from fastai.vision import *
-from .transforms import RandomErasing
-from .samplers import RandomIdentitySampler
+
 from .datasets import CUHK03
+from .samplers import RandomIdentitySampler
+from .transforms import build_transforms
 
 
 def get_data_bunch(cfg):
-    ds_tfms = (
-        [flip_lr(p=0.5),
-         *rand_pad(padding=cfg.INPUT.PADDING, size=cfg.INPUT.SIZE_TRAIN, mode='zeros'),
-         RandomErasing()
-         ],
-        None
-    )
+    ds_tfms = build_transforms(cfg)
 
     def _process_dir(dir_path, recursive=False):
         img_paths = []
@@ -67,6 +62,8 @@ def get_data_bunch(cfg):
 
     query_names = _process_dir(bj_query_path)
     gallery_names = _process_dir(bj_gallery_path, True)
+    # query_names = _process_dir(market_query_path)
+    # gallery_names = _process_dir(marker_gallery_path)
 
     test_fnames = []
     test_labels = []
@@ -97,3 +94,4 @@ def get_data_bunch(cfg):
     data_bunch.normalize(imagenet_stats)
 
     return data_bunch, test_labels, len(query_names)
+
