@@ -1,4 +1,5 @@
 MODEL:
+  BACKBONE: "resnet50"
   PRETRAIN_PATH: '/export/home/lxy/.cache/torch/checkpoints/resnet50-19c8e357.pth'
 
 
@@ -10,6 +11,7 @@ INPUT:
 
 DATASETS:
   NAMES: ("market1501",)
+  TEST_NAMES: "market1501"
 
 DATALOADER:
   SAMPLER: 'softmax_triplet'

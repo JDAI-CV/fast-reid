@@ -8,9 +8,6 @@ from fastai.vision.transform import *
 
 
 def build_transforms(cfg):
-    # do_flip:bool=True, max_rotate:float=10., max_zoom:float=1.1,
-    #                max_lighting:float=0.2, max_warp:float=0.2, p_affine:float=0.75,
-    #                p_lighting:float=0.75, xtra_tfms:Optional[Collection[Transform]]=None):
     "Utility func to easily create a list of flip, rotate, `zoom`, warp, lighting transforms."
     res = []
     if cfg.INPUT.DO_FLIP:   res.append(flip_lr(p=cfg.INPUT.FLIP_PROB))

@@ -18,7 +18,7 @@ _C = CN()
 
 _C.MODEL = CN()
 _C.MODEL.DEVICE = "cuda"
-_C.MODEL.NAME = 'resnet50'
+_C.MODEL.BACKBONE = 'resnet50'
 _C.MODEL.LAST_STRIDE = 1
 _C.MODEL.PRETRAIN_PATH = ''
 # -----------------------------------------------------------------------------
@@ -41,15 +41,20 @@ _C.INPUT.DO_PAD = True
 _C.INPUT.PADDING_MODE = 'zeros'
 _C.INPUT.PADDING = 10
 # Random lightning and contrast change 
-_C.INPUT.DO_LIGHTING = True
+_C.INPUT.DO_LIGHTING = False
 _C.INPUT.MAX_LIGHTING = 0.2
 _C.INPUT.P_LIGHTING=0.75
+# Mixup
+_C.INPUT.MIXUP = False
+_C.INPUT.MIXUP_ALPHA = 0.4
 # -----------------------------------------------------------------------------
 # Dataset
 # -----------------------------------------------------------------------------
 _C.DATASETS = CN()
-# List of the dataset names for training, as present in paths_catalog.py
+# List of the dataset names for training
 _C.DATASETS.NAMES = ("cuhk03",)
+# List of the dataset names for testing
+_C.DATASETS.TEST_NAMES = "market1501"
 
 # -----------------------------------------------------------------------------
 # DataLoader

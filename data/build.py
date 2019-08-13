@@ -60,10 +60,14 @@ def get_data_bunch(cfg):
         
     train_names = [i[0] for i in train_img_names]
 
-    query_names = _process_dir(bj_query_path)
-    gallery_names = _process_dir(bj_gallery_path, True)
-    # query_names = _process_dir(market_query_path)
-    # gallery_names = _process_dir(marker_gallery_path)
+    if cfg.DATASETS.TEST_NAMES == "market1501":
+        query_names = _process_dir(market_query_path)
+        gallery_names = _process_dir(marker_gallery_path)
+    elif cfg.DATASETS.TEST_NAMES == "bj":
+        query_names = _process_dir(bj_query_path)
+        gallery_names = _process_dir(bj_gallery_path, True)
+    else:
+        print(f"not support {cfg.DATASETS.TEST_NAMES} test set")
 
     test_fnames = []
     test_labels = []

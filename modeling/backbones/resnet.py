@@ -10,6 +10,8 @@ import torch
 from torch import nn
 
 
+__all__ = ['resnet50']
+
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -107,3 +109,8 @@ class ResNet(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+
+
+def resnet50(last_stride, **kwargs):
+    model = ResNet(last_stride, block=Bottleneck, layers=[3,4,6,3])
+    return model

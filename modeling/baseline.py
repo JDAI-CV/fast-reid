@@ -6,7 +6,7 @@
 
 from torch import nn
 
-from .backbones.resnet import ResNet
+from .backbones import *
 
 
 def weights_init_kaiming(m):
@@ -35,13 +35,20 @@ def weights_init_classifier(m):
 class Baseline(nn.Module):
     in_planes = 2048
 
-    def __init__(self, num_classes, last_stride, model_path=None):
+    def __init__(self, backbone, num_classes, last_stride, model_path=None):
         super(Baseline, self).__init__()
-        self.base = ResNet(last_stride)
+        if backbone == 'resnet50':
+            self.base = resnet50(last_stride)
+        elif backbone == 'resnet50_ibn':
+            self.base = resnet50_ibn_a(last_stride)
+        else:
+            print(f'not support {backbone} backbone')
+
         try:
             self.base.load_param(model_path)
         except:
-            print("Not load imagenet pretrained model!")
+            print("not load imagenet pretrained model!")
+
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.num_classes = num_classes
 
