@@ -18,14 +18,9 @@ from .transforms import build_transforms
 def get_data_bunch(cfg):
     ds_tfms = build_transforms(cfg)
 
-    def _process_dir(dir_path, recursive=False):
+    def _process_dir(dir_path):
         img_paths = []
-        if recursive:
-            id_dirs = os.listdir(dir_path)
-            for d in id_dirs:
-                img_paths.extend(glob.glob(os.path.join(dir_path, d, '*.jpg')))
-        else:
-            img_paths = glob.glob(os.path.join(dir_path, '*.jpg'))
+        img_paths = glob.glob(os.path.join(dir_path, '*.jpg'))
         pattern = re.compile(r'([-\d]+)_c(\d*)')
         v_paths = []
         for img_path in img_paths:
@@ -38,12 +33,9 @@ def get_data_bunch(cfg):
     market_train_path = 'datasets/Market-1501-v15.09.15/bounding_box_train'
     duke_train_path = 'datasets/DukeMTMC-reID/bounding_box_train'
     cuhk03_train_path = 'datasets/cuhk03/'
-    bjStation_train_path = 'datasets/beijingStation/20190720/train'
 
     market_query_path = 'datasets/Market-1501-v15.09.15/query'
     marker_gallery_path = 'datasets/Market-1501-v15.09.15/bounding_box_test'
-    bj_query_path = 'datasets/beijingStation/query'
-    bj_gallery_path = 'datasets/beijingStation/test'
 
     train_img_names = list()
     for d in cfg.DATASETS.NAMES:
@@ -51,21 +43,16 @@ def get_data_bunch(cfg):
             train_img_names.extend(_process_dir(market_train_path))
         elif d == 'duke':
             train_img_names.extend(_process_dir(duke_train_path))
-        elif d == 'beijing':
-            train_img_names.extend(_process_dir(bjStation_train_path, True))
         elif d == 'cuhk03':
             train_img_names.extend(CUHK03().train)
         else:
-            raise NameError("{} is not available".format(d))
+            raise NameError(f'{d} is not available')
         
     train_names = [i[0] for i in train_img_names]
 
     if cfg.DATASETS.TEST_NAMES == "market1501":
         query_names = _process_dir(market_query_path)
         gallery_names = _process_dir(marker_gallery_path)
-    elif cfg.DATASETS.TEST_NAMES == "bj":
-        query_names = _process_dir(bj_query_path)
-        gallery_names = _process_dir(bj_gallery_path, True)
     else:
         print(f"not support {cfg.DATASETS.TEST_NAMES} test set")
 
@@ -98,4 +85,3 @@ def get_data_bunch(cfg):
     data_bunch.normalize(imagenet_stats)
 
     return data_bunch, test_labels, len(query_names)
-

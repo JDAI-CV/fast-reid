@@ -44,9 +44,7 @@ _C.INPUT.PADDING = 10
 _C.INPUT.DO_LIGHTING = False
 _C.INPUT.MAX_LIGHTING = 0.2
 _C.INPUT.P_LIGHTING=0.75
-# Mixup
-_C.INPUT.MIXUP = False
-_C.INPUT.MIXUP_ALPHA = 0.4
+
 # -----------------------------------------------------------------------------
 # Dataset
 # -----------------------------------------------------------------------------

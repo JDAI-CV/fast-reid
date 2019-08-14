@@ -5,7 +5,6 @@
 """
 
 
-
 import argparse
 import json
 import os
@@ -27,19 +26,19 @@ class Reid(object):
 
         # self.cfg = self.prepare('config/softmax_triplet.yml')
         # self.num_classes = 413
-        self.model = Baseline(10, 1)
-        state_dict = torch.load('logs/beijing/market+duke+bj_bs64/models/model_149.pth')
-        self.model.load_params_wo_fc(state_dict['model'])
-        self.model.cuda()
-        self.model.eval()
-        # self.model = torch.jit.load("reid_model_v0.1.pt")
+        # self.model = Baseline('resnet50_ibn', 100, 1)
+        # state_dict = torch.load('/export/home/lxy/reid_baseline/logs/2019.8.12/bj/ibn_lighting/models/model_119.pth')
+        # self.model.load_params_wo_fc(state_dict['model'])
+        # self.model.cuda()
+        # self.model.eval()
+        self.model = torch.jit.load("reid_model.pt")
         # self.model.eval()
         # self.model.cuda()
         
-        # example = torch.rand(1, 3, 384, 128)
+        # example = torch.rand(1, 3, 256, 128)
         # example = example.cuda()
         # traced_script_module = torch.jit.trace(self.model, example)
-        # traced_script_module.save("reid_model_v0.1.pt")
+        # traced_script_module.save("reid_model.pt")
 
     def demo(self, img_path):
         img = cv2.imread(img_path)

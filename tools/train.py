@@ -6,9 +6,7 @@
 
 import argparse
 import os
-import sys
 from bisect import bisect_right
-
 from torch.backends import cudnn
 
 import sys
@@ -21,6 +19,7 @@ from layers import make_loss
 from modeling import build_model
 from solver import *
 from utils.logger import setup_logger
+
 
 
 def train(cfg):
@@ -56,7 +55,7 @@ def train(cfg):
         opt_func,
         lr_sched,
         loss_func,
-        num_query
+        num_query,
     )
 
 

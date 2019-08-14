@@ -5,3 +5,4 @@ __pycache__
 csrc/eval_cylib/build/
 logs/
 .ipynb_checkpoints
+tests/

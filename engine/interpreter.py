@@ -4,14 +4,9 @@
 @contact: sherlockliao01@gmail.com
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
-from fastai.train import *
-from fastai.torch_core import *
-from fastai.basic_data import *
-from fastai.basic_train import Learner
-from fastai.vision import *
 
 
 class ReidInterpretation():
@@ -60,18 +55,18 @@ class ReidInterpretation():
         remove = (self.g_pids[order] == q_pid) & (self.g_camids[order] == q_camid)
         keep = np.invert(remove)
         cmc = self.matches[q_index][keep]
-        matched_idx = order[keep]
-        return cmc, matched_idx
+        sort_idx = order[keep]
+        return cmc, sort_idx
         
     def plot_rank_result(self, q_idx, top=5, title="Rank result"):
-        cmc,matched_idx = self.get_matched_result(q_idx)
+        cmc, sort_idx = self.get_matched_result(q_idx)
 
         fig,axes = plt.subplots(1, top+1, figsize=(15, 5))
         fig.suptitle('query  similarity/true(false)')
         query_im,cl=self.test_dl.dataset[q_idx]
         query_im.show(ax=axes.flat[0], title='query')
         for i in range(top):
-            g_idx = self.num_q + matched_idx[i] 
+            g_idx = self.num_q + sort_idx[i] 
             im,cl = self.test_dl.dataset[g_idx]
             if cmc[i] == 1:
                 label='true'
@@ -81,7 +76,7 @@ class ReidInterpretation():
                 label='false'
                 axes.flat[i+1].add_patch(plt.Rectangle(xy=(0, 0), width=im.size[1]-1, height=im.size[0]-1, 
                                          edgecolor=(0, 0, 1), fill=False, linewidth=5))
-            im.show(ax=axes.flat[i+1], title=f'{self.distmat[q_idx, matched_idx[i]]:.3f} / {label}')
+            im.show(ax=axes.flat[i+1], title=f'{self.distmat[q_idx, sort_idx[i]]:.3f} / {label}')
         return fig
 
     def get_top_error(self):
@@ -90,9 +85,9 @@ class ReidInterpretation():
         storeCorrect = []
         storeWrong = []
         for q_index in range(self.num_q):
-            cmc,matched_idx = self.get_matched_result(q_index)
-            single_item = similarity_score(query=q_index, gallery=[self.num_q + matched_idx[i] for i in range(5)], 
-                                           sim=[self.distmat[q_index, matched_idx[i]] for i in range(5)],
+            cmc, sort_idx = self.get_matched_result(q_index)
+            single_item = similarity_score(query=q_index, gallery=[self.num_q + sort_idx[i] for i in range(5)], 
+                                           sim=[self.distmat[q_index, sort_idx[i]] for i in range(5)],
                                            cmc=cmc[:5])
             if cmc[0] == 1:
                 storeCorrect.append(single_item)
@@ -125,11 +120,48 @@ class ReidInterpretation():
                 if cmc[j] == 1:
                     label='true'
                     axes[i,j+1].add_patch(plt.Rectangle(xy=(0, 0), width=im.size[1]-1, height=im.size[0]-1, 
-                                         edgecolor=(1, 0, 0), fill=False, linewidth=5))
+                                          edgecolor=(1, 0, 0), fill=False, linewidth=5))
                 else:
                     label='false'
                     axes[i, j+1].add_patch(plt.Rectangle(xy=(0, 0), width=im.size[1]-1, height=im.size[0]-1, 
-                                            edgecolor=(0, 0, 1), fill=False, linewidth=5))
+                                           edgecolor=(0, 0, 1), fill=False, linewidth=5))
                 im.show(ax=axes[i,j+1], title=f'{sim[j]:.3f} / {label}')
             
+        return fig
+
+    def plot_positve_negative_dist(self):
+        pos_sim, neg_sim = [], []
+        for i, q in enumerate(self.q_pids):
+            cmc, sort_idx = self.get_matched_result(i)  # remove same id in same camera
+            for j in range(len(cmc)):
+                if cmc[j] == 1:
+                    pos_sim.append(self.distmat[i,sort_idx[j]])
+                else:
+                    neg_sim.append(self.distmat[i,sort_idx[j]])
+        fig = plt.figure(figsize=(10,5))
+        plt.hist(pos_sim, bins=80, alpha=0.7, density=True, color='red', label='positive')
+        plt.hist(neg_sim, bins=80, alpha=0.5, density=True, color='blue', label='negative')
+        plt.xticks(np.arange(-0.3, 0.8, 0.1))
+        plt.title('posivie and negative pair distribution')
+        return pos_sim, neg_sim
+
+    def plot_same_cam_diff_cam_dist(self):
+        same_cam, diff_cam = [], []
+        for i, q in enumerate(self.q_pids):
+            q_camid = self.q_camids[i]
+
+            order = self.indices[i]
+            same = (self.g_pids[order] == q) & (self.g_camids[order] == q_camid)
+            diff = (self.g_pids[order] == q) & (self.g_camids[order] != q_camid)
+            sameCam_idx = order[same]
+            diffCam_idx = order[diff]
+
+            same_cam.extend(self.distmat[i, sameCam_idx])
+            diff_cam.extend(self.distmat[i, diffCam_idx])
+
+        fig = plt.figure(figsize=(10,5))
+        plt.hist(same_cam, bins=80, alpha=0.7, density=True, color='red', label='same camera')
+        plt.hist(diff_cam, bins=80, alpha=0.5, density=True, color='blue', label='diff camera')
+        plt.xticks(np.arange(0.1, 1.0, 0.1))
+        plt.title('posivie and negative pair distribution')
         return fig
