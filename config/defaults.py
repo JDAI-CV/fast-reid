@@ -18,7 +18,7 @@ _C = CN()
 
 _C.MODEL = CN()
 _C.MODEL.DEVICE = "cuda"
-_C.MODEL.NAME = 'resnet50'
+_C.MODEL.BACKBONE = 'resnet50'
 _C.MODEL.LAST_STRIDE = 1
 _C.MODEL.PRETRAIN_PATH = ''
 # -----------------------------------------------------------------------------
@@ -26,24 +26,33 @@ _C.MODEL.PRETRAIN_PATH = ''
 # -----------------------------------------------------------------------------
 _C.INPUT = CN()
 # Size of the image during training
-_C.INPUT.SIZE_TRAIN = [384, 128]
+_C.INPUT.SIZE_TRAIN = [256, 128]
 # Size of the image during test
-_C.INPUT.SIZE_TEST = [384, 128]
+_C.INPUT.SIZE_TEST = [256, 128]
 # Random probability for image horizontal flip
-_C.INPUT.PROB = 0.5
+_C.INPUT.DO_FLIP = True
+_C.INPUT.FLIP_PROB = 0.5
 # Values to be used for image normalization
 _C.INPUT.PIXEL_MEAN = [0.485, 0.456, 0.406]
 # Values to be used for image normalization
 _C.INPUT.PIXEL_STD = [0.229, 0.224, 0.225]
 # Value of padding size
+_C.INPUT.DO_PAD = True
+_C.INPUT.PADDING_MODE = 'zeros'
 _C.INPUT.PADDING = 10
+# Random lightning and contrast change 
+_C.INPUT.DO_LIGHTING = False
+_C.INPUT.MAX_LIGHTING = 0.2
+_C.INPUT.P_LIGHTING=0.75
 
 # -----------------------------------------------------------------------------
 # Dataset
 # -----------------------------------------------------------------------------
 _C.DATASETS = CN()
-# List of the dataset names for training, as present in paths_catalog.py
-_C.DATASETS.NAMES = ('market1501')
+# List of the dataset names for training
+_C.DATASETS.NAMES = ("cuhk03",)
+# List of the dataset names for testing
+_C.DATASETS.TEST_NAMES = "market1501"
 
 # -----------------------------------------------------------------------------
 # DataLoader

@@ -1,3 +1,8 @@
 .idea
 __pycache__
 .DS_Store
+.vscode
+csrc/eval_cylib/build/
+logs/
+.ipynb_checkpoints
+tests/

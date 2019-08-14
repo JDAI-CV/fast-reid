@@ -1,150 +1,119 @@
 # encoding: utf-8
 """
-@author:  sherlock
+@author:  l1aoxingyu
 @contact: sherlockliao01@gmail.com
 """
 
 import logging
+import os
 
-import torch
-from ignite.engine import Engine, Events
-from ignite.handlers import ModelCheckpoint, Timer
-from ignite.metrics import RunningAverage
+import matplotlib.pyplot as plt
+import torch.nn.functional as F
 
-from utils.reid_metric import R1_mAP
-
-
-def create_supervised_trainer(model, optimizer, loss_fn,
-                              device=None):
-    """
-    Factory function for creating a trainer for supervised models
-
-    Args:
-        model (`torch.nn.Module`): the model to train
-        optimizer (`torch.optim.Optimizer`): the optimizer to use
-        loss_fn (torch.nn loss function): the loss function to use
-        device (str, optional): device type specification (default: None).
-            Applies to both model and batches.
-
-    Returns:
-        Engine: a trainer engine with supervised update function
-    """
-    if device:
-        model.to(device)
-
-    def _update(engine, batch):
-        model.train()
-        optimizer.zero_grad()
-        img, target = batch
-        img = img.cuda()
-        target = target.cuda()
-        score, feat = model(img)
-        loss = loss_fn(score, feat, target)
-        loss.backward()
-        optimizer.step()
-        # compute acc
-        acc = (score.max(1)[1] == target).float().mean()
-        return loss.item(), acc.item()
-
-    return Engine(_update)
+from data.datasets.eval_reid import evaluate
+from fastai.vision import *
 
 
-def create_supervised_evaluator(model, metrics,
-                                device=None):
-    """
-    Factory function for creating an evaluator for supervised models
+@dataclass
+class TrackValue(Callback):
+    logger: logging.Logger
+    total_iter: int
 
-    Args:
-        model (`torch.nn.Module`): the model to train
-        metrics (dict of str - :class:`ignite.metrics.Metric`): a map of metric names to Metrics
-        device (str, optional): device type specification (default: None).
-            Applies to both model and batches.
-    Returns:
-        Engine: an evaluator engine with supervised inference function
-    """
-    if device:
-        model.to(device)
+    def on_epoch_end(self, epoch, smooth_loss, **kwargs):
+        self.logger.info('Epoch {}[Iter {}], loss: {:.4f}'.format(epoch, self.total_iter, smooth_loss.item()))
+            
 
-    def _inference(engine, batch):
-        model.eval()
-        with torch.no_grad():
-            data, pids, camids = batch
-            data = data.cuda()
-            feat = model(data)
-            return feat, pids, camids
+@dataclass
+class LRScheduler(Callback):
+    learn: Learner
+    lr_sched: Scheduler
 
-    engine = Engine(_inference)
+    def on_train_begin(self, **kwargs:Any):
+        self.opt = self.learn.opt
 
-    for name, metric in metrics.items():
-        metric.attach(engine, name)
+    def on_epoch_begin(self, **kwargs:Any):
+        self.opt.lr = self.lr_sched.step()
 
-    return engine
+
+class TestModel(LearnerCallback):
+    def __init__(self, learn: Learner, test_labels: Iterator, eval_period: int, num_query: int, logger: logging.Logger, norm=True):
+        super().__init__(learn)
+        self._test_dl = learn.data.test_dl
+        self._eval_period = eval_period
+        self._norm = norm
+        self._logger = logger
+        self._num_query = num_query
+        pids = []
+        camids = []
+        for i in test_labels:
+            pids.append(i[0])
+            camids.append(i[1])
+        self.q_pids = np.asarray(pids[:num_query])
+        self.q_camids = np.asarray(camids[:num_query])
+        self.g_pids = np.asarray(pids[num_query:])
+        self.g_camids = np.asarray(camids[num_query:])
+
+    def on_epoch_end(self, epoch, **kwargs: Any):
+        # test model performance
+        if (epoch + 1) % self._eval_period == 0:
+            self._logger.info('Testing ...')
+            feats, pids, camids = [], [], []
+            self.learn.model.eval()
+            with torch.no_grad():
+                for imgs, _ in self._test_dl:
+                    feat = self.learn.model(imgs)
+                    feats.append(feat)
+            feats = torch.cat(feats, dim=0)
+            if self._norm:
+                feats = F.normalize(feats, p=2, dim=1)
+            # query
+            qf = feats[:self._num_query]
+            # gallery
+            gf = feats[self._num_query:]
+            m, n = qf.shape[0], gf.shape[0]
+            distmat = torch.pow(qf, 2).sum(dim=1, keepdim=True).expand(m, n) + \
+                      torch.pow(gf, 2).sum(dim=1, keepdim=True).expand(n, m).t()
+            distmat.addmm_(1, -2, qf, gf.t())
+            distmat = to_np(distmat)
+            cmc, mAP = evaluate(distmat, self.q_pids, self.g_pids, self.q_camids, self.g_camids)
+            self._logger.info("Test Results - Epoch: {}".format(epoch + 1))
+            self._logger.info("mAP: {:.1%}".format(mAP))
+            for r in [1, 5, 10]:
+                self._logger.info("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
+            self.learn.save("model_{}".format(epoch))
 
 
 def do_train(
         cfg,
         model,
-        train_loader,
-        val_loader,
-        optimizer,
-        scheduler,
-        loss_fn,
-        num_query
+        data_bunch,
+        test_labels,
+        opt_func,
+        lr_sched,
+        loss_func,
+        num_query,
 ):
-    log_period = cfg.SOLVER.LOG_PERIOD
-    checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
     eval_period = cfg.SOLVER.EVAL_PERIOD
-    output_dir = cfg.OUTPUT_DIR
-    device = cfg.MODEL.DEVICE
+    output_dir = Path(cfg.OUTPUT_DIR)
     epochs = cfg.SOLVER.MAX_EPOCHS
+    total_iter = len(data_bunch.train_dl)
 
     logger = logging.getLogger("reid_baseline.train")
-    logger.info("Start training")
-    trainer = create_supervised_trainer(model, optimizer, loss_fn, device=device)
-    evaluator = create_supervised_evaluator(model, metrics={'r1_mAP': R1_mAP(num_query)}, device=device)
-    checkpointer = ModelCheckpoint(output_dir, cfg.MODEL.NAME, checkpoint_period, n_saved=10, require_empty=False)
-    timer = Timer(average=True)
+    logger.info("Start Training")
 
-    trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'model': model.state_dict(),
-                                                                     'optimizer': optimizer.state_dict()})
-    timer.attach(trainer, start=Events.EPOCH_STARTED, resume=Events.ITERATION_STARTED,
-                 pause=Events.ITERATION_COMPLETED, step=Events.ITERATION_COMPLETED)
+    cb_fns = [
+        partial(LRScheduler, lr_sched=lr_sched),
+        partial(TestModel, test_labels=test_labels, eval_period=eval_period, num_query=num_query, logger=logger),
+    ]
 
-    # average metric to attach on trainer
-    RunningAverage(output_transform=lambda x: x[0]).attach(trainer, 'avg_loss')
-    RunningAverage(output_transform=lambda x: x[1]).attach(trainer, 'avg_acc')
+    learn = Learner(
+        data_bunch,
+        model,
+        path=output_dir,
+        opt_func=opt_func,
+        loss_func=loss_func,
+        true_wd=False,
+        callback_fns=cb_fns,
+        callbacks=[TrackValue(logger, total_iter)])
 
-    @trainer.on(Events.EPOCH_STARTED)
-    def adjust_learning_rate(engine):
-        scheduler.step()
-
-    @trainer.on(Events.ITERATION_COMPLETED)
-    def log_training_loss(engine):
-        iter = (engine.state.iteration - 1) % len(train_loader) + 1
-
-        if iter % log_period == 0:
-            logger.info("Epoch[{}] Iteration[{}/{}] Loss: {:.3f}, Acc: {:.3f}, Base Lr: {:.2e}"
-                        .format(engine.state.epoch, iter, len(train_loader),
-                                engine.state.metrics['avg_loss'], engine.state.metrics['avg_acc'],
-                                scheduler.get_lr()[0]))
-
-    # adding handlers using `trainer.on` decorator API
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def print_times(engine):
-        logger.info('Epoch {} done. Time per batch: {:.3f}[s] Speed: {:.1f}[samples/s]'
-                    .format(engine.state.epoch, timer.value() * timer.step_count,
-                            train_loader.batch_size / timer.value()))
-        logger.info('-' * 10)
-        timer.reset()
-
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def log_validation_results(engine):
-        if engine.state.epoch % eval_period == 0:
-            evaluator.run(val_loader)
-            cmc, mAP = evaluator.state.metrics['r1_mAP']
-            logger.info("Validation Results - Epoch: {}".format(engine.state.epoch))
-            logger.info("mAP: {:.1%}".format(mAP))
-            for r in [1, 5, 10]:
-                logger.info("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
-
-    trainer.run(train_loader, max_epochs=epochs)
+    learn.fit(epochs, lr=cfg.SOLVER.BASE_LR, wd=cfg.SOLVER.WEIGHT_DECAY)
