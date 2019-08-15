@@ -3,10 +3,10 @@ gpu=0
 CUDA_VISIBLE_DEVICES=$gpu python tools/train.py -cfg='configs/softmax_triplet.yml' \
 DATASETS.NAMES '("market1501",)'  \
 DATASETS.TEST_NAMES 'market1501' \
-MODEL.BACKBONE 'resnet50_ibn' \
-MODEL.PRETRAIN_PATH '/export/home/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar' \
-INPUT.DO_LIGHTING 'True' \
-OUTPUT_DIR 'logs/2019.8.14/market/lighting_ibn_7_1'
+MODEL.BACKBONE 'resnet50' \
+MODEL.PRETRAIN_PATH '/home/user01/.cache/torch/checkpoints/resnet50-19c8e357.pth' \
+INPUT.DO_LIGHTING 'False' \
+OUTPUT_DIR 'logs/2019.8.14/market/baseline'
 
 # CUDA_VISIBLE_DEVICES=$gpu python tools/train.py -cfg='configs/softmax_triplet.yml' \
 # DATASETS.NAMES '("market1501",)'  \

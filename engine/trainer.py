@@ -20,7 +20,7 @@ class TrackValue(Callback):
     total_iter: int
 
     def on_epoch_end(self, epoch, smooth_loss, **kwargs):
-        self.logger.info('Epoch {}[Iter {}], loss: {:.4f}'.format(epoch, self.total_iter, smooth_loss.item()))
+        self.logger.info(f'Epoch {epoch}[Iter {self.total_iter}], loss: {smooth_loss.item():.4f}')
             
 
 @dataclass
@@ -76,10 +76,10 @@ class TestModel(LearnerCallback):
             distmat.addmm_(1, -2, qf, gf.t())
             distmat = to_np(distmat)
             cmc, mAP = evaluate(distmat, self.q_pids, self.g_pids, self.q_camids, self.g_camids)
-            self._logger.info("Test Results - Epoch: {}".format(epoch + 1))
-            self._logger.info("mAP: {:.1%}".format(mAP))
+            self._logger.info(f"Test Results - Epoch: {epoch+1}")
+            self._logger.info(f"mAP: {mAP:.1%}")
             for r in [1, 5, 10]:
-                self._logger.info("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
+                self._logger.info(f"CMC curve, Rank-{r:<3}:{cmc[r-1]:.1%}")
             self.learn.save("model_{}".format(epoch))
 
 

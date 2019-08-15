@@ -1,12 +1,21 @@
 # ReID_baseline
-**The results in CUHK03 is wrong becuase I use the same evaluation protocol with market1501 and duke. I will fix this later. You can use the right evaluation protocol to get accurate result.**
 
-Baseline model (with bottleneck) for person ReID (using softmax and triplet loss).
+A strong baseline (state-of-the-art) for person re-identification.
 
 We support
 - [x] easy dataset preparation
 - [x] end-to-end training and evaluation
+- [ ] multi-GPU distributed training
+- [ ] fast training speed with fp16
+- [ ] support both image and video reid
+- [x] multi-dataset training
+- [x] cross-dataset evaluation
 - [x] high modular management
+- [x] state-of-the-art performance with simple model
+- [ ] high efficient backbone
+- [ ] advanced training techniques
+- [ ] various loss functions
+- [ ] visualization tools
 
 ## Get Started
 The designed architecture follows this guide [PyTorch-Project-Template](https://github.com/L1aoXingyu/PyTorch-Project-Template), you can check each folder's purpose by yourself.

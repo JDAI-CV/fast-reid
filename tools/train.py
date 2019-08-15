@@ -17,7 +17,6 @@ from engine.trainer import do_train
 from fastai.vision import *
 from layers import make_loss
 from modeling import build_model
-from solver import *
 from utils.logger import setup_logger
 
 
@@ -29,7 +28,7 @@ def train(cfg):
     # prepare model
     model = build_model(cfg, data_bunch.c)
 
-    opt_func = partial(torch.optim.Adam)
+    opt_fns = partial(getattr(torch.optim, cfg.SOLVER.OPTIMIZER_NAME))
 
     def warmup_multistep(start: float, end: float, pct: float):
         warmup_factor = 1
@@ -41,9 +40,7 @@ def train(cfg):
             warmup_factor = cfg.SOLVER.WARMUP_FACTOR * (1 - alpha) + alpha
         return start * warmup_factor * gamma ** bisect_right(milestones, pct)
 
-    # lr = cfg.SOLVER.BASE_LR * (cfg.SOLVER.IMS_PER_BATCH // 64)
-    lr = cfg.SOLVER.BASE_LR
-    lr_sched = Scheduler(lr, cfg.SOLVER.MAX_EPOCHS, warmup_multistep)
+    lr_sched = Scheduler(cfg.SOLVER.BASE_LR, cfg.SOLVER.MAX_EPOCHS, warmup_multistep)
 
     loss_func = make_loss(cfg)
 
@@ -52,7 +49,7 @@ def train(cfg):
         model,
         data_bunch,
         test_labels,
-        opt_func,
+        opt_fns,
         lr_sched,
         loss_func,
         num_query,
@@ -87,7 +84,6 @@ def main():
 
     cudnn.benchmark = True
     train(cfg)
-
 
 
 if __name__ == '__main__':
