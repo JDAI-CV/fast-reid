@@ -17,8 +17,8 @@ from engine.trainer import do_train
 from fastai.vision import *
 from layers import make_loss
 from modeling import build_model
+from solver import *
 from utils.logger import setup_logger
-
 
 
 def train(cfg):
@@ -28,9 +28,11 @@ def train(cfg):
     # prepare model
     model = build_model(cfg, data_bunch.c)
 
-    opt_fns = partial(getattr(torch.optim, cfg.SOLVER.OPTIMIZER_NAME))
+    if cfg.SOLVER.OPT == 'adam':    opt_fns = partial(torch.optim.Adam)
+    elif cfg.SOLVER.OPT == 'sgd': opt_fns = partial(torch.optim.SGD, momentum=0.9)
+    else:                           raise NameError(f'optimizer {cfg.SOLVER.OPT} not support')
 
-    def warmup_multistep(start: float, end: float, pct: float):
+    def lr_multistep(start: float, end: float, pct: float):
         warmup_factor = 1
         gamma = cfg.SOLVER.GAMMA
         milestones = [1.0 * s / cfg.SOLVER.MAX_EPOCHS for s in cfg.SOLVER.STEPS]
@@ -40,7 +42,7 @@ def train(cfg):
             warmup_factor = cfg.SOLVER.WARMUP_FACTOR * (1 - alpha) + alpha
         return start * warmup_factor * gamma ** bisect_right(milestones, pct)
 
-    lr_sched = Scheduler(cfg.SOLVER.BASE_LR, cfg.SOLVER.MAX_EPOCHS, warmup_multistep)
+    lr_sched = Scheduler(cfg.SOLVER.BASE_LR, cfg.SOLVER.MAX_EPOCHS, lr_multistep)
 
     loss_func = make_loss(cfg)
 

@@ -9,7 +9,6 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 from data.datasets.eval_reid import evaluate
-from data.datasets.eval_threshold import eval_roc
 from fastai.torch_core import to_np
 
 
@@ -32,6 +31,7 @@ def inference(
     g_pids = np.asarray(pids[num_query:])
     q_camids = np.asarray(camids[:num_query])
     g_camids = np.asarray(camids[num_query:])
+
     feats = []
     model.eval()
     for imgs, _ in data_bunch.test_dl:
@@ -60,11 +60,3 @@ def inference(
     logger.info("mAP: {:.1%}".format(mAP))
     for r in [1, 5, 10]:
         logger.info("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
-
-    # Compute ROC and AUC
-    logger.info("Compute ROC Curve...")
-    fpr, tpr, fps, tps, p, n, thresholds = eval_roc(distmat, q_pids, g_pids, q_camids, g_camids, 0.1, 0.5)
-    logger.info("positive samples: {}, negative samples: {}".format(p, n))
-    for i, thresh in enumerate(thresholds):
-        logger.info("threshold: {:.2f}, FP: {:.0f}({:.3f}), TP: {:.0f}({:.3f})".
-        format(thresh, fps[i], fpr[i], tps[i], tpr[i]))

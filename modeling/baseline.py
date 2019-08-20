@@ -35,19 +35,12 @@ def weights_init_classifier(m):
 class Baseline(nn.Module):
     in_planes = 2048
 
-    def __init__(self, backbone, num_classes, last_stride, model_path=None):
-        super(Baseline, self).__init__()
-        if backbone == 'resnet50':
-            self.base = resnet50(last_stride)
-        elif backbone == 'resnet50_ibn':
-            self.base = resnet50_ibn_a(last_stride)
-        else:
-            print(f'not support {backbone} backbone')
+    def __init__(self, backbone, num_classes, last_stride, ibn, pretrain=True, model_path=None):
+        super().__init__()
+        try:    self.base = ResNet.from_name(backbone, last_stride, ibn)
+        except: print(f'not support {backbone} backbone')
 
-        try:
-            self.base.load_param(model_path)
-        except:
-            print("not load imagenet pretrained model!")
+        if pretrain: self.base.load_pretrain(model_path)
 
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.num_classes = num_classes
@@ -70,7 +63,6 @@ class Baseline(nn.Module):
             return feat
 
     def load_params_wo_fc(self, state_dict):
-        for i in state_dict:
-            if 'classifier' in i:
-                continue
-            self.state_dict()[i].copy_(state_dict[i])
+        state_dict.pop('classifier.weight')
+        res = self.load_state_dict(state_dict, strict=False)
+        assert str(res.missing_keys) == str(['classifier.weight',]), 'issue loading pretrained weights'

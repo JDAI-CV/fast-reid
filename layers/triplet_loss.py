@@ -5,6 +5,7 @@
 """
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 
 def normalize(x, axis=-1):
@@ -62,12 +63,20 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
 
     # `dist_ap` means distance(anchor, positive)
     # both `dist_ap` and `relative_p_inds` with shape [N, 1]
+    # pos_dist = dist_mat[is_pos].contiguous().view(N, -1)
+    # ap_weight = F.softmax(pos_dist, dim=1)
+    # dist_ap = torch.sum(ap_weight * pos_dist, dim=1)
     dist_ap, relative_p_inds = torch.max(
         dist_mat[is_pos].contiguous().view(N, -1), 1, keepdim=True)
     # `dist_an` means distance(anchor, negative)
     # both `dist_an` and `relative_n_inds` with shape [N, 1]
     dist_an, relative_n_inds = torch.min(
         dist_mat[is_neg].contiguous().view(N, -1), 1, keepdim=True)
+    # neg_dist = dist_mat[is_neg].contiguous().view(N, -1)
+    # an_weight = F.softmax(-neg_dist, dim=1)
+    # dist_an = torch.sum(an_weight * neg_dist, dim=1)
+
+
     # shape [N]
     dist_ap = dist_ap.squeeze(1)
     dist_an = dist_an.squeeze(1)
@@ -90,19 +99,20 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
     return dist_ap, dist_an
 
 
-class TripletLoss(object):
+class TripletLoss(nn.Module):
     """Modified from Tong Xiao's open-reid (https://github.com/Cysu/open-reid).
     Related Triplet Loss theory can be found in paper 'In Defense of the Triplet
     Loss for Person Re-Identification'."""
 
     def __init__(self, margin=None):
+        super().__init__()
         self.margin = margin
         if margin is not None:
             self.ranking_loss = nn.MarginRankingLoss(margin=margin)
         else:
             self.ranking_loss = nn.SoftMarginLoss()
 
-    def __call__(self, global_feat, labels, normalize_feature=False):
+    def forward(self, global_feat, labels, normalize_feature=False):
         if normalize_feature:
             global_feat = normalize(global_feat, axis=-1)
         dist_mat = euclidean_dist(global_feat, global_feat)

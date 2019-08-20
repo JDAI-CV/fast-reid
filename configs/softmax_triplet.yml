@@ -1,6 +1,5 @@
 MODEL:
   BACKBONE: "resnet50"
-  PRETRAIN_PATH: '/export/home/lxy/.cache/torch/checkpoints/resnet50-19c8e357.pth'
 
 
 INPUT:
@@ -18,7 +17,7 @@ DATALOADER:
   NUM_INSTANCE: 4
 
 SOLVER:
-  OPTIMIZER_NAME: 'Adam'
+  OPT: 'adam'
   MAX_EPOCHS: 150
   BASE_LR: 0.00035
   WEIGHT_DECAY: 0.0005

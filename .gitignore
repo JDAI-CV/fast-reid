@@ -2,6 +2,6 @@
 __pycache__
 .DS_Store
 .vscode
-csrc/eval_cylib/build/
+csrc/eval_cylib/*.so
 logs/
 .ipynb_checkpoints

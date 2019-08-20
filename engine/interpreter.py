@@ -7,20 +7,20 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torch.nn.functional as F
+from fastai.basic_data import *
+from fastai.layers import *
+from fastai.vision import *
 
 
 class ReidInterpretation():
     "Interpretation methods for reid models."
     def __init__(self, learn, test_labels, num_q):
-        self.test_labels,self.num_q = test_labels,num_q
+        self.learn,self.test_labels,self.num_q = learn,test_labels,num_q
         self.test_dl = learn.data.test_dl
-        self.model = learn.model
-        
         self.get_distmat()
 
     def get_distmat(self):
-        self.model.eval()
-        feats = []
         pids = []
         camids = []
         for p,c in self.test_labels:
@@ -31,11 +31,7 @@ class ReidInterpretation():
         self.q_camids = np.asarray(camids[:self.num_q])
         self.g_camids = np.asarray(camids[self.num_q:])
 
-        for imgs, _ in self.test_dl:
-            with torch.no_grad():
-                feat = self.model(imgs)
-            feats.append(feat)
-        feats = torch.cat(feats, dim=0)
+        feats, _ = self.learn.get_preds(DatasetType.Test, activ=Lambda(lambda x:x))
         feats = F.normalize(feats)
         qf = feats[:self.num_q]
         gf = feats[self.num_q:]

@@ -7,6 +7,7 @@ We support
 - [x] end-to-end training and evaluation
 - [ ] multi-GPU distributed training
 - [ ] fast training speed with fp16
+- [x] fast evaluation with cython
 - [ ] support both image and video reid
 - [x] multi-dataset training
 - [x] cross-dataset evaluation
@@ -15,7 +16,7 @@ We support
 - [ ] high efficient backbone
 - [ ] advanced training techniques
 - [ ] various loss functions
-- [ ] visualization tools
+- [ ] tensorboard visualization 
 
 ## Get Started
 The designed architecture follows this guide [PyTorch-Project-Template](https://github.com/L1aoXingyu/PyTorch-Project-Template), you can check each folder's purpose by yourself.
@@ -42,12 +43,15 @@ The designed architecture follows this guide [PyTorch-Project-Template](https://
             bounding_box_test/
             bounding_box_train/
     ```
-5. Prepare pretrained model if you don't have
-    ```python
-    from torchvision import models
-    models.resnet50(pretrained=True)
+5. Prepare pretrained model.
+    If you use origin ResNet, you do not need to do anything. But if you want to use ResNet_ibn, you need to download pretrain model in [here](https://drive.google.com/open?id=1thS2B8UOSBi_cJX6zRy6YYRwz_nVFI_S). And then you can put it in `~/.cache/torch/checkpoints` or anywhere you like.
+    
+    Then you should set this pretrain model path in `configs/softmax_triplet.yml`.
+
+6. compile with cython to accelerate evalution
+    ```bash
+    cd csrc/eval_cylib; make
     ```
-    Then it will automatically download model in `~/.cache/torch/checkpoints/`, you should set this path in `config/defaults.py` for all training or set in every single training config file in `configs/`.
 
 ## Train
 Most of the configuration files that we provide, you can run this command for training market1501
@@ -71,4 +75,4 @@ python3 tools/test.py --config_file='configs/softmax.yml' TEST.WEIGHT '/save/tra
 
 | cfg | market1501 | dukemtmc |
 | --- | -- | -- |
-| softmax_triplet, size=(256, 128), batch_size=64(16 id x 4 imgs) | 93.9 (85.9) | training |
+| softmax+triplet, size=(256, 128), batch_size=64(16 id x 4 imgs) | 93.9 (85.9) | 86.5 (75.9) |

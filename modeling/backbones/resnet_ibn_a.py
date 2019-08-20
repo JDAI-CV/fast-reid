@@ -1,18 +1,10 @@
+import math
+
 import torch
 import torch.nn as nn
-import math
-import torch.utils.model_zoo as model_zoo
+from torch.utils import model_zoo
 
-
-__all__ = ['ResNet_IBN', 'resnet50_ibn_a', 'resnet101_ibn_a',
-           'resnet152_ibn_a']
-
-
-model_urls = {
-    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
-    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
-    'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
-}
+__all__ = ['ResNet_IBN', 'resnet50_ibn_a']
 
 
 class IBN(nn.Module):
@@ -144,6 +136,15 @@ class ResNet_IBN(nn.Module):
             j = '.'.join(i.split('.')[1:])  # remove 'module' in state_dict
             if self.state_dict()[j].shape == param_dict[i].shape:
                 self.state_dict()[j].copy_(param_dict[i])
+    
+    def load_pretrain(self):
+        state_dict = model_zoo.load_url(model_urls[self._model_name])
+        
+
+    @classmethod
+    def from_name(cls, model_name, last_stride):
+        cls._model_name = model_name
+        return ResNet_IBN(last_stride, Bottleneck_IBN, [3, 4, 6, 3])
 
 
 def resnet50_ibn_a(last_stride, **kwargs):

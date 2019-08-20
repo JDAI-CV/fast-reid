@@ -16,11 +16,24 @@ from yacs.config import CfgNode as CN
 
 _C = CN()
 
+# -----------------------------------------------------------------------------
+# MODEL
+# -----------------------------------------------------------------------------
 _C.MODEL = CN()
 _C.MODEL.DEVICE = "cuda"
+# Model backbone
 _C.MODEL.BACKBONE = 'resnet50'
+# Last stride for backbone
 _C.MODEL.LAST_STRIDE = 1
+# If use IBN block
+_C.MODEL.IBN = False
+# If use imagenet pretrain model
+_C.MODEL.PRETRAIN = True
+# Pretrain model path
 _C.MODEL.PRETRAIN_PATH = ''
+# Checkpoint for continuing training
+_C.MODEL.CHECKPOINT = ''
+#
 # -----------------------------------------------------------------------------
 # INPUT
 # -----------------------------------------------------------------------------
@@ -69,7 +82,7 @@ _C.DATALOADER.NUM_INSTANCE = 16
 # Solver
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
-_C.SOLVER.OPTIMIZER_NAME = "Adam"
+_C.SOLVER.OPT = "adam"
 
 _C.SOLVER.MAX_EPOCHS = 50
 

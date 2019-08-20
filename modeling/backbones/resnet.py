@@ -8,17 +8,56 @@ import math
 
 import torch
 from torch import nn
+from torch.utils import model_zoo
+
+model_urls = {
+    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
+    'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
+    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
+    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
+    'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
+    'resnext50_32x4d': 'https://download.pytorch.org/models/resnext50_32x4d-7cdf4587.pth',
+    'resnext101_32x8d': 'https://download.pytorch.org/models/resnext101_32x8d-8ba56ff5.pth',
+    'wide_resnet50_2': 'https://download.pytorch.org/models/wide_resnet50_2-95faca4d.pth',
+    'wide_resnet101_2': 'https://download.pytorch.org/models/wide_resnet101_2-32ee1156.pth',
+}
+
+model_layers = {
+    'resnet50': [3, 4, 6, 3],
+    'resnet101': [3, 4, 23, 3]
+}
+
+__all__ = ['ResNet']
 
 
-__all__ = ['resnet50']
+class IBN(nn.Module):
+    def __init__(self, planes):
+        super(IBN, self).__init__()
+        half1 = int(planes/2)
+        self.half = half1
+        half2 = planes - half1
+        self.IN = nn.InstanceNorm2d(half1, affine=True)
+        self.BN = nn.BatchNorm2d(half2)
+    
+    def forward(self, x):
+        split = torch.split(x, self.half, 1)
+        out1 = self.IN(split[0].contiguous())
+        # out2 = self.BN(torch.cat(split[1:], dim=1).contiguous())
+        out2 = self.BN(split[1].contiguous())
+        out = torch.cat((out1, out2), 1)
+        return out
+
 
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, ibn=False, stride=1, downsample=None):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
+        if ibn:
+            self.bn1 = IBN(planes)
+        else:
+            self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
                                padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
@@ -52,21 +91,22 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, last_stride=2, block=Bottleneck, layers=[3, 4, 6, 3]):
-        self.inplanes = 64
-        super(ResNet, self).__init__()
+    def __init__(self, last_stride, ibn, block, layers):
+        scale = 64
+        self.inplanes = scale
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0])
-        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
+        self.layer1 = self._make_layer(block, scale, layers[0], ibn=ibn)
+        self.layer2 = self._make_layer(block, scale*2, layers[1], stride=2, ibn=ibn)
+        self.layer3 = self._make_layer(block, scale*4, layers[2], stride=2, ibn=ibn)
         self.layer4 = self._make_layer(
-            block, 512, layers[3], stride=last_stride)
+            block, scale*8, layers[3], stride=last_stride)
 
-    def _make_layer(self, block, planes, blocks, stride=1):
+    def _make_layer(self, block, planes, blocks, stride=1, ibn=False):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
@@ -76,10 +116,12 @@ class ResNet(nn.Module):
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
+        if planes == 512:
+            ibn = False
+        layers.append(block(self.inplanes, planes, ibn, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes))
+            layers.append(block(self.inplanes, planes, ibn))
 
         return nn.Sequential(*layers)
 
@@ -96,12 +138,22 @@ class ResNet(nn.Module):
 
         return x
 
-    def load_param(self, model_path):
-        param_dict = torch.load(model_path)
-        for i in param_dict:
-            if 'fc' in i:
-                continue
-            self.state_dict()[i].copy_(param_dict[i])
+    def load_pretrain(self, model_path=''):
+        if model_path == '':
+            state_dict = model_zoo.load_url(model_urls[self._model_name])
+            state_dict.pop('fc.weight')
+            state_dict.pop('fc.bias')
+        else:
+            state_dict = torch.load(model_path)['state_dict']
+            state_dict.pop('module.fc.weight')
+            state_dict.pop('module.fc.bias')
+            new_state_dict = {}
+            for k in state_dict:
+                new_k = '.'.join(k.split('.')[1:])  # remove module in name
+                if self.state_dict()[new_k].shape == state_dict[k].shape:
+                    new_state_dict[new_k] = state_dict[k]
+            state_dict = new_state_dict
+        self.load_state_dict(state_dict, strict=False)
 
     def random_init(self):
         for m in self.modules():
@@ -112,7 +164,7 @@ class ResNet(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-
-def resnet50(last_stride, **kwargs):
-    model = ResNet(last_stride, block=Bottleneck, layers=[3,4,6,3])
-    return model
+    @classmethod
+    def from_name(cls, model_name, last_stride, ibn):
+        cls._model_name = model_name
+        return ResNet(last_stride, ibn=ibn, block=Bottleneck, layers=model_layers[model_name])

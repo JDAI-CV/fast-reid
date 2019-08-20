@@ -10,14 +10,6 @@ import sys
 import logging
 
 
-def mkdir_if_missing(dir_path):
-    try:
-        os.makedirs(dir_path)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-
-
 def setup_logger(name, save_dir, distributed_rank):
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)

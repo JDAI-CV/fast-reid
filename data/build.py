@@ -36,23 +36,24 @@ def get_data_bunch(cfg):
 
     market_query_path = 'datasets/Market-1501-v15.09.15/query'
     marker_gallery_path = 'datasets/Market-1501-v15.09.15/bounding_box_test'
+    duke_query_path = 'datasets/DukeMTMC-reID/query'
+    duke_gallery_path = 'datasets/DukeMTMC-reID/bounding_box_test'
 
     train_img_names = list()
     for d in cfg.DATASETS.NAMES:
-        if d == 'market1501':
-            train_img_names.extend(_process_dir(market_train_path))
-        elif d == 'duke':
-            train_img_names.extend(_process_dir(duke_train_path))
-        elif d == 'cuhk03':
-            train_img_names.extend(CUHK03().train)
-        else:
-            raise NameError(f'{d} is not available')
+        if d == 'market1501':   train_img_names.extend(_process_dir(market_train_path))
+        elif d == 'duke':       train_img_names.extend(_process_dir(duke_train_path))
+        elif d == 'cuhk03':     train_img_names.extend(CUHK03().train)
+        else:                   raise NameError(f'{d} is not available')
         
     train_names = [i[0] for i in train_img_names]
 
     if cfg.DATASETS.TEST_NAMES == "market1501":
         query_names = _process_dir(market_query_path)
         gallery_names = _process_dir(marker_gallery_path)
+    elif cfg.DATASETS.TEST_NAMES == 'duke':
+        query_names = _process_dir(duke_query_path)
+        gallery_names = _process_dir(duke_gallery_path)
     else:
         print(f"not support {cfg.DATASETS.TEST_NAMES} test set")
 
