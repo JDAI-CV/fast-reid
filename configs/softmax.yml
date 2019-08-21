@@ -1,22 +1,23 @@
 MODEL:
-  PRETRAIN_PATH: 'home/user01/.torch/models/resnet50-19c8e357.pth'
-
+  BACKBONE: "resnet50"
 
 INPUT:
-  SIZE_TRAIN: [384, 128]
-  SIZE_TEST: [384, 128]
-  PROB: 0.5 # random horizontal flip
+  SIZE_TRAIN: [256, 128]
+  SIZE_TEST: [256, 128]
+  FLIP_PROB: 0.5 # random horizontal flip
   PADDING: 10
 
 DATASETS:
-  NAMES: ('market1501')
+  NAMES: ("market1501",)
+  TEST_NAMES: 'market1501'
 
 DATALOADER:
   SAMPLER: 'softmax'
   NUM_WORKERS: 8
 
 SOLVER:
-  OPTIMIZER_NAME: 'Adam'
+  OPT: 'adam'
+  LOSSTYPE: ('softmax',)
   MAX_EPOCHS: 120
   BASE_LR: 0.00035
   BIAS_LR_FACTOR: 1

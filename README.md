@@ -70,9 +70,18 @@ You can test your model's performance directly by running this command
 python3 tools/test.py --config_file='configs/softmax.yml' TEST.WEIGHT '/save/trained_model/path'
 ```
 
-## Results
+## Experiment Results
+
+| size=(256, 128) batch_size=64 (16 id x 4 imgs) |  |   |  |  |  |
+| :------: | :-----: | :-----: | :--: | :---: | :----: |
+|    softmax?   |    ✔︎   |   ✔︎    | ✔︎ | ✔︎ | ✔︎ |
+|    triplet?   |        |  ✔︎    |  | ✔︎ | ✔︎ |
+|    ibn?       |        |        |  ✔︎ |  ✔︎   |  ✔︎ |
+|    gcnet?     |        |        |      |      |   ✔︎   |
+|  Market1501   | 93.4 (82.9) | 94.2 (86.1) |93.3 (84.3)|94.9 (86.4)|-|
+| DukeMTMC-reid | 84.7 (72.7) | 87.3 (76.0) |86.7 (74.9)|87.9 (77.1)|-|
+|   CUHK03      | | ||||
 
 
-| cfg | market1501 | dukemtmc |
-| --- | -- | -- |
-| softmax+triplet, size=(256, 128), batch_size=64(16 id x 4 imgs) | 93.9 (85.9) | 86.5 (75.9) |
+
+🔥Any other tricks are welcomed！

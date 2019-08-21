@@ -78,7 +78,7 @@ def get_data_bunch(cfg):
                                                size=cfg.INPUT.SIZE_TRAIN, ds_tfms=ds_tfms, bs=cfg.SOLVER.IMS_PER_BATCH,
                                                val_bs=cfg.TEST.IMS_PER_BATCH)
 
-    if 'triplet' in cfg.DATALOADER.SAMPLER:
+    if cfg.DATALOADER.SAMPLER == 'triplet':
         data_sampler = RandomIdentitySampler(train_names, cfg.SOLVER.IMS_PER_BATCH, cfg.DATALOADER.NUM_INSTANCE)
         data_bunch.train_dl = data_bunch.train_dl.new(shuffle=False, sampler=data_sampler)
 

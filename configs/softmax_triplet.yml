@@ -13,11 +13,12 @@ DATASETS:
   TEST_NAMES: "market1501"
 
 DATALOADER:
-  SAMPLER: 'softmax_triplet'
+  SAMPLER: 'triplet'
   NUM_INSTANCE: 4
 
 SOLVER:
   OPT: 'adam'
+  LOSSTYPE: ('softmax', 'triplet')
   MAX_EPOCHS: 150
   BASE_LR: 0.00035
   WEIGHT_DECAY: 0.0005

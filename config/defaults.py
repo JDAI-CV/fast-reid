@@ -63,7 +63,7 @@ _C.INPUT.P_LIGHTING=0.75
 # -----------------------------------------------------------------------------
 _C.DATASETS = CN()
 # List of the dataset names for training
-_C.DATASETS.NAMES = ("cuhk03",)
+_C.DATASETS.NAMES = ("market1501",)
 # List of the dataset names for testing
 _C.DATASETS.TEST_NAMES = "market1501"
 
@@ -83,6 +83,8 @@ _C.DATALOADER.NUM_INSTANCE = 16
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
 _C.SOLVER.OPT = "adam"
+
+_C.SOLVER.LOSSTYPE = ("softmax",)
 
 _C.SOLVER.MAX_EPOCHS = 50
 

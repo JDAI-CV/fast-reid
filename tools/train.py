@@ -15,7 +15,7 @@ from config import cfg
 from data import get_data_bunch
 from engine.trainer import do_train
 from fastai.vision import *
-from layers import make_loss
+from layers import reidLoss
 from modeling import build_model
 from solver import *
 from utils.logger import setup_logger
@@ -44,7 +44,7 @@ def train(cfg):
 
     lr_sched = Scheduler(cfg.SOLVER.BASE_LR, cfg.SOLVER.MAX_EPOCHS, lr_multistep)
 
-    loss_func = make_loss(cfg)
+    loss_func = reidLoss(cfg.SOLVER.LOSSTYPE, cfg.SOLVER.MARGIN)
 
     do_train(
         cfg,
