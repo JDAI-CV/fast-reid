@@ -6,20 +6,18 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 import torch.nn.functional as F
-from fastai.basic_data import *
-from fastai.layers import *
 from fastai.vision import *
+from fastai.callbacks import *
 
 
 class ReidInterpretation():
     "Interpretation methods for reid models."
     def __init__(self, learn, test_labels, num_q):
-        self.learn,self.test_labels,self.num_q = learn,test_labels,num_q
-        self.test_dl = learn.data.test_dl
+        self.learn, self.test_labels,self.num_q = learn,test_labels,num_q
+        
         self.get_distmat()
-
+    
     def get_distmat(self):
         pids = []
         camids = []
@@ -54,16 +52,25 @@ class ReidInterpretation():
         sort_idx = order[keep]
         return cmc, sort_idx
         
-    def plot_rank_result(self, q_idx, top=5, title="Rank result"):
+    def plot_rank_result(self, q_idx, top=5, actmap=False, title="Rank result"):
+        m = self.learn.model.eval()
         cmc, sort_idx = self.get_matched_result(q_idx)
-
         fig,axes = plt.subplots(1, top+1, figsize=(15, 5))
         fig.suptitle('query  similarity/true(false)')
-        query_im,cl=self.test_dl.dataset[q_idx]
+        query_im,cl=self.learn.data.dl(DatasetType.Test).dataset[q_idx]
         query_im.show(ax=axes.flat[0], title='query')
+        if actmap:
+            xb, _ = self.learn.data.one_item(query_im, detach=False, denorm=False)
+            sz = list(xb.shape[-2:])
+            with hook_output(m.base) as hook_a:
+                _ = m(xb)
+                acts = hook_a.stored[0].cpu()
+            acts = self.get_actmap(acts)
+            axes.flat[0].imshow(acts, alpha=0.3, extent=(0,*sz[::-1], 0), interpolation='bilinear', cmap='jet')
+                
         for i in range(top):
             g_idx = self.num_q + sort_idx[i] 
-            im,cl = self.test_dl.dataset[g_idx]
+            im,cl = self.learn.data.dl(DatasetType.Test).dataset[g_idx]
             if cmc[i] == 1:
                 label='true'
                 axes.flat[i+1].add_patch(plt.Rectangle(xy=(0, 0), width=im.size[1]-1, height=im.size[0]-1, 
@@ -73,6 +80,14 @@ class ReidInterpretation():
                 axes.flat[i+1].add_patch(plt.Rectangle(xy=(0, 0), width=im.size[1]-1, height=im.size[0]-1, 
                                          edgecolor=(0, 0, 1), fill=False, linewidth=5))
             im.show(ax=axes.flat[i+1], title=f'{self.distmat[q_idx, sort_idx[i]]:.3f} / {label}')
+            if actmap:
+                xb, _ = self.learn.data.one_item(im, detach=False, denorm=False)
+                sz = list(xb.shape[-2:])
+                with hook_output(m.base) as hook_a:
+                    _ = m(xb)
+                    acts = hook_a.stored[0].cpu()
+                acts = self.get_actmap(acts)
+                axes.flat[i+1].imshow(acts, alpha=0.3, extent=(0,*sz[::-1], 0), interpolation='bilinear', cmap='jet')
         return fig
 
     def get_top_error(self):
@@ -95,7 +110,7 @@ class ReidInterpretation():
         self.storeCorrect = storeCorrect
         self.storeWrong = storeWrong
 
-    def plot_top_error(self, topK=5, positive=True):
+    def plot_top_error(self, error_range=range(0,5), actmap=False, positive=True):
         if not hasattr(self, 'storeCorrect'):
             self.get_top_error()
 
@@ -105,25 +120,9 @@ class ReidInterpretation():
             img_list = self.storeWrong
         # Rank top error results, which means negative sample with largest similarity
         # and positive sample with smallest similarity
-        fig,axes = plt.subplots(topK, 6, figsize=(15, 4*topK))
-        fig.suptitle('query similarity/true(false)')
-        for i in range(topK):
+        for i in error_range:
             q_idx,g_idxs,sim,cmc = img_list[i]
-            query_im,cl = self.test_dl.dataset[q_idx]
-            query_im.show(ax=axes[i, 0], title='query')
-            for j,g_idx in enumerate(g_idxs):
-                im,cl = self.test_dl.dataset[g_idx]
-                if cmc[j] == 1:
-                    label='true'
-                    axes[i,j+1].add_patch(plt.Rectangle(xy=(0, 0), width=im.size[1]-1, height=im.size[0]-1, 
-                                          edgecolor=(1, 0, 0), fill=False, linewidth=5))
-                else:
-                    label='false'
-                    axes[i, j+1].add_patch(plt.Rectangle(xy=(0, 0), width=im.size[1]-1, height=im.size[0]-1, 
-                                           edgecolor=(0, 0, 1), fill=False, linewidth=5))
-                im.show(ax=axes[i,j+1], title=f'{sim[j]:.3f} / {label}')
-            
-        return fig
+            self.plot_rank_result(q_idx, actmap=actmap)
 
     def plot_positve_negative_dist(self):
         pos_sim, neg_sim = [], []
@@ -161,3 +160,12 @@ class ReidInterpretation():
         plt.xticks(np.arange(0.1, 1.0, 0.1))
         plt.title('posivie and negative pair distribution')
         return fig
+
+    def get_actmap(self, features):
+        features = (features ** 2).sum(0)
+        h, w = features.size()
+        features = features.view(1, h*w)
+        features = F.normalize(features, p=2, dim=1)
+        acts = features.view(h, w)
+        acts = (acts - acts.max()) / (acts.max() - acts.min() + 1e-12)
+        return to_np(acts)
