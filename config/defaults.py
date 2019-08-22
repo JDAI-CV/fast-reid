@@ -26,13 +26,18 @@ _C.MODEL.BACKBONE = 'resnet50'
 # Last stride for backbone
 _C.MODEL.LAST_STRIDE = 1
 # If use IBN block
-_C.MODEL.IBN = False
+_C.MODEL.WITH_IBN = False
+# Global Context Block configuration
+_C.MODEL.STAGE_WITH_GCB = (False, False, False, False)
+_C.MODEL.GCB = CN()
+_C.MODEL.GCB.ratio = 1./16.
 # If use imagenet pretrain model
 _C.MODEL.PRETRAIN = True
 # Pretrain model path
 _C.MODEL.PRETRAIN_PATH = ''
 # Checkpoint for continuing training
 _C.MODEL.CHECKPOINT = ''
+
 #
 # -----------------------------------------------------------------------------
 # INPUT

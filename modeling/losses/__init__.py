@@ -4,4 +4,4 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from .loss import reidLoss
+from .loss import *

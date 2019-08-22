@@ -5,6 +5,7 @@
 """
 
 from torch import nn
+from fastai.vision import *
 
 from .backbones import *
 
@@ -35,9 +36,18 @@ def weights_init_classifier(m):
 class Baseline(nn.Module):
     in_planes = 2048
 
-    def __init__(self, backbone, num_classes, last_stride, ibn, pretrain=True, model_path=None):
+    def __init__(self, 
+                 backbone, 
+                 num_classes, 
+                 last_stride, 
+                 with_ibn, 
+                 gcb, 
+                 stage_with_gcb, 
+                 pretrain=True, 
+                 model_path=''):
         super().__init__()
-        try:    self.base = ResNet.from_name(backbone, last_stride, ibn)
+        # Todo: add more backbone (ResNext, shufflenet)
+        try:    self.base = ResNet.from_name(backbone, last_stride, with_ibn, gcb, stage_with_gcb)
         except: print(f'not support {backbone} backbone')
 
         if pretrain: self.base.load_pretrain(model_path)
@@ -47,6 +57,7 @@ class Baseline(nn.Module):
 
         self.bottleneck = nn.BatchNorm1d(self.in_planes)
         self.bottleneck.bias.requires_grad_(False)  # no shift
+        self.flatten = Flatten()
         self.classifier = nn.Linear(self.in_planes, self.num_classes, bias=False)
 
         self.bottleneck.apply(weights_init_kaiming)
@@ -54,7 +65,7 @@ class Baseline(nn.Module):
 
     def forward(self, x):
         global_feat = self.gap(self.base(x))  # (b, 2048, 1, 1)
-        global_feat = global_feat.view(global_feat.shape[0], -1)  # flatten to (bs, 2048)
+        global_feat = self.flatten(global_feat)  # flatten to (bs, 2048)
         feat = self.bottleneck(global_feat)  # normalize for angular softmax
         if self.training:
             cls_score = self.classifier(feat)

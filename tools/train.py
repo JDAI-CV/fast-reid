@@ -15,8 +15,7 @@ from config import cfg
 from data import get_data_bunch
 from engine.trainer import do_train
 from fastai.vision import *
-from layers import reidLoss
-from modeling import build_model
+from modeling import *
 from solver import *
 from utils.logger import setup_logger
 
@@ -29,7 +28,7 @@ def train(cfg):
     model = build_model(cfg, data_bunch.c)
 
     if cfg.SOLVER.OPT == 'adam':    opt_fns = partial(torch.optim.Adam)
-    elif cfg.SOLVER.OPT == 'sgd': opt_fns = partial(torch.optim.SGD, momentum=0.9)
+    elif cfg.SOLVER.OPT == 'sgd':   opt_fns = partial(torch.optim.SGD, momentum=0.9)
     else:                           raise NameError(f'optimizer {cfg.SOLVER.OPT} not support')
 
     def lr_multistep(start: float, end: float, pct: float):

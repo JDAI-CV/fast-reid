@@ -8,7 +8,52 @@ import logging
 from data.datasets.eval_reid import evaluate
 
 
-__all__ = ['TrackValue', 'LRScheduler', 'TestModel']
+__all__ = ['TrackValue', 'LRScheduler', 'TestModel', 'CutMix']
+
+
+class CutMix(LearnerCallback):
+    def __init__(self, learn:Learner, cutmix_prob:float=0.5, beta:float=1.0):
+        super().__init__(learn)
+        self.cutmix_prob,self.beta = cutmix_prob,beta 
+    
+    @staticmethod
+    def rand_bbox(size, lambd):
+        h,w = size[2],size[3]
+        cut_rat = np.sqrt(1. - lambd)
+        cut_w = np.int(w * cut_rat)
+        cut_h = np.int(h * cut_rat)
+
+        # Uniform
+        cx = np.random.randint(w)
+        cy = np.random.randint(h)
+
+        bbx1 = np.clip(cx - cut_w // 2, 0, w)
+        bby1 = np.clip(cy - cut_h // 2, 0, h)
+        bbx2 = np.clip(cx + cut_w // 2, 0, w)
+        bby2 = np.clip(cy + cut_h // 2, 0, h)
+        return bbx1, bby1, bbx2, bby2
+
+
+    def on_batch_begin(self, last_input, last_target, train, epoch, **kwargs):
+        if not train: return
+        # if epoch > 90:
+            # lambd = torch.ones(last_target.size(0)).to(last_input.device)
+            # new_target = torch.cat([last_target[:, None].float(), last_target[:, None].float(), lambd[:,None].float()], 1) 
+            # return {'last_target': new_target}
+        if np.random.rand(1) > self.cutmix_prob: return
+        lambd = np.random.beta(self.beta, self.beta)
+        lambd = max(lambd, 1-lambd)
+        # lambd = last_input.new(lambd)
+        shuffle = torch.randperm(last_target.size(0)).to(last_input.device)
+        x1, y1 = last_input[shuffle], last_target[shuffle]
+        bbx1, bby1, bbx2, bby2 = self.rand_bbox(last_input.size(), lambd)
+        last_input[:, :, bby1:bby2, bbx1:bbx2] = x1[:, :, bby1:bby2, bbx1:bbx2]
+        # Adjust lambda to exactly match pixel ratio
+        lambd = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (last_input.size()[-1] * last_input.size()[-2]))
+        lambd = torch.ones(last_target[:,None].size(), dtype=torch.float32).fill_(lambd).to(last_input.device)
+        new_target = torch.cat([last_target[:,None].float(), y1[:,None].float(), lambd], 1)
+        return {'last_input': last_input, 'last_target': new_target}
+
 
 @dataclass
 class TrackValue(Callback):

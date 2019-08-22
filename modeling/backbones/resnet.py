@@ -9,6 +9,8 @@ import math
 import torch
 from torch import nn
 from torch.utils import model_zoo
+from ops import *
+
 
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
@@ -50,13 +52,12 @@ class IBN(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, ibn=False, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, with_ibn=False, gcb=None, stride=1, downsample=None):
         super(Bottleneck, self).__init__()
+        self.with_gcb = gcb is not None
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
-        if ibn:
-            self.bn1 = IBN(planes)
-        else:
-            self.bn1 = nn.BatchNorm2d(planes)
+        if with_ibn: self.bn1 = IBN(planes)
+        else:        self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
                                padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
@@ -65,6 +66,10 @@ class Bottleneck(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
+        # GCNet
+        if self.with_gcb:
+            gcb_inplanes = planes * self.expansion
+            self.context_block = ContextBlock(inplanes=gcb_inplanes, **gcb)
 
     def forward(self, x):
         residual = x
@@ -80,6 +85,9 @@ class Bottleneck(nn.Module):
         out = self.conv3(out)
         out = self.bn3(out)
 
+        if self.with_gcb:
+            out = self.context_block(out)
+
         if self.downsample is not None:
             residual = self.downsample(x)
 
@@ -90,7 +98,7 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, last_stride, ibn, block, layers):
+    def __init__(self, last_stride, with_ibn, gcb, stage_with_gcb, block, layers):
         scale = 64
         self.inplanes = scale
         super().__init__()
@@ -99,13 +107,16 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, scale, layers[0], ibn=ibn)
-        self.layer2 = self._make_layer(block, scale*2, layers[1], stride=2, ibn=ibn)
-        self.layer3 = self._make_layer(block, scale*4, layers[2], stride=2, ibn=ibn)
-        self.layer4 = self._make_layer(
-            block, scale*8, layers[3], stride=last_stride)
+        self.layer1 = self._make_layer(block, scale, layers[0], with_ibn=with_ibn, 
+                                       gcb=gcb if stage_with_gcb[0] else None)
+        self.layer2 = self._make_layer(block, scale*2, layers[1], stride=2, with_ibn=with_ibn, 
+                                       gcb=gcb if stage_with_gcb[1] else None)
+        self.layer3 = self._make_layer(block, scale*4, layers[2], stride=2, with_ibn=with_ibn, 
+                                       gcb=gcb if stage_with_gcb[2] else None)
+        self.layer4 = self._make_layer(block, scale*8, layers[3], stride=last_stride, 
+                                       gcb=gcb if stage_with_gcb[3] else None)
 
-    def _make_layer(self, block, planes, blocks, stride=1, ibn=False):
+    def _make_layer(self, block, planes, blocks, stride=1, with_ibn=False, gcb=None):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
@@ -116,11 +127,11 @@ class ResNet(nn.Module):
 
         layers = []
         if planes == 512:
-            ibn = False
-        layers.append(block(self.inplanes, planes, ibn, stride, downsample))
+            with_ibn = False
+        layers.append(block(self.inplanes, planes, with_ibn, gcb, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes, ibn))
+            layers.append(block(self.inplanes, planes, with_ibn, gcb))
 
         return nn.Sequential(*layers)
 
@@ -138,7 +149,8 @@ class ResNet(nn.Module):
         return x
 
     def load_pretrain(self, model_path=''):
-        if model_path == '':
+        with_model_path = model_path is not ''
+        if not with_model_path:
             state_dict = model_zoo.load_url(model_urls[self._model_name])
             state_dict.pop('fc.weight')
             state_dict.pop('fc.bias')
@@ -164,6 +176,6 @@ class ResNet(nn.Module):
                 m.bias.data.zero_()
 
     @classmethod
-    def from_name(cls, model_name, last_stride, ibn):
+    def from_name(cls, model_name, last_stride, with_ibn, gcb, stage_with_gcb):
         cls._model_name = model_name
-        return ResNet(last_stride, ibn=ibn, block=Bottleneck, layers=model_layers[model_name])
+        return ResNet(last_stride, with_ibn, gcb, stage_with_gcb, block=Bottleneck, layers=model_layers[model_name])

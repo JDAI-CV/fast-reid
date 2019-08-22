@@ -1,6 +1,7 @@
 MODEL:
   BACKBONE: "resnet50"
-
+  GCB:
+    ratio: 0.0625
 
 INPUT:
   SIZE_TRAIN: [256, 128]
