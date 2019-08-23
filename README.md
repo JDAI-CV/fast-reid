@@ -14,7 +14,7 @@ We support
 - [x] high modular management
 - [x] state-of-the-art performance with simple model
 - [ ] high efficient backbone
-- [ ] advanced training techniques
+- [x] advanced training techniques
 - [ ] various loss functions
 - [ ] tensorboard visualization 
 
@@ -67,21 +67,23 @@ python3 tools/train.py -cfg='configs/softmax.yml' INPUT.SIZE_TRAIN '(256, 128)' 
 ## Test
 You can test your model's performance directly by running this command
 ```bash
-python3 tools/test.py --config_file='configs/softmax.yml' TEST.WEIGHT '/save/trained_model/path'
+python3 tools/test.py  DATASET.TEST_NAMES 'duke' \
+                       MODEL.BACKBONE 'resnet50' \
+                       MODEL.WITH_IBN 'True' \
+                       TEST.WEIGHT '/save/trained_model/path'
 ```
 
 ## Experiment Results
 
-| size=(256, 128) batch_size=64 (16 id x 4 imgs) |  |   |  |  |  |
-| :------: | :-----: | :-----: | :--: | :---: | :----: |
-|    softmax?   |    ✔︎   |   ✔︎    | ✔︎ | ✔︎ | ✔︎ |
-|    triplet?   |        |  ✔︎    |  | ✔︎ | ✔︎ |
-|    ibn?       |        |        |  ✔︎ |  ✔︎   |  ✔︎ |
-|    gcnet?     |        |        |      |      |   ✔︎   |
-|  Market1501   | 93.4 (82.9) | 94.2 (86.1) |93.3 (84.3)|94.9 (86.4)| 94.9 (87.6) |
-| DukeMTMC-reid | 84.7 (72.7) | 87.3 (76.0) |86.7 (74.9)|87.9 (77.1)| 89.0 (78.8) |
-|   CUHK03      | | | | | |
-
+| size=(256, 128) batch_size=64 (16 id x 4 imgs) |  |  |  |  |
+| :------: | :-----: | :-----: | :--: | :---: |
+|    softmax?   |    ✔︎   |   ✔︎   | ✔︎ | ✔︎ |
+|    triplet?   |        |  ✔︎    | ✔︎ | ✔︎ |
+|    ibn?       |        |       |  ✔︎   |  ✔︎ |
+|    gcnet?     |        |       |      |   ✔︎   |
+|  Market1501   | 93.4 (82.9) | 94.2 (86.1) | 94.9 (86.4)| 94.9 (87.6) |
+| DukeMTMC-reid | 84.7 (72.7) | 87.3 (76.0) | 87.9 (77.1)| 89.0 (78.8) |
+|   CUHK03      | | | | |
 
 
 🔥Any other tricks are welcomed！
