@@ -19,7 +19,7 @@ DATALOADER:
 
 SOLVER:
   OPT: 'adam'
-  LOSSTYPE: ('softmax', 'triplet')
+  LOSSTYPE: ('softmax_smooth', 'triplet')
   MAX_EPOCHS: 150
   BASE_LR: 0.00035
   WEIGHT_DECAY: 0.0005

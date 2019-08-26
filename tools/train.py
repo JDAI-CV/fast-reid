@@ -5,7 +5,6 @@
 """
 
 import argparse
-import os
 from bisect import bisect_right
 from torch.backends import cudnn
 
@@ -16,7 +15,6 @@ from data import get_data_bunch
 from engine.trainer import do_train
 from fastai.vision import *
 from modeling import *
-from solver import *
 from utils.logger import setup_logger
 
 
@@ -43,7 +41,7 @@ def train(cfg):
 
     lr_sched = Scheduler(cfg.SOLVER.BASE_LR, cfg.SOLVER.MAX_EPOCHS, lr_multistep)
 
-    loss_func = reidLoss(cfg.SOLVER.LOSSTYPE, cfg.SOLVER.MARGIN)
+    loss_func = reidLoss(cfg.SOLVER.LOSSTYPE, cfg.SOLVER.MARGIN, data_bunch.c)
 
     do_train(
         cfg,
