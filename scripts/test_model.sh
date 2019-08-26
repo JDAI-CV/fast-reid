@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 gpu=0
 
 CUDA_VISIBLE_DEVICES=$gpu python tools/test.py -cfg='configs/softmax_triplet.yml' \

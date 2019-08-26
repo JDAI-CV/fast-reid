@@ -7,7 +7,8 @@
 import errno
 import os
 import sys
-import logging
+
+from .iotools import mkdir_if_missing
 
 
 def setup_logger(name, save_dir, distributed_rank):

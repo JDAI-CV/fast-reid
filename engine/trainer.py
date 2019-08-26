@@ -5,12 +5,8 @@
 """
 
 import logging
-import os
-
-import matplotlib.pyplot as plt
 from fastai.vision import *
 from .callbacks import *
-
 
 def do_train(
         cfg,
@@ -33,6 +29,7 @@ def do_train(
     cb_fns = [
         partial(LRScheduler, lr_sched=lr_sched),
         partial(TestModel, test_labels=test_labels, eval_period=eval_period, num_query=num_query, logger=logger),
+        # partial(LearnerTensorboardWriter, base_dir=output_dir, name='tb')
     ]
 
     learn = Learner(

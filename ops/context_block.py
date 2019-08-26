@@ -6,6 +6,7 @@ from torch import nn
 
 __all__ = ['ContextBlock']
 
+
 def last_zero_init(m):
     if isinstance(m, nn.Sequential):
         nn.init.constant_(m[-1].weight, val=0)

@@ -41,10 +41,10 @@ def get_data_bunch(cfg):
 
     train_img_names = list()
     for d in cfg.DATASETS.NAMES:
-        if d == 'market1501':   train_img_names.extend(_process_dir(market_train_path))
-        elif d == 'duke':       train_img_names.extend(_process_dir(duke_train_path))
-        elif d == 'cuhk03':     train_img_names.extend(CUHK03().train)
-        else:                   raise NameError(f'{d} is not available')
+        if d == 'market1501':  train_img_names.extend(_process_dir(market_train_path))
+        elif d == 'duke':      train_img_names.extend(_process_dir(duke_train_path))
+        elif d == 'cuhk03':    train_img_names.extend(CUHK03().train)
+        else:                  raise NameError(f'{d} is not available')
         
     train_names = [i[0] for i in train_img_names]
 
