@@ -5,9 +5,9 @@
 """
 
 from torch import nn
-from fastai.vision import *
 
 from .backbones import *
+from .losses.cosface import AddMarginProduct
 
 
 def weights_init_kaiming(m):
@@ -46,7 +46,6 @@ class Baseline(nn.Module):
                  pretrain=True, 
                  model_path=''):
         super().__init__()
-        # Todo: add more backbone (ResNext, shufflenet)
         try:    self.base = ResNet.from_name(backbone, last_stride, with_ibn, gcb, stage_with_gcb)
         except: print(f'not support {backbone} backbone')
 
@@ -57,19 +56,21 @@ class Baseline(nn.Module):
 
         self.bottleneck = nn.BatchNorm1d(self.in_planes)
         self.bottleneck.bias.requires_grad_(False)  # no shift
-        self.flatten = Flatten()
-        self.classifier = nn.Linear(self.in_planes, self.num_classes, bias=False)
+        # self.classifier = nn.Linear(self.in_planes, self.num_classes, bias=False)
+        self.classifier = AddMarginProduct(self.in_planes, self.num_classes, s=30, m=0.3)
 
         self.bottleneck.apply(weights_init_kaiming)
-        self.classifier.apply(weights_init_classifier)
+        # self.classifier.apply(weights_init_classifier)
 
-    def forward(self, x):
+    def forward(self, x, label=None):
         global_feat = self.gap(self.base(x))  # (b, 2048, 1, 1)
-        global_feat = self.flatten(global_feat)  # flatten to (bs, 2048)
+        global_feat = global_feat.view(-1, global_feat.size()[1])
         feat = self.bottleneck(global_feat)  # normalize for angular softmax
         if self.training:
-            cls_score = self.classifier(feat)
-            return cls_score, global_feat  # global feature for triplet loss
+            cls_score = self.classifier(feat, label)  # (2*b, class)
+            # adv_score = self.classifier_swap(feat)  # (2*b, 2)
+            # return cls_score, adv_score, global_feat  # global feature for triplet loss
+            return cls_score, global_feat
         else:
             return feat
 

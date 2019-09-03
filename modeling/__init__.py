@@ -4,11 +4,13 @@
 @contact: sherlockliao01@gmail.com
 """
 
+from torch import nn
+
 from .baseline import Baseline
 from .losses import reidLoss
 
 
-def build_model(cfg, num_classes):
+def build_model(cfg, num_classes) -> nn.Module:
     model = Baseline(
         cfg.MODEL.BACKBONE, 
         num_classes, 

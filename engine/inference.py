@@ -16,34 +16,32 @@ def inference(
         cfg,
         model,
         data_bunch,
-        test_labels,
+        tst_loader,
         num_query
 ):
     logger = logging.getLogger("reid_baseline.inference")
     logger.info("Start inferencing")
 
+    model.eval()
+    feats = []
     pids = []
     camids = []
-    for p, c in test_labels:
-        pids.append(p)
-        camids.append(c)
+    for imgs, pid, camid in data_bunch.test_dl:
+        with torch.no_grad():
+            feat = model(imgs.cuda())
+        feats.append(feat)
+        pids.append(pid)
+        camids.append(camid)
+
+    feats = torch.cat(feats, dim=0)
+    qf = feats[:num_query]
+    gf = feats[num_query:]
     q_pids = np.asarray(pids[:num_query])
     g_pids = np.asarray(pids[num_query:])
     q_camids = np.asarray(camids[:num_query])
     g_camids = np.asarray(camids[num_query:])
 
-    feats = []
-    model.eval()
-    for imgs, _ in data_bunch.test_dl:
-        with torch.no_grad():
-            feat = model(imgs)
-        feats.append(feat)
-    feats = torch.cat(feats, dim=0)
-
-    qf = feats[:num_query]
-    gf = feats[num_query:]
     m, n = qf.shape[0], gf.shape[0]
-
     # Cosine distance
     distmat = torch.mm(F.normalize(qf), F.normalize(gf).t())
 

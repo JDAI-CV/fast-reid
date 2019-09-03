@@ -20,7 +20,7 @@ _C = CN()
 # MODEL
 # -----------------------------------------------------------------------------
 _C.MODEL = CN()
-_C.MODEL.DEVICE = "cuda"
+_C.MODEL.GPUS = [0]
 # Model backbone
 _C.MODEL.BACKBONE = 'resnet50'
 # Last stride for backbone
@@ -37,6 +37,7 @@ _C.MODEL.PRETRAIN = True
 _C.MODEL.PRETRAIN_PATH = ''
 # Checkpoint for continuing training
 _C.MODEL.CHECKPOINT = ''
+_C.MODEL.VERSION = ''
 
 #
 # -----------------------------------------------------------------------------
@@ -56,12 +57,15 @@ _C.INPUT.PIXEL_MEAN = [0.485, 0.456, 0.406]
 _C.INPUT.PIXEL_STD = [0.229, 0.224, 0.225]
 # Value of padding size
 _C.INPUT.DO_PAD = True
-_C.INPUT.PADDING_MODE = 'zeros'
+_C.INPUT.PADDING_MODE = 'constant'
 _C.INPUT.PADDING = 10
 # Random lightning and contrast change 
 _C.INPUT.DO_LIGHTING = False
 _C.INPUT.MAX_LIGHTING = 0.2
-_C.INPUT.P_LIGHTING=0.75
+_C.INPUT.P_LIGHTING = 0.75
+# Random erasing
+_C.INPUT.DO_RE = True
+_C.INPUT.RE_PROB = 0.5
 
 # -----------------------------------------------------------------------------
 # Dataset
@@ -76,17 +80,17 @@ _C.DATASETS.TEST_NAMES = "market1501"
 # DataLoader
 # -----------------------------------------------------------------------------
 _C.DATALOADER = CN()
-# Number of data loading threads
-_C.DATALOADER.NUM_WORKERS = 8
 # Sampler for data loading
 _C.DATALOADER.SAMPLER = 'softmax'
-# Number of instance for one batch
-_C.DATALOADER.NUM_INSTANCE = 16
+# Number of instance for each person
+_C.DATALOADER.NUM_INSTANCE = 4
 
 # ---------------------------------------------------------------------------- #
 # Solver
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
+_C.SOLVER.DIST = False
+
 _C.SOLVER.OPT = "adam"
 
 _C.SOLVER.LOSSTYPE = ("softmax",)
@@ -94,7 +98,7 @@ _C.SOLVER.LOSSTYPE = ("softmax",)
 _C.SOLVER.MAX_EPOCHS = 50
 
 _C.SOLVER.BASE_LR = 3e-4
-_C.SOLVER.BIAS_LR_FACTOR = 2
+_C.SOLVER.BIAS_LR_FACTOR = 1
 
 _C.SOLVER.MOMENTUM = 0.9
 
@@ -111,7 +115,6 @@ _C.SOLVER.WARMUP_ITERS = 500
 _C.SOLVER.WARMUP_METHOD = "linear"
 
 _C.SOLVER.CHECKPOINT_PERIOD = 50
-_C.SOLVER.LOG_PERIOD = 100
 _C.SOLVER.EVAL_PERIOD = 50
 # Number of images per batch
 # This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
@@ -122,6 +125,7 @@ _C.SOLVER.IMS_PER_BATCH = 64
 # see 2 images per batch
 _C.TEST = CN()
 _C.TEST.IMS_PER_BATCH = 128
+_C.TEST.NORM = True
 _C.TEST.WEIGHT = ""
 
 # ---------------------------------------------------------------------------- #

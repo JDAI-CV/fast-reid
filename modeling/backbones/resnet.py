@@ -9,8 +9,8 @@ import math
 import torch
 from torch import nn
 from torch.utils import model_zoo
-from ops import *
 
+from ops import *
 
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
@@ -35,16 +35,16 @@ __all__ = ['ResNet']
 class IBN(nn.Module):
     def __init__(self, planes):
         super(IBN, self).__init__()
-        half1 = int(planes/2)
+        half1 = int(planes/8)
         self.half = half1
         half2 = planes - half1
         self.IN = nn.InstanceNorm2d(half1, affine=True)
         self.BN = nn.BatchNorm2d(half2)
     
     def forward(self, x):
-        split = torch.split(x, self.half, 1)
+        split = torch.split(x, self.half, dim=1)
         out1 = self.IN(split[0].contiguous())
-        out2 = self.BN(split[1].contiguous())
+        out2 = self.BN(torch.cat(split[1:], dim=1).contiguous())
         out = torch.cat((out1, out2), 1)
         return out
 
@@ -56,8 +56,10 @@ class Bottleneck(nn.Module):
         super(Bottleneck, self).__init__()
         self.with_gcb = gcb is not None
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
+
         if with_ibn: self.bn1 = IBN(planes)
         else:        self.bn1 = nn.BatchNorm2d(planes)
+
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
                                padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
@@ -150,11 +152,13 @@ class ResNet(nn.Module):
 
     def load_pretrain(self, model_path=''):
         with_model_path = model_path is not ''
-        if not with_model_path:
+        if not with_model_path:  # resnet pretrain
             state_dict = model_zoo.load_url(model_urls[self._model_name])
             state_dict.pop('fc.weight')
             state_dict.pop('fc.bias')
+            self.load_state_dict(state_dict)
         else:
+            # ibn pretrain
             state_dict = torch.load(model_path)['state_dict']
             state_dict.pop('module.fc.weight')
             state_dict.pop('module.fc.bias')
@@ -164,7 +168,7 @@ class ResNet(nn.Module):
                 if self.state_dict()[new_k].shape == state_dict[k].shape:
                     new_state_dict[new_k] = state_dict[k]
             state_dict = new_state_dict
-        self.load_state_dict(state_dict, strict=False)
+            self.load_state_dict(state_dict, strict=False)
 
     def random_init(self):
         for m in self.modules():

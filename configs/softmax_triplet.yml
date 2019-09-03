@@ -3,11 +3,6 @@ MODEL:
   GCB:
     ratio: 0.0625
 
-INPUT:
-  SIZE_TRAIN: [256, 128]
-  SIZE_TEST: [256, 128]
-  FLIP_PROB: 0.5 # random horizontal flip
-  PADDING: 10
 
 DATASETS:
   NAMES: ("market1501",)
@@ -19,9 +14,10 @@ DATALOADER:
 
 SOLVER:
   OPT: 'adam'
-  LOSSTYPE: ('softmax_smooth', 'triplet')
+  LOSSTYPE: ('softmax', 'triplet')
   MAX_EPOCHS: 150
-  BASE_LR: 0.00035
+#  BASE_LR: 0.00035
+  BASE_LR: 0.0007
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.0005
   IMS_PER_BATCH: 64

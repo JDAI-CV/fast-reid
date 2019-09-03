@@ -6,7 +6,7 @@
 from .cuhk03 import CUHK03
 from .dukemtmcreid import DukeMTMCreID
 from .market1501 import Market1501
-from .dataset_loader import ImageDataset
+from .dataset_loader import *
 
 __factory = {
     'market1501': Market1501,
