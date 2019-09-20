@@ -3,19 +3,18 @@
 @author:  liaoxingyu
 @contact: sherlockliao01@gmail.com
 """
-import numpy as np
-import copy
-from collections import defaultdict
-import sys
 import warnings
+from collections import defaultdict
+
+import numpy as np
 
 try:
     from csrc.eval_cylib.eval_metrics_cy import evaluate_cy
     IS_CYTHON_AVAI = True
-    print("Using Cython evaluation code as the backend")
+    # print("Using Cython evaluation code as the backend")
 except ImportError:
     IS_CYTHON_AVAI = False
-    warnings.warn("Cython evaluation is UNAVAILABLE, which is highly recommended")
+    # warnings.warn("Cython evaluation is UNAVAILABLE, which is highly recommended")
 
 
 def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):

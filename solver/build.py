@@ -22,6 +22,7 @@ def make_optimizer(cfg, model):
         params += [{"params": [value], "lr": lr, "weight_decay": weight_decay}]
     if cfg.SOLVER.OPT == 'sgd':     opt_fns = torch.optim.SGD(params, momentum=cfg.SOLVER.MOMENTUM)
     elif cfg.SOLVER.OPT == 'adam':  opt_fns = torch.optim.Adam(params)
+    elif cfg.SOLVER.OPT == 'adamw': opt_fns = torch.optim.AdamW(params)
     else:
         raise NameError(f'optimizer {cfg.SOLVER.OPT} not support')
     return opt_fns

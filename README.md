@@ -5,7 +5,8 @@ A strong baseline (state-of-the-art) for person re-identification.
 We support
 - [x] easy dataset preparation
 - [x] end-to-end training and evaluation
-- [ ] multi-GPU distributed training
+- [x] multi-GPU distributed training
+- [x] fast data loader with prefetcher
 - [ ] fast training speed with fp16
 - [x] fast evaluation with cython
 - [ ] support both image and video reid
@@ -26,7 +27,7 @@ The designed architecture follows this guide [PyTorch-Project-Template](https://
 3. Install dependencies:
     - [pytorch 1.0.0+](https://pytorch.org/)
     - torchvision
-    - [pytorch-lightning](https://github.com/williamFalcon/pytorch-lightning)
+    - tensorboard
     - [yacs](https://github.com/rbgirshick/yacs)
 4. Prepare dataset
 
@@ -56,21 +57,21 @@ The designed architecture follows this guide [PyTorch-Project-Template](https://
 ## Train
 Most of the configuration files that we provide, you can run this command for training market1501
 ```bash
-bash scripts/train_market.sh
+bash scripts/train_openset.sh
 ```
 
 Or you can just run code below to modify your cfg parameters 
 ```bash
-python3 tools/train.py -cfg='configs/softmax.yml' INPUT.SIZE_TRAIN '(256, 128)' INPUT.SIZE_TEST '(256, 128)'
+CUDA_VISIBLE_DEVICES='0,1' python tools/train.py -cfg='configs/softmax_triplet.yml' DATASETS.NAMES '("dukemtmc","market1501",)' SOLVER.IMS_PER_BATCH '256'
 ```
 
 ## Test
 You can test your model's performance directly by running this command
 ```bash
-python3 tools/test.py  DATASET.TEST_NAMES 'duke' \
-                       MODEL.BACKBONE 'resnet50' \
-                       MODEL.WITH_IBN 'True' \
-                       TEST.WEIGHT '/save/trained_model/path'
+CUDA_VISIBLE_DEVICES='0' python tools/test.py -cfg='configs/softmax_triplet.yml' DATASET.TEST_NAMES 'dukemtmc' \
+MODEL.BACKBONE 'resnet50' \
+MODEL.WITH_IBN 'True' \
+TEST.WEIGHT '/save/trained_model/path'
 ```
 
 ## Experiment Results

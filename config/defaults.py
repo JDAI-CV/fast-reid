@@ -20,7 +20,8 @@ _C = CN()
 # MODEL
 # -----------------------------------------------------------------------------
 _C.MODEL = CN()
-_C.MODEL.GPUS = [0]
+_C.MODEL.NAME = 'baseline'
+_C.MODEL.DIST_BACKEND = 'dp'
 # Model backbone
 _C.MODEL.BACKBONE = 'resnet50'
 # Last stride for backbone
@@ -84,6 +85,7 @@ _C.DATALOADER = CN()
 _C.DATALOADER.SAMPLER = 'softmax'
 # Number of instance for each person
 _C.DATALOADER.NUM_INSTANCE = 4
+_C.DATALOADER.NUM_WORKERS = 8
 
 # ---------------------------------------------------------------------------- #
 # Solver
@@ -110,11 +112,11 @@ _C.SOLVER.WEIGHT_DECAY_BIAS = 0.
 _C.SOLVER.GAMMA = 0.1
 _C.SOLVER.STEPS = (30, 55)
 
-_C.SOLVER.WARMUP_FACTOR = 1.0 / 3
-_C.SOLVER.WARMUP_ITERS = 500
+_C.SOLVER.WARMUP_FACTOR = 0.1
+_C.SOLVER.WARMUP_ITERS = 10
 _C.SOLVER.WARMUP_METHOD = "linear"
 
-_C.SOLVER.CHECKPOINT_PERIOD = 50
+_C.SOLVER.LOG_INTERVAL = 30
 _C.SOLVER.EVAL_PERIOD = 50
 # Number of images per batch
 # This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
@@ -131,4 +133,4 @@ _C.TEST.WEIGHT = ""
 # ---------------------------------------------------------------------------- #
 # Misc options
 # ---------------------------------------------------------------------------- #
-_C.OUTPUT_DIR = ""
+_C.OUTPUT_DIR = "logs/"

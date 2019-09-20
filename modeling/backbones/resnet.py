@@ -29,10 +29,13 @@ model_layers = {
     'resnet101': [3, 4, 23, 3]
 }
 
-__all__ = ['ResNet']
+__all__ = ['ResNet', 'Bottleneck']
 
 
 class IBN(nn.Module):
+    """
+    IBN with BN:IN = 7:1
+    """
     def __init__(self, planes):
         super(IBN, self).__init__()
         half1 = int(planes/8)
@@ -151,7 +154,7 @@ class ResNet(nn.Module):
         return x
 
     def load_pretrain(self, model_path=''):
-        with_model_path = model_path is not ''
+        with_model_path = (model_path is not '')
         if not with_model_path:  # resnet pretrain
             state_dict = model_zoo.load_url(model_urls[self._model_name])
             state_dict.pop('fc.weight')

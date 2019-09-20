@@ -33,16 +33,20 @@ class ImageDataset(Dataset):
     """Image Person ReID Dataset"""
 
     def __init__(self, img_items, transform=None, relabel=True):
-        self.img_items,self.tfms,self.relabel = img_items,transform,relabel
+        self.tfms,self.relabel = transform,relabel
+
         self.pid2label = None
         if self.relabel:
+            self.img_items = []
             pids = set()
-            for i, item in enumerate(self.img_items):
-                pid = self.get_pids(item[0])  # path
-                self.img_items[i][1] = pid  # replace pid
+            for i, item in enumerate(img_items):
+                pid = self.get_pids(item[0], item[1])  # path
+                self.img_items.append((item[0], pid, item[2]))  # replace pid
                 pids.add(pid)
             self.pids = pids
             self.pid2label = dict([(p, i) for i, p in enumerate(self.pids)])
+        else:
+            self.img_items = img_items
 
     @property
     def c(self):
@@ -59,14 +63,9 @@ class ImageDataset(Dataset):
         if self.relabel:            pid = self.pid2label[pid]
         return img, pid, camid
 
-    def get_pids(self, file_path):
+    def get_pids(self, file_path, pid):
         """ Suitable for muilti-dataset training """
-        if 'cuhk03' in file_path:
-            prefix = 'cuhk'
-            pid = '_'.join(file_path.split('/')[-1].split('_')[0:2])
-        else:
-            prefix = file_path.split('/')[1]
-            pat = re.compile(r'([-\d]+)_c(\d)')
-            pid, _ = pat.search(file_path).groups()
-        return prefix + '_' + pid
+        if 'cuhk03' in file_path:   prefix = 'cuhk'
+        else:                       prefix = file_path.split('/')[1]
+        return prefix + '_' + str(pid)
 

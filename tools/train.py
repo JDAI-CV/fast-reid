@@ -8,33 +8,17 @@ import argparse
 import os
 import sys
 
-import warnings
-import torch
 from torch.backends import cudnn
 
 sys.path.append(".")
 from config import cfg
-from data import get_dataloader
-from engine.trainer import do_train
 from utils.logger import setup_logger
-
-
-def train(cfg, local_rank):
-    # prepare dataset
-    tng_loader, val_loader, num_classes, num_query = get_dataloader(cfg)
-
-    do_train(
-        cfg,
-        local_rank,
-        tng_loader,
-        val_loader,
-        num_classes,
-        num_query,
-    )
+from engine.trainer import ReidSystem
+from torch.utils.tensorboard import SummaryWriter
 
 
 def main():
-    parser = argparse.ArgumentParser(description="ReID Baseline Training")
+    parser = argparse.ArgumentParser(description="ReID Model Training")
     parser.add_argument(
         '-cfg', "--config_file", 
         default="", 
@@ -42,7 +26,7 @@ def main():
         help="path to config file", 
         type=str
     )
-    parser.add_argument("--local_rank", type=int, default=0)
+    # parser.add_argument("--local_rank", type=int, default=0)
     parser.add_argument("opts", help="Modify config options using the command-line", default=None,
                         nargs=argparse.REMAINDER)
     args = parser.parse_args()
@@ -51,21 +35,21 @@ def main():
     cfg.merge_from_list(args.opts)
 
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
-    cfg.SOLVER.DIST = num_gpus > 1
+    # cfg.SOLVER.DIST = num_gpus > 1
 
-    if cfg.SOLVER.DIST:
-        torch.cuda.set_device(args.local_rank)
-        torch.distributed.init_process_group(
-            backend="nccl", init_method="env://"
-        )
-        torch.cuda.synchronize()
+    # if cfg.SOLVER.DIST:
+    #     torch.cuda.set_device(args.local_rank)
+    #     torch.distributed.init_process_group(
+    #         backend="nccl", init_method="env://"
+    #     )
+    #     torch.cuda.synchronize()
 
     cfg.freeze()
 
-    log_save_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST_NAMES, 'version_'+cfg.MODEL.VERSION)
+    log_save_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST_NAMES, cfg.MODEL.VERSION)
     if not os.path.exists(log_save_dir): os.makedirs(log_save_dir)
 
-    logger = setup_logger("reid_baseline", log_save_dir, 0)
+    logger = setup_logger("reid_baseline.train", log_save_dir, 0)
     logger.info("Using {} GPUs.".format(num_gpus))
     logger.info(args)
 
@@ -73,8 +57,24 @@ def main():
         logger.info("Loaded configuration file {}".format(args.config_file))
     logger.info("Running with config:\n{}".format(cfg))
 
+    logger.info('start training')
     cudnn.benchmark = True
-    train(cfg, args.local_rank)
+
+    writer = SummaryWriter(os.path.join(log_save_dir, 'tf'))
+    reid_system = ReidSystem(cfg, logger, writer)
+    reid_system.train()
+
+    # TODO: continue training
+    # if cfg.MODEL.CHECKPOINT is not '':
+    #     state = torch.load(cfg.MODEL.CHECKPOINT)
+    #     if set(state.keys()) == {'model', 'opt'}:
+    #         model_state = state['model']
+    #         learn.model.load_state_dict(model_state)
+    #         learn.create_opt(0, 0)
+    #         learn.opt.load_state_dict(state['opt'])
+    #     else:
+    #         learn.model.load_state_dict(state['model'])
+    #     logger.info(f'continue training from checkpoint {cfg.MODEL.CHECKPOINT}')
 
 
 if __name__ == '__main__':

@@ -4,12 +4,13 @@
 @contact: liaoxingyu2@jd.com
 """
 
-import copy
-import random
-import re
 from collections import defaultdict
 
+import random
+import copy
 import numpy as np
+import re
+import torch
 from torch.utils.data.sampler import Sampler
 
 
@@ -22,9 +23,7 @@ class RandomIdentitySampler(Sampler):
     - num_instances (int): number of instances per identity in a batch.
     - batch_size (int): number of examples in a batch.
     """
-
     def __init__(self, data_source, batch_size, num_instances):
-        pat = re.compile(r'([-\d]+)_c(\d)')
 
         self.data_source = data_source
         self.batch_size = batch_size
@@ -32,14 +31,7 @@ class RandomIdentitySampler(Sampler):
         self.num_pids_per_batch = self.batch_size // self.num_instances
         self.index_dic = defaultdict(list)
         for index, info in enumerate(self.data_source):
-            fname = info[0]
-            prefix = fname.split('/')[1]
-            try:
-                pid, _ = pat.search(fname).groups()
-            except:  # cuhk03
-                prefix = fname.split('/')[4]
-                pid = '_'.join(fname.split('/')[-1].split('_')[:2])
-            pid = prefix + '_' + pid
+            pid = info[1]
             self.index_dic[pid].append(index)
         self.pids = list(self.index_dic.keys())
 
@@ -78,14 +70,37 @@ class RandomIdentitySampler(Sampler):
                 if len(batch_idxs_dict[pid]) == 0:
                     avai_pids.remove(pid)
 
-        if len(final_idxs) > self.length:
-            final_idxs = final_idxs[:self.length]
-        elif len(final_idxs) < self.length:
-            cycle = self.length - len(final_idxs)
-            final_idxs = final_idxs + final_idxs[:cycle]
-        assert len(final_idxs) == self.length, 'sampler length must match'
+        # if len(final_idxs) > self.length:
+        #     final_idxs = final_idxs[:self.length]
+        # elif len(final_idxs) < self.length:
+        #     cycle = self.length - len(final_idxs)
+        #     final_idxs = final_idxs + final_idxs[:cycle]
+        # assert len(final_idxs) == self.length, 'sampler length must match'
         return iter(final_idxs)
 
     def __len__(self):
         return self.length
 
+# class RandomIdentitySampler(Sampler):
+#     def __init__(self, data_source, num_instances=4):
+#         self.data_source = data_source
+#         self.num_instances = num_instances
+#         self.index_dic = defaultdict(list)
+#         for index, (_, pid) in enumerate(data_source):
+#             self.index_dic[pid].append(index)
+#         self.pids = list(self.index_dic.keys())
+#         self.num_identities = len(self.pids)
+#
+#     def __iter__(self):
+#         indices = torch.randperm(self.num_identities)
+#         ret = []
+#         for i in indices:
+#             pid = self.pids[i]
+#             t = self.index_dic[pid]
+#             replace = False if len(t) >= self.num_instances else True
+#             t = np.random.choice(t, size=self.num_instances, replace=replace)
+#             ret.extend(t)
+#         return iter(ret)
+#
+#     def __len__(self):
+#         return self.num_identities * self.num_instances

@@ -4,17 +4,25 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from fastai.callbacks import *
-from fastai.vision import *
+import torch
+import numpy as np
 import torch.nn.functional as F
+from collections import namedtuple
+import matplotlib.pyplot as plt
+from modeling import build_model
+from data import get_dataloader
+from data.prefetcher import data_prefetcher
 
 
 class ReidInterpretation():
     "Interpretation methods for reid models."
-    def __init__(self, model, tst_loader, num_q):
-        self.model,self.tst_loader,self.num_q = model,tst_loader,num_q
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.model = build_model(cfg, 0)
+        self.tng_dataloader, self.val_dataloader, self.num_classes, self.num_query = get_dataloader(cfg)
         self.model = self.model.cuda()
-        
+        self.model.load_params_wo_fc(torch.load(cfg.TEST.WEIGHT))
+
         self.get_distmat()
     
     def get_distmat(self):
@@ -22,26 +30,28 @@ class ReidInterpretation():
         feats = []
         pids = []
         camids = []
-        for img, pid, camid in self.tst_loader:
+        val_prefetcher = data_prefetcher(self.val_dataloader)
+        batch = val_prefetcher.next()
+        while batch[0] is not None:
+            img, pid, camid = batch
             with torch.no_grad():
                 feat = m(img.cuda())
             feats.append(feat)
-            pids.extend(to_np(pid))
-            camids.extend(to_np(camid))
+            pids.extend(pid.cpu().numpy())
+            camids.extend(np.asarray(camid))
         feats = torch.cat(feats, dim=0)
-        feats = F.normalize(feats)
-        qf = feats[:self.num_q]
-        gf = feats[self.num_q:]
-        self.q_pids = np.asarray(pids[:self.num_q])
-        self.g_pids = np.asarray(pids[self.num_q:])
-        self.q_camids = np.asarray(camids[:self.num_q])
-        self.g_camids = np.asarray(camids[self.num_q:])
-
-        m, n = qf.shape[0], gf.shape[0]
+        if self.cfg.TEST.NORM:
+            feats = F.normalize(feats)
+        qf = feats[:self.num_query]
+        gf = feats[self.num_query:]
+        self.q_pids = np.asarray(pids[:self.num_query])
+        self.g_pids = np.asarray(pids[self.num_query:])
+        self.q_camids = np.asarray(camids[:self.num_query])
+        self.g_camids = np.asarray(camids[self.num_query:])
 
         # Cosine distance
         distmat = torch.mm(qf, gf.t())
-        self.distmat = to_np(distmat)
+        self.distmat = distmat.cpu().numpy()
         self.indices = np.argsort(-self.distmat, axis=1)
         self.matches = (self.g_pids[self.indices] == self.q_pids[:, np.newaxis]).astype(np.int32)
 
@@ -56,61 +66,13 @@ class ReidInterpretation():
         sort_idx = order[keep]
         return cmc, sort_idx
 
-    # def plot_gradcam(self, q_idx):
-    #     m = self.model.eval()
-    #     cmc, sort_idx = self.get_matched_result(q_idx)
-    #     fig,axes = plt.subplots(1, 2, figsize=(10, 5))
-    #     fig.suptitle('query gallery gradcam')
-    #     query_im, _, _ = self.tst_loader.dataset[q_idx]
-    #     de_query_im = Image(denormalize(query_im, tensor(imagenet_stats[0]), tensor(imagenet_stats[1])))
-    #     de_query_im.show(ax=axes.flat[0], title='query')
-    #
-    #     g_idx = self.num_q + sort_idx[0]
-    #     im, _, _ = self.tst_loader.dataset[g_idx]
-    #     de_im = Image(denormalize(im, tensor(imagenet_stats[0]), tensor(imagenet_stats[1])))
-    #     if cmc[0] == 1: label = 'true'
-    #     else:           label = 'false'
-    #     de_im.show(ax=axes.flat[1], title='gallery')
-    #
-    #     query_im = query_im[None,...]
-    #     qf_cont = F.normalize(m(query_im.cuda()).detach(), p=2, dim=1)
-    #     im = im[None,...]
-    #     gf_cont = F.normalize(m(im.cuda()).detach(), p=2, dim=1)
-    #
-    #     with hook_output(m.base) as hook_a:
-    #         with hook_output(m.base) as hook_g:
-    #             qf = m(query_im.cuda())
-    #             sim = torch.mm(F.normalize(qf, p=2, dim=1), gf_cont.t())
-    #             sim.backward()
-    #     acts = hook_a.stored[0].cpu()  # activation maps
-    #     grad = hook_g.stored[0].cpu()
-    #     grad_chan = grad.mean(1).mean(1)
-    #     mult = F.relu(((acts * grad_chan[...,None,None])).sum(0))
-    #
-    #     acts = self.get_actmap(acts)
-    #     sz = list(query_im.shape[-2:])
-    #     axes.flat[0].imshow(mult, alpha=0.4, extent=(0, *sz[::-1], 0), interpolation='bilinear', cmap='jet')
-    #
-    #     with hook_output(m.base) as hook_a:
-    #         with hook_output(m.base) as hook_g:
-    #             gf = m(im.cuda())
-    #             sim = torch.mm(F.normalize(gf, p=2, dim=1), qf_cont.t())
-    #             sim.backward()
-    #     acts = hook_a.stored[0].cpu()  # activation maps
-    #     grad = hook_g.stored[0].cpu()
-    #     grad_chan = grad.mean(1).mean(1)
-    #     mult = F.relu(((acts * grad_chan[...,None,None])).sum(0))
-    #
-    #     acts = self.get_actmap(acts)
-    #     sz = list(im.shape[-2:])
-    #     axes.flat[1].imshow(mult, alpha=0.4, extent=(0, *sz[::-1], 0), interpolation='bilinear', cmap='jet')
-
     def plot_rank_result(self, q_idx, top=5, actmap=False, title="Rank result"):
         m = self.model.eval()
         cmc, sort_idx = self.get_matched_result(q_idx)
         fig,axes = plt.subplots(1, top+1, figsize=(15, 5))
         fig.suptitle('query  similarity/true(false)')
-        query_im, _, _ = self.tst_loader.dataset[q_idx]
+        query_im, _, _ = self.val_dataloader.dataset[q_idx]
+        from ipdb import set_trace; set_trace()
         de_query_im = Image(denormalize(query_im, tensor(imagenet_stats[0]), tensor(imagenet_stats[1])))
         de_query_im.show(ax=axes.flat[0], title='query')
         if actmap:

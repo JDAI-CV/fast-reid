@@ -7,17 +7,16 @@
 import argparse
 import os
 import sys
-from os import mkdir
 
 import torch
 from torch.backends import cudnn
 
 sys.path.append('.')
 from config import cfg
-from data import get_data_bunch
+from data import get_test_dataloader
 from engine.inference import inference
-from utils.logger import setup_logger
 from modeling import build_model
+from utils.logger import setup_logger
 
 
 def main():
@@ -35,11 +34,11 @@ def main():
     if args.config_file != "":
         cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
+    # set pretrian = False to avoid loading weight repeatedly
+    cfg.MODEL.PRETRAIN = False
     cfg.freeze()
 
-    if not os.path.exists(cfg.OUTPUT_DIR): os.makedirs(cfg.OUTPUT_DIR)
-
-    logger = setup_logger("reid_baseline", cfg.OUTPUT_DIR, 0)
+    logger = setup_logger("reid_baseline", False, 0)
     logger.info("Using {} GPUS".format(num_gpus))
     logger.info(args)
 
@@ -49,15 +48,15 @@ def main():
 
     cudnn.benchmark = True
 
-    data_bunch, test_labels, num_query = get_data_bunch(cfg)
-    model = build_model(cfg, data_bunch.c)
-    state_dict = torch.load(cfg.TEST.WEIGHT)
-    model.load_params_wo_fc(state_dict['model'])
-    model.cuda()
-    # model = torch.jit.load("/export/home/lxy/reid_baseline/pcb_model_v0.2.pt")
+    model = build_model(cfg, 0)
+    model = model.cuda()
+    model.load_params_wo_fc(torch.load(cfg.TEST.WEIGHT))
 
-    inference(cfg, model, data_bunch, test_labels, num_query)
+    test_dataloader, num_query = get_test_dataloader(cfg)
+
+    inference(cfg, model, test_dataloader, num_query)
 
 
 if __name__ == '__main__':
     main()
+
