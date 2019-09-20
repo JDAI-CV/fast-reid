@@ -13,10 +13,10 @@ We support
 - [x] cross-dataset evaluation
 - [x] high modular management
 - [x] state-of-the-art performance with simple model
-- [ ] high efficient backbone
+- [x] high efficient backbone
 - [x] advanced training techniques
-- [ ] various loss functions
-- [ ] tensorboard visualization 
+- [x] various loss functions
+- [x] tensorboard visualization 
 
 ## Get Started
 The designed architecture follows this guide [PyTorch-Project-Template](https://github.com/L1aoXingyu/PyTorch-Project-Template), you can check each folder's purpose by yourself.
@@ -26,7 +26,7 @@ The designed architecture follows this guide [PyTorch-Project-Template](https://
 3. Install dependencies:
     - [pytorch 1.0.0+](https://pytorch.org/)
     - torchvision
-    - [fastai](https://github.com/fastai/fastai)
+    - [pytorch-lightning](https://github.com/williamFalcon/pytorch-lightning)
     - [yacs](https://github.com/rbgirshick/yacs)
 4. Prepare dataset
 
