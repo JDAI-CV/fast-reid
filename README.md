@@ -73,18 +73,3 @@ MODEL.BACKBONE 'resnet50' \
 MODEL.WITH_IBN 'True' \
 TEST.WEIGHT '/save/trained_model/path'
 ```
-
-## Experiment Results
-
-| size=(256, 128) batch_size=64 (16 id x 4 imgs) |  |  |  |  |
-| :------: | :-----: | :-----: | :--: | :---: |
-|    softmax?   |    ✔︎   |   ✔︎   | ✔︎ | ✔︎ |
-| label smooth? |  |  | ✔︎ | ✔︎ |
-| triplet?   |        |  ✔︎    | ✔︎ | ✔︎ |
-|    ibn?       |        |       |  ✔︎   |  ✔︎ |
-|    gcnet?     |        |       |      |   ✔︎   |
-|  Market1501   | 93.4 (82.9) | 94.2 (86.1) | 95.4 (87.9) | 95.2 (88.7) |
-| DukeMTMC-reid | 84.7 (72.7) | 87.3 (76.0) | 89.5 (79.7) | 90.0 (80.2) |
-
-
-🔥Any other tricks are welcomed！
