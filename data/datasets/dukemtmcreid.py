@@ -28,19 +28,22 @@ class DukeMTMCreID(ImageDataset):
     dataset_dir = 'DukeMTMC-reID'
     dataset_url = 'http://vision.cs.duke.edu/DukeMTMC/data/misc/DukeMTMC-reID.zip'
 
-    def __init__(self, root='datasets', **kwargs):
+    def __init__(self, root='datasets', return_mask=False, **kwargs):
         # self.root = osp.abspath(osp.expanduser(root))
         self.root = root
+        self.return_mask = return_mask
         self.dataset_dir = osp.join(self.root, self.dataset_dir)
         self.train_dir = osp.join(self.dataset_dir, 'bounding_box_train')
         self.query_dir = osp.join(self.dataset_dir, 'query')
         self.gallery_dir = osp.join(self.dataset_dir, 'bounding_box_test')
+        self.mask_dir = osp.join(self.dataset_dir, 'duke_mask_train')
 
         required_files = [
             self.dataset_dir,
             self.train_dir,
             self.query_dir,
-            self.gallery_dir
+            self.gallery_dir,
+            self.mask_dir,
         ]
         self.check_before_run(required_files)
 
@@ -65,7 +68,12 @@ class DukeMTMCreID(ImageDataset):
             pid, camid = map(int, pattern.search(img_path).groups())
             assert 1 <= camid <= 8
             camid -= 1  # index starts from 0
-            if relabel: pid = pid2label[pid]
-            data.append((img_path, pid, camid))
+            if relabel:
+                pid = pid2label[pid]
+            if self.return_mask:
+                mask_path = osp.join(self.mask_dir, img_path.split('/')[-1].split('.')[0]+'_.png')
+                data.append(((img_path, mask_path), pid, camid))
+            else:
+                data.append((img_path, pid, camid))
 
         return data

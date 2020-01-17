@@ -28,10 +28,14 @@ _C.MODEL.BACKBONE = 'resnet50'
 _C.MODEL.LAST_STRIDE = 1
 # If use IBN block
 _C.MODEL.WITH_IBN = False
+# If use SE block
+_C.MODEL.WITH_SE = False
 # Global Context Block configuration
 _C.MODEL.STAGE_WITH_GCB = (False, False, False, False)
 _C.MODEL.GCB = CN()
 _C.MODEL.GCB.ratio = 1./16.
+# Model head
+_C.MODEL.HEAD = 'softmax'
 # If use imagenet pretrain model
 _C.MODEL.PRETRAIN = True
 # Pretrain model path
@@ -49,6 +53,8 @@ _C.INPUT = CN()
 _C.INPUT.SIZE_TRAIN = [256, 128]
 # Size of the image during test
 _C.INPUT.SIZE_TEST = [256, 128]
+# If use mask
+_C.INPUT.USE_MASK = False
 # Random probability for image horizontal flip
 _C.INPUT.DO_FLIP = True
 _C.INPUT.FLIP_PROB = 0.5
@@ -62,11 +68,19 @@ _C.INPUT.PADDING_MODE = 'constant'
 _C.INPUT.PADDING = 10
 # Random lightning and contrast change 
 _C.INPUT.DO_LIGHTING = False
-_C.INPUT.MAX_LIGHTING = 0.2
-_C.INPUT.P_LIGHTING = 0.75
+_C.INPUT.BRIGHTNESS = 0.4
+_C.INPUT.CONTRAST = 0.4
 # Random erasing
-_C.INPUT.DO_RE = True
-_C.INPUT.RE_PROB = 0.5
+_C.INPUT.RE = CN()
+_C.INPUT.RE.DO = True
+_C.INPUT.RE.PROB = 0.5
+_C.INPUT.RE.MEAN = [0.340*255, 0.326*255, 0.316*255]
+# Cutout
+_C.INPUT.CUTOUT = CN()
+_C.INPUT.CUTOUT.DO = False
+_C.INPUT.CUTOUT.PROB = 0.5
+_C.INPUT.CUTOUT.SIZE = 64
+_C.INPUT.CUTOUT.MEAN = [0, 0, 0]
 
 # -----------------------------------------------------------------------------
 # Dataset
@@ -95,8 +109,6 @@ _C.SOLVER.DIST = False
 
 _C.SOLVER.OPT = "adam"
 
-_C.SOLVER.LOSSTYPE = ("softmax",)
-
 _C.SOLVER.MAX_EPOCHS = 50
 
 _C.SOLVER.BASE_LR = 3e-4
@@ -105,6 +117,7 @@ _C.SOLVER.BIAS_LR_FACTOR = 1
 _C.SOLVER.MOMENTUM = 0.9
 
 _C.SOLVER.MARGIN = 0.3
+_C.SOLVER.CE_SMOOTH_ON = False
 
 _C.SOLVER.WEIGHT_DECAY = 0.0005
 _C.SOLVER.WEIGHT_DECAY_BIAS = 0.

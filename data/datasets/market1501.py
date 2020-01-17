@@ -29,9 +29,10 @@ class Market1501(ImageDataset):
     dataset_dir = ''
     dataset_url = 'http://188.138.127.15:81/Datasets/Market-1501-v15.09.15.zip'
 
-    def __init__(self, root='datasets', market1501_500k=False, **kwargs):
+    def __init__(self, root='datasets', return_mask=False, market1501_500k=False, **kwargs):
         # self.root = osp.abspath(osp.expanduser(root))
         self.root = root
+        self.return_mask = return_mask
         self.dataset_dir = osp.join(self.root, self.dataset_dir)
 
         # allow alternative directory structure
@@ -47,6 +48,7 @@ class Market1501(ImageDataset):
         self.train_dir = osp.join(self.data_dir, 'bounding_box_train')
         self.query_dir = osp.join(self.data_dir, 'query')
         self.gallery_dir = osp.join(self.data_dir, 'bounding_box_test')
+        self.mask_dir = osp.join(self.data_dir, 'market_mask_train/bounding_box_train')
         self.extra_gallery_dir = osp.join(self.data_dir, 'images')
         self.market1501_500k = market1501_500k
 
@@ -54,7 +56,8 @@ class Market1501(ImageDataset):
             self.data_dir,
             self.train_dir,
             self.query_dir,
-            self.gallery_dir
+            self.gallery_dir,
+            self.mask_dir,
         ]
         if self.market1501_500k:
             required_files.append(self.extra_gallery_dir)
@@ -90,7 +93,11 @@ class Market1501(ImageDataset):
             camid -= 1  # index starts from 0
             if relabel:
                 pid = pid2label[pid]
-            data.append((img_path, pid, camid))
+            if self.return_mask:
+                mask_path = osp.join(self.mask_dir, img_path.split('/')[-1].split('.')[0]+'.png')
+                data.append(((img_path, mask_path), pid, camid))
+            else:
+                data.append((img_path, pid, camid))
 
         return data
 

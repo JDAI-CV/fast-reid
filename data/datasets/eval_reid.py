@@ -91,7 +91,7 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
     return all_cmc, mAP
 
 
-def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
+def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, threshold):
     """Evaluation with market1501 metric
     Key: for each query identity, its gallery images from the same camera view are discarded.
     """
@@ -101,14 +101,15 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
         max_rank = num_g
         print("Note: number of gallery samples is quite small, got {}".format(num_g))
 
-    indices = np.argsort(distmat, axis=1)
+    indices = np.argsort(-distmat, axis=1)
     matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
 
     # compute cmc curve for each query
     all_cmc = []
     all_AP = []
+    all_tcmc = []
+    all_tAP = []
     num_valid_q = 0.  # number of valid query
-
     for q_idx in range(num_q):
         # get query pid and camid
         q_pid = q_pids[q_idx]
@@ -125,10 +126,18 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
             # this condition is true when query identity does not appear in gallery
             continue
 
+        # get result larger than threshold
+        t_keep = distmat[q_idx][keep] > threshold
+        t_cmc = raw_cmc[t_keep]
+
+        t_cmc = t_cmc.cumsum()
+        t_cmc[t_cmc > 1] = 1
+
         cmc = raw_cmc.cumsum()
         cmc[cmc > 1] = 1
 
         all_cmc.append(cmc[:max_rank])
+        all_tcmc.append(t_cmc[:max_rank])
         num_valid_q += 1.
 
         # compute average precision
@@ -140,26 +149,36 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
         AP = tmp_cmc.sum() / num_rel
         all_AP.append(AP)
 
+        num_rel = raw_cmc.sum()
+        tmp_cmc = raw_cmc[t_keep].cumsum()
+        tmp_cmc = [x / (i + 1.) for i, x in enumerate(tmp_cmc)]
+        tmp_cmc = np.asarray(tmp_cmc) * raw_cmc[t_keep]
+        tAP = tmp_cmc.sum() / num_rel
+        all_tAP.append(tAP)
+
     assert num_valid_q > 0, "Error: all query identities do not appear in gallery"
 
     all_cmc = np.asarray(all_cmc).astype(np.float32)
     all_cmc = all_cmc.sum(0) / num_valid_q
+    all_tcmc = np.asarray(all_tcmc).astype(np.float32)
+    all_tcmc = all_tcmc.sum(0) / num_valid_q
     mAP = np.mean(all_AP)
+    t_mAP = np.mean(all_tAP)
 
-    return all_cmc, mAP
+    return all_cmc, all_tcmc, mAP, t_mAP
 
 
-def evaluate_py(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03):
+def evaluate_py(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, threshold, use_metric_cuhk03):
     if use_metric_cuhk03:
         return eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
     else:
-        return eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
+        return eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, threshold)
 
 
-def evaluate(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, use_metric_cuhk03=False, use_cython=True):
+def evaluate(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, threshold=0.3, use_metric_cuhk03=False, use_cython=True):
     if use_cython and IS_CYTHON_AVAI:
         return evaluate_cy(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03)
     else:
-        return evaluate_py(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03)
+        return evaluate_py(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, threshold, use_metric_cuhk03)
 
 

@@ -5,7 +5,6 @@
 """
 
 import torchvision.transforms as T
-
 from .transforms import *
 
 
@@ -18,16 +17,28 @@ def build_transforms(cfg, is_train=True):
         if cfg.INPUT.DO_PAD:        
             res.extend([T.Pad(cfg.INPUT.PADDING, padding_mode=cfg.INPUT.PADDING_MODE), 
                         T.RandomCrop(cfg.INPUT.SIZE_TRAIN)])
-        if cfg.INPUT.DO_LIGHTING:   
-            res.append(T.ColorJitter(cfg.INPUT.MAX_LIGHTING, cfg.INPUT.MAX_LIGHTING))
+        # res.append(random_angle_rotate())
+        # res.append(do_color())
         # res.append(T.ToTensor())  # to slow
-        if cfg.INPUT.DO_RE:         
-            res.append(RandomErasing(probability=cfg.INPUT.RE_PROB))
+        if cfg.INPUT.RE.DO:         
+            res.append(RandomErasing(probability=cfg.INPUT.RE.PROB, mean=cfg.INPUT.RE.MEAN))
+        if cfg.INPUT.CUTOUT.DO:
+            res.append(Cutout(probability=cfg.INPUT.CUTOUT.PROB, size=cfg.INPUT.CUTOUT.SIZE, 
+                            mean=cfg.INPUT.CUTOUT.MEAN))
     else:
         res.append(T.Resize(cfg.INPUT.SIZE_TEST))
-        # res.append(T.ToTensor())
     return T.Compose(res)
 
+
+def build_mask_transforms(cfg):
+    res = []
+    res.append(T.Resize(cfg.INPUT.SIZE_TRAIN))
+    if cfg.INPUT.DO_FLIP:
+        res.append(T.RandomHorizontalFlip(p=cfg.INPUT.FLIP_PROB))
+    if cfg.INPUT.DO_PAD:
+        res.extend([T.Pad(cfg.INPUT.PADDING, padding_mode=cfg.INPUT.PADDING_MODE),
+                    T.RandomCrop(cfg.INPUT.SIZE_TRAIN)])
+    return T.Compose(res)
 
 # def build_transforms(cfg):
 #     "Utility func to easily create a list of flip, rotate, `zoom`, warp, lighting transforms."

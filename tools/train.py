@@ -47,9 +47,10 @@ def main():
     cfg.freeze()
 
     log_save_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST_NAMES, cfg.MODEL.VERSION)
-    if not os.path.exists(log_save_dir): os.makedirs(log_save_dir)
+    if not os.path.exists(log_save_dir): 
+        os.makedirs(log_save_dir)
 
-    logger = setup_logger("reid_baseline.train", log_save_dir, 0)
+    logger = setup_logger(cfg.MODEL.VERSION, log_save_dir, 0)
     logger.info("Using {} GPUs.".format(num_gpus))
     logger.info(args)
 

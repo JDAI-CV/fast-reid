@@ -3,9 +3,12 @@ from __future__ import print_function
 import os.path as osp
 import sys
 import timeit
+import numpy as np
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)) + '/../..')
+sys.path.append('../../')
 
+from data.datasets.eval_reid import evaluate
 """
 Test the speed of cython-based evaluation code. The speed improvements
 can be much bigger when using the real reid data, which contains a larger
@@ -54,7 +57,6 @@ print('Python time: {} s'.format(pytime))
 print('Cython time: {} s'.format(cytime))
 print('Cython is {} times faster than python\n'.format(pytime / cytime))
 
-"""
 print("=> Check precision")
 
 num_q = 30
@@ -66,8 +68,7 @@ g_pids = np.random.randint(0, num_g, size=num_g)
 q_camids = np.random.randint(0, 5, size=num_q)
 g_camids = np.random.randint(0, 5, size=num_g)
 
-cmc, mAP = evaluate(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)
-print("Python:\nmAP = {} \ncmc = {}\n".format(mAP, cmc))
+cmc, t_cmc, mAP, t_mAP = evaluate(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)
+print("Python:\nmAP = {} \ncmc = {} \nt_cmc={} \nt_mAP={}\n".format(mAP, cmc, t_cmc, t_mAP))
 cmc, mAP = evaluate(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True)
 print("Cython:\nmAP = {} \ncmc = {}\n".format(mAP, cmc))
-"""

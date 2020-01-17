@@ -8,9 +8,11 @@ import math
 
 import torch
 from torch import nn
+import torch.nn.functional as F
 from torch.utils import model_zoo
 
-from ops import *
+from layers import ContextBlock
+from layers.se_module import SEModule
 
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
@@ -39,6 +41,7 @@ class IBN(nn.Module):
     def __init__(self, planes):
         super(IBN, self).__init__()
         half1 = int(planes/8)
+        # half1 = int(planes/2)
         self.half = half1
         half2 = planes - half1
         self.IN = nn.InstanceNorm2d(half1, affine=True)
@@ -48,6 +51,7 @@ class IBN(nn.Module):
         split = torch.split(x, self.half, dim=1)
         out1 = self.IN(split[0].contiguous())
         out2 = self.BN(torch.cat(split[1:], dim=1).contiguous())
+        # out2 = self.BN(split[1].contiguous())
         out = torch.cat((out1, out2), 1)
         return out
 
@@ -55,16 +59,20 @@ class IBN(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, with_ibn=False, gcb=None, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, with_ibn=False, with_se=False, gcb=None, stride=1, downsample=None,
+                 reduction=16):
         super(Bottleneck, self).__init__()
         self.with_gcb = gcb is not None
+        self.with_se = with_se
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
 
-        if with_ibn: self.bn1 = IBN(planes)
-        else:        self.bn1 = nn.BatchNorm2d(planes)
+        if with_ibn:
+            self.bn1 = IBN(planes)
+        else:
+            self.bn1 = nn.BatchNorm2d(planes)
 
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
-                               padding=1, bias=False)
+                                padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
         self.bn3 = nn.BatchNorm2d(planes * 4)
@@ -75,23 +83,29 @@ class Bottleneck(nn.Module):
         if self.with_gcb:
             gcb_inplanes = planes * self.expansion
             self.context_block = ContextBlock(inplanes=gcb_inplanes, **gcb)
+        # SEModule
+        if self.with_se:
+            self.se_module = SEModule(planes*4, reduciton=reduction)
 
     def forward(self, x):
         residual = x
 
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.relu(out)
+        out = F.relu(out, True)
 
         out = self.conv2(out)
         out = self.bn2(out)
-        out = self.relu(out)
+        out = F.relu(out, True)
 
         out = self.conv3(out)
         out = self.bn3(out)
 
         if self.with_gcb:
             out = self.context_block(out)
+
+        if self.with_se:
+            out = self.se_module(out)
 
         if self.downsample is not None:
             residual = self.downsample(x)
@@ -103,8 +117,9 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, last_stride, with_ibn, gcb, stage_with_gcb, block, layers):
+    def __init__(self, pretrained, last_stride, with_ibn, with_se, gcb, stage_with_gcb, block, layers, model_path):
         scale = 64
+        self.reduction = 16
         self.inplanes = scale
         super().__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
@@ -112,16 +127,20 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, scale, layers[0], with_ibn=with_ibn, 
+        self.layer1 = self._make_layer(block, scale, layers[0], with_ibn=with_ibn, with_se=with_se,
                                        gcb=gcb if stage_with_gcb[0] else None)
-        self.layer2 = self._make_layer(block, scale*2, layers[1], stride=2, with_ibn=with_ibn, 
+        self.layer2 = self._make_layer(block, scale*2, layers[1], stride=2, with_ibn=with_ibn, with_se=with_se,
                                        gcb=gcb if stage_with_gcb[1] else None)
-        self.layer3 = self._make_layer(block, scale*4, layers[2], stride=2, with_ibn=with_ibn, 
+        self.layer3 = self._make_layer(block, scale*4, layers[2], stride=2, with_ibn=with_ibn, with_se=with_se,
                                        gcb=gcb if stage_with_gcb[2] else None)
-        self.layer4 = self._make_layer(block, scale*8, layers[3], stride=last_stride, 
+        self.layer4 = self._make_layer(block, scale*8, layers[3], stride=last_stride, with_se=with_se,
                                        gcb=gcb if stage_with_gcb[3] else None)
+        # self.layer4[2].relu = nn.Identity()
 
-    def _make_layer(self, block, planes, blocks, stride=1, with_ibn=False, gcb=None):
+        if pretrained:
+            self.load_pretrain(model_path)
+
+    def _make_layer(self, block, planes, blocks, stride=1, with_ibn=False, with_se=False, gcb=None):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
@@ -133,10 +152,10 @@ class ResNet(nn.Module):
         layers = []
         if planes == 512:
             with_ibn = False
-        layers.append(block(self.inplanes, planes, with_ibn, gcb, stride, downsample))
+        layers.append(block(self.inplanes, planes, with_ibn, with_se, gcb, stride, downsample, self.reduction))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes, with_ibn, gcb))
+            layers.append(block(self.inplanes, planes, with_ibn, with_se, gcb, reduction=self.reduction))
 
         return nn.Sequential(*layers)
 
@@ -162,16 +181,20 @@ class ResNet(nn.Module):
             self.load_state_dict(state_dict)
         else:
             # ibn pretrain
-            state_dict = torch.load(model_path)['state_dict']
-            state_dict.pop('module.fc.weight')
-            state_dict.pop('module.fc.bias')
-            new_state_dict = {}
-            for k in state_dict:
-                new_k = '.'.join(k.split('.')[1:])  # remove module in name
-                if self.state_dict()[new_k].shape == state_dict[k].shape:
-                    new_state_dict[new_k] = state_dict[k]
-            state_dict = new_state_dict
-            self.load_state_dict(state_dict, strict=False)
+            # state_dict = torch.load(model_path)['state_dict']
+            state_dict = torch.load(model_path)['model']
+            # from ipdb import set_trace; set_trace()
+            # state_dict.pop('module.fc.weight')
+            # state_dict.pop('module.fc.bias')
+            # new_state_dict = {}
+            # for k in state_dict:
+            #     new_k = '.'.join(k.split('.')[1:])  # remove module in name
+            #     if self.state_dict()[new_k].shape == state_dict[k].shape:
+            #         new_state_dict[new_k] = state_dict[k]
+            # state_dict = new_state_dict
+            res = self.load_state_dict(state_dict, strict=False)
+            print(f'missing keys {res.missing_keys}')
+            print(f'unexpected keys {res.unexpected_keys}')
 
     def random_init(self):
         for m in self.modules():
@@ -183,6 +206,7 @@ class ResNet(nn.Module):
                 m.bias.data.zero_()
 
     @classmethod
-    def from_name(cls, model_name, last_stride, with_ibn, gcb, stage_with_gcb):
+    def from_name(cls, model_name, pretrained, last_stride, with_ibn, with_se, gcb, stage_with_gcb, model_path):
         cls._model_name = model_name
-        return ResNet(last_stride, with_ibn, gcb, stage_with_gcb, block=Bottleneck, layers=model_layers[model_name])
+        return ResNet(pretrained, last_stride, with_ibn, with_se, gcb, stage_with_gcb,
+                      block=Bottleneck, layers=model_layers[model_name], model_path=model_path)

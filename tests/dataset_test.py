@@ -5,7 +5,6 @@
 """
 
 import sys
-from fastai.vision import *
 sys.path.append('.')
 from data import get_dataloader
 from config import cfg

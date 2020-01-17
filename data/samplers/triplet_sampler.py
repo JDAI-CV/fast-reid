@@ -24,7 +24,7 @@ class RandomIdentitySampler(Sampler):
     - batch_size (int): number of examples in a batch.
     """
     def __init__(self, data_source, batch_size, num_instances):
-
+    
         self.data_source = data_source
         self.batch_size = batch_size
         self.num_instances = num_instances
@@ -65,7 +65,7 @@ class RandomIdentitySampler(Sampler):
         while len(avai_pids) >= self.num_pids_per_batch:
             selected_pids = random.sample(avai_pids, self.num_pids_per_batch)
             for pid in selected_pids:
-                batch_idxs = batch_idxs_dict[pid].pop(0)
+                batch_idxs = batch_idxs_dict[pid].pop()
                 final_idxs.extend(batch_idxs)
                 if len(batch_idxs_dict[pid]) == 0:
                     avai_pids.remove(pid)
@@ -82,15 +82,19 @@ class RandomIdentitySampler(Sampler):
         return self.length
 
 # class RandomIdentitySampler(Sampler):
-#     def __init__(self, data_source, num_instances=4):
+#     def __init__(self, data_source, batch_size, num_instances=4):
 #         self.data_source = data_source
+#         self.batch_size = batch_size
 #         self.num_instances = num_instances
+#         self.num_pids_per_batch = self.batch_size // self.num_instances
 #         self.index_dic = defaultdict(list)
-#         for index, (_, pid) in enumerate(data_source):
+#         for index, info in enumerate(data_source):
+#             pid = info[1]
 #             self.index_dic[pid].append(index)
+
 #         self.pids = list(self.index_dic.keys())
 #         self.num_identities = len(self.pids)
-#
+
 #     def __iter__(self):
 #         indices = torch.randperm(self.num_identities)
 #         ret = []
@@ -101,6 +105,6 @@ class RandomIdentitySampler(Sampler):
 #             t = np.random.choice(t, size=self.num_instances, replace=replace)
 #             ret.extend(t)
 #         return iter(ret)
-#
+
 #     def __len__(self):
 #         return self.num_identities * self.num_instances

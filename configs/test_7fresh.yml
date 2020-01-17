@@ -1,0 +1,18 @@
+MODEL:
+  NAME: "baseline"
+  BACKBONE: "resnet50"
+  WITH_IBN: True
+
+DATASETS:
+  TEST_NAMES: "7fresh"
+
+INPUT:
+  SIZE_TEST: [256, 128]
+
+DATALOADER:
+  NUM_WORKERS: 16
+
+TEST:
+  IMS_PER_BATCH: 256
+  WEIGHT: "logs/bj/resnet50_ibn_v0.1/ckpts/model_epoch120.pth"
+

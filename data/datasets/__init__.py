@@ -7,13 +7,17 @@ from .cuhk03 import CUHK03
 from .dukemtmcreid import DukeMTMCreID
 from .market1501 import Market1501
 from .msmt17 import MSMT17
+from .bjstation import BjStation
+from .sefreshdata import SeFresh
 from .dataset_loader import *
 
 __factory = {
     'market1501': Market1501,
     'cuhk03': CUHK03,
     'dukemtmc': DukeMTMCreID,
-    'msmt17': MSMT17
+    'msmt17': MSMT17,
+    'bjstation': BjStation,
+    '7fresh': SeFresh
 }
 
 

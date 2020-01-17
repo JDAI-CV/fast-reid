@@ -11,7 +11,6 @@ from bisect import bisect_right
 # separating MultiStepLR with WarmupLR
 # but the current LRScheduler design doesn't allow it
 
-
 class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(
         self,

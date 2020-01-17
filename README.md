@@ -73,3 +73,4 @@ MODEL.BACKBONE 'resnet50' \
 MODEL.WITH_IBN 'True' \
 TEST.WEIGHT '/save/trained_model/path'
 ```
+
