@@ -1,3 +1,3 @@
 GPUS=0,1,2,3
 
-CUDA_VISIBLE_DEVICES=$GPUS python tools/train.py -cfg='configs/mask_model.yml'
+CUDA_VISIBLE_DEVICES=$GPUS python tools/train_net.py -cfg='configs/mask_model.yml'

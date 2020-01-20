@@ -1,0 +1,237 @@
+# encoding: utf-8
+"""
+@author:  liaoxingyu
+@contact: sherlockliao01@gmail.com
+"""
+import copy
+import logging
+import warnings
+from collections import OrderedDict
+from collections import defaultdict
+
+import numpy as np
+import torch
+import torch.nn.functional as F
+
+from .evaluator import DatasetEvaluator
+
+try:
+    from .csrc.eval_cylib.eval_metrics_cy import evaluate_cy
+    IS_CYTHON_AVAI = True
+    print("Using Cython evaluation code as the backend")
+except ImportError:
+    IS_CYTHON_AVAI = False
+    warnings.warn("Cython evaluation is UNAVAILABLE, which is highly recommended")
+
+
+def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
+    """Evaluation with cuhk03 metric
+    Key: one image for each gallery identity is randomly sampled for each query identity.
+    Random sampling is performed num_repeats times.
+    """
+    num_repeats = 10
+    num_q, num_g = distmat.shape
+
+    if num_g < max_rank:
+        max_rank = num_g
+        print("Note: number of gallery samples is quite small, got {}".format(num_g))
+
+    indices = np.argsort(distmat, axis=1)
+    matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
+
+    # compute cmc curve for each query
+    all_cmc = []
+    all_AP = []
+    num_valid_q = 0.  # number of valid query
+
+    for q_idx in range(num_q):
+        # get query pid and camid
+        q_pid = q_pids[q_idx]
+        q_camid = q_camids[q_idx]
+
+        # remove gallery samples that have the same pid and camid with query
+        order = indices[q_idx]
+        remove = (g_pids[order] == q_pid) & (g_camids[order] == q_camid)
+        keep = np.invert(remove)
+
+        # compute cmc curve
+        raw_cmc = matches[q_idx][keep]  # binary vector, positions with value 1 are correct matches
+        if not np.any(raw_cmc):
+            # this condition is true when query identity does not appear in gallery
+            continue
+
+        kept_g_pids = g_pids[order][keep]
+        g_pids_dict = defaultdict(list)
+        for idx, pid in enumerate(kept_g_pids):
+            g_pids_dict[pid].append(idx)
+
+        cmc, AP = 0., 0.
+        for repeat_idx in range(num_repeats):
+            mask = np.zeros(len(raw_cmc), dtype=np.bool)
+            for _, idxs in g_pids_dict.items():
+                # randomly sample one image for each gallery person
+                rnd_idx = np.random.choice(idxs)
+                mask[rnd_idx] = True
+            masked_raw_cmc = raw_cmc[mask]
+            _cmc = masked_raw_cmc.cumsum()
+            _cmc[_cmc > 1] = 1
+            cmc += _cmc[:max_rank].astype(np.float32)
+            # compute AP
+            num_rel = masked_raw_cmc.sum()
+            tmp_cmc = masked_raw_cmc.cumsum()
+            tmp_cmc = [x / (i + 1.) for i, x in enumerate(tmp_cmc)]
+            tmp_cmc = np.asarray(tmp_cmc) * masked_raw_cmc
+            AP += tmp_cmc.sum() / num_rel
+
+        cmc /= num_repeats
+        AP /= num_repeats
+        all_cmc.append(cmc)
+        all_AP.append(AP)
+        num_valid_q += 1.
+
+    assert num_valid_q > 0, "Error: all query identities do not appear in gallery"
+
+    all_cmc = np.asarray(all_cmc).astype(np.float32)
+    all_cmc = all_cmc.sum(0) / num_valid_q
+    mAP = np.mean(all_AP)
+
+    return all_cmc, mAP
+
+
+def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, threshold):
+    """Evaluation with market1501 metric
+    Key: for each query identity, its gallery images from the same camera view are discarded.
+    """
+    num_q, num_g = distmat.shape
+
+    if num_g < max_rank:
+        max_rank = num_g
+        print("Note: number of gallery samples is quite small, got {}".format(num_g))
+
+    indices = np.argsort(-distmat, axis=1)
+    matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
+
+    # compute cmc curve for each query
+    all_cmc = []
+    all_AP = []
+    all_tcmc = []
+    all_tAP = []
+    num_valid_q = 0.  # number of valid query
+    for q_idx in range(num_q):
+        # get query pid and camid
+        q_pid = q_pids[q_idx]
+        q_camid = q_camids[q_idx]
+
+        # remove gallery samples that have the same pid and camid with query
+        order = indices[q_idx]
+        remove = (g_pids[order] == q_pid) & (g_camids[order] == q_camid)
+        keep = np.invert(remove)
+
+        # compute cmc curve
+        raw_cmc = matches[q_idx][keep]  # binary vector, positions with value 1 are correct matches
+        if not np.any(raw_cmc):
+            # this condition is true when query identity does not appear in gallery
+            continue
+
+        # get result larger than threshold
+        t_keep = distmat[q_idx][keep] > threshold
+        t_cmc = raw_cmc[t_keep]
+
+        t_cmc = t_cmc.cumsum()
+        t_cmc[t_cmc > 1] = 1
+
+        cmc = raw_cmc.cumsum()
+        cmc[cmc > 1] = 1
+
+        all_cmc.append(cmc[:max_rank])
+        all_tcmc.append(t_cmc[:max_rank])
+        num_valid_q += 1.
+
+        # compute average precision
+        # reference: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Average_precision
+        num_rel = raw_cmc.sum()
+        tmp_cmc = raw_cmc.cumsum()
+        tmp_cmc = [x / (i + 1.) for i, x in enumerate(tmp_cmc)]
+        tmp_cmc = np.asarray(tmp_cmc) * raw_cmc
+        AP = tmp_cmc.sum() / num_rel
+        all_AP.append(AP)
+
+        num_rel = raw_cmc.sum()
+        tmp_cmc = raw_cmc[t_keep].cumsum()
+        tmp_cmc = [x / (i + 1.) for i, x in enumerate(tmp_cmc)]
+        tmp_cmc = np.asarray(tmp_cmc) * raw_cmc[t_keep]
+        tAP = tmp_cmc.sum() / num_rel
+        all_tAP.append(tAP)
+
+    assert num_valid_q > 0, "Error: all query identities do not appear in gallery"
+
+    all_cmc = np.asarray(all_cmc).astype(np.float32)
+    all_cmc = all_cmc.sum(0) / num_valid_q
+    all_tcmc = np.asarray(all_tcmc).astype(np.float32)
+    all_tcmc = all_tcmc.sum(0) / num_valid_q
+    mAP = np.mean(all_AP)
+    t_mAP = np.mean(all_tAP)
+
+    return all_cmc, all_tcmc, mAP, t_mAP
+
+
+def evaluate_py(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, threshold, use_metric_cuhk03):
+    if use_metric_cuhk03:
+        return eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
+    else:
+        return eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, threshold)
+
+
+def evaluate(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, threshold=0.3, use_metric_cuhk03=False,
+             use_cython=True):
+    if use_cython and IS_CYTHON_AVAI:
+        return evaluate_cy(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03)
+    else:
+        return evaluate_py(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, threshold, use_metric_cuhk03)
+
+
+class ReidEvaluator(DatasetEvaluator):
+    def __init__(self, cfg, num_query):
+        self._test_norm = cfg.TEST.NORM
+        self._num_query = num_query
+        self._logger = logging.getLogger(__name__)
+
+        self.features = []
+        self.pids = []
+        self.camids = []
+
+    def reset(self):
+        self.features = []
+        self.pids = []
+        self.camids = []
+
+    def process(self, inputs, outputs):
+        self.features.append(outputs['pred_features'].cpu())
+        for input in inputs:
+            self.pids.append(input['targets'])
+            self.camids.append(input['camid'])
+
+    def evaluate(self):
+        features = torch.cat(self.features, dim=0)
+        if self._test_norm:
+            features = F.normalize(features, dim=0)
+
+        # query feature, person ids and camera ids
+        query_features = features[:self._num_query]
+        query_pids = self.pids[:self._num_query]
+        query_camids = self.camids[:self._num_query]
+
+        # gallery features, person ids and camera ids
+        gallery_features = features[self._num_query:]
+        gallery_pids = self.pids[self._num_query:]
+        gallery_camids = self.camids[self._num_query:]
+
+        self._results = OrderedDict()
+
+        cos_dist = torch.mm(query_features, gallery_features.t()).numpy()
+        cmc, mAP = evaluate(1-cos_dist, query_pids, gallery_pids, query_camids, gallery_camids)
+        for r in [1, 5, 10]:
+            self._results['Rank-{}'.format(r)] = cmc[r-1]
+        self._results['mAP'] = mAP
+
+        return copy.deepcopy(self._results)
