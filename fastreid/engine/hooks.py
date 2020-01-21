@@ -11,12 +11,12 @@ from collections import Counter
 
 import torch
 
-import fastreid.utils.comm as comm
-from fastreid.utils.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
-from fastreid.utils.events import EventStorage, EventWriter
-from fastreid.evaluation.testing import flatten_results_dict
-from fastreid.utils.file_io import PathManager
-from fastreid.utils.timer import Timer
+from ..utils import comm
+from ..utils.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
+from ..utils.events import EventStorage, EventWriter
+from ..evaluation.testing import flatten_results_dict
+from ..utils.file_io import PathManager
+from ..utils.timer import Timer
 from .train_loop import HookBase
 
 __all__ = [

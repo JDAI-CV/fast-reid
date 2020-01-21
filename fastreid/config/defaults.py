@@ -20,26 +20,24 @@ _C = CN()
 # MODEL
 # -----------------------------------------------------------------------------
 _C.MODEL = CN()
-_C.MODEL.DIST_BACKEND = 'dp'
-_C.MODEL.DEVICE = 'cuda'
-# Model backbone
-_C.MODEL.BACKBONE = 'resnet50'
-# Last stride for backbone
-_C.MODEL.LAST_STRIDE = 1
-# If use IBN block
-_C.MODEL.WITH_IBN = False
-# If use SE block
-_C.MODEL.WITH_SE = False
-# Global Context Block configuration
-_C.MODEL.STAGE_WITH_GCB = (False, False, False, False)
-_C.MODEL.GCB = CN()
-_C.MODEL.GCB.ratio = 1./16.
-# If use ImageNet pretrain model
-_C.MODEL.PRETRAIN = True
-# Pretrain model path
-_C.MODEL.PRETRAIN_PATH = ''
 _C.MODEL.META_ARCHITECTURE = 'Baseline'
 
+# ---------------------------------------------------------------------------- #
+# Backbone options
+# ---------------------------------------------------------------------------- #
+_C.MODEL.BACKBONE = CN()
+
+_C.MODEL.BACKBONE.NAME = "build_resnet_backbone"
+_C.MODEL.BACKBONE.DEPTH = 50
+_C.MODEL.BACKBONE.LAST_STRIDE = 1
+# If use IBN block in backbone
+_C.MODEL.BACKBONE.WITH_IBN = False
+# If use SE block in backbone
+_C.MODEL.BACKBONE.WITH_SE = False
+# If use ImageNet pretrain model
+_C.MODEL.BACKBONE.PRETRAIN = True
+# Pretrain model path
+_C.MODEL.BACKBONE.PRETRAIN_PATH = ''
 
 # ---------------------------------------------------------------------------- #
 # REID HEADS options
@@ -87,7 +85,7 @@ _C.INPUT.CONTRAST = 0.4
 _C.INPUT.RE = CN()
 _C.INPUT.RE.DO = True
 _C.INPUT.RE.PROB = 0.5
-_C.INPUT.RE.MEAN = [0.485, 0.456, 0.406]
+_C.INPUT.RE.MEAN = [0.340*255, 0.326*255, 0.316*255]
 # Cutout
 _C.INPUT.CUTOUT = CN()
 _C.INPUT.CUTOUT.DO = False

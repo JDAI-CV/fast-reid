@@ -1,14 +1,19 @@
 MODEL:
-  BACKBONE: "resnet50"
-  WITH_IBN: False
-  PRETRAIN: True
+  META_ARCHITECTURE: 'Baseline'
+
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+    DEPTH: 50
+    LAST_STRIDE: 1
+    WITH_IBN: False
+    PRETRAIN: True
 
   REID_HEADS:
-    MARGIN: 0.0
+    MARGIN: 0.3
 
 DATASETS:
   NAMES: ("market1501",)
-  TEST: ("market1501",)
+  TEST: ("market1501", "dukemtmc")
 
 INPUT:
   SIZE_TRAIN: [256, 128]
@@ -31,7 +36,6 @@ DATALOADER:
 
 SOLVER:
   OPT: "adam"
-  MOMENTUM: 0.9
   MAX_ITER: 18000
   BASE_LR: 0.00035
   WEIGHT_DECAY: 0.0005
@@ -45,6 +49,7 @@ SOLVER:
   WARMUP_ITERS: 2000
 
   LOG_PERIOD: 100
+  CHECKPOINT_PERIOD: 2000
 
 TEST:
   EVAL_PERIOD: 2000

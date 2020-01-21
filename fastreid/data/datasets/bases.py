@@ -52,8 +52,8 @@ class Dataset(object):
             raise ValueError('Invalid mode. Got {}, but expected to be '
                              'one of [train | query | gallery]'.format(self.mode))
 
-        if self.verbose:
-            self.show_summary()
+        # if self.verbose:
+        #     self.show_summary()
 
     def __getitem__(self, index):
         raise NotImplementedError

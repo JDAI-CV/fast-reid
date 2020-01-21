@@ -5,6 +5,7 @@
 """
 
 import sys
+
 sys.path.append('.')
 from fastreid.config import cfg
 from fastreid.engine import DefaultTrainer, default_argument_parser, default_setup

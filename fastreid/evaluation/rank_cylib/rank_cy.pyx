@@ -1,8 +1,10 @@
+# cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
+# credits: https://github.com/KaiyangZhou/deep-person-reid/blob/master/torchreid/metrics/rank_cylib/rank_cy.pyx
+
 import cython
 import numpy as np
 cimport numpy as np
 from collections import defaultdict
-import random
 
 
 """

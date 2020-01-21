@@ -11,14 +11,16 @@ from .common import ReidDataset
 from .datasets import init_dataset
 from .samplers import RandomIdentitySampler
 from .transforms import build_transforms
+import logging
 
 
 def build_reid_train_loader(cfg):
     train_transforms = build_transforms(cfg, is_train=True)
 
-    print('prepare training set ...')
+    logger = logging.getLogger(__name__)
     train_img_items = list()
     for d in cfg.DATASETS.NAMES:
+        logger.info('prepare training set {}'.format(d))
         dataset = init_dataset(d)
         train_img_items.extend(dataset.train)
     # for d in ['market1501', 'dukemtmc', 'msmt17']:
@@ -31,7 +33,7 @@ def build_reid_train_loader(cfg):
     # num_workers = 0
     data_sampler = None
     if cfg.DATALOADER.SAMPLER == 'triplet':
-        data_sampler = RandomIdentitySampler(train_set.img_items, cfg.SOLVER.IMS_PER_BATCH, cfg.DATALOADER.NUM_INSTANCE)
+        data_sampler = RandomIdentitySampler(train_set.img_items, cfg.DATALOADER.NUM_INSTANCE)
 
     train_loader = DataLoader(train_set, cfg.SOLVER.IMS_PER_BATCH, shuffle=(data_sampler is None),
                               num_workers=num_workers, sampler=data_sampler, collate_fn=trivial_batch_collator,
@@ -45,12 +47,13 @@ def build_reid_train_loader(cfg):
     return train_loader
 
 
-def build_reid_test_loader(cfg):
+def build_reid_test_loader(cfg, dataset_name):
     # tng_tfms = build_transforms(cfg, is_train=True)
     test_transforms = build_transforms(cfg, is_train=False)
 
-    print('prepare test set ...')
-    dataset = init_dataset(cfg.DATASETS.TEST[0])
+    logger = logging.getLogger(__name__)
+    logger.info('prepare test set {}'.format(dataset_name))
+    dataset = init_dataset(dataset_name)
     query_names, gallery_names = dataset.query, dataset.gallery
     test_img_items = list(set(query_names) | set(gallery_names))
 

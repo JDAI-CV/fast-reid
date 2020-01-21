@@ -1,7 +1,8 @@
 from distutils.core import setup
 from distutils.extension import Extension
-from Cython.Build import cythonize
+
 import numpy as np
+from Cython.Build import cythonize
 
 
 def numpy_include():
@@ -11,10 +12,12 @@ def numpy_include():
         numpy_include = np.get_numpy_include()
     return numpy_include
 
+
 ext_modules = [
-    Extension('eval_metrics_cy',
-              ['eval_metrics_cy.pyx'],
-              include_dirs=[numpy_include()],
+    Extension(
+        'rank_cy',
+        ['rank_cy.pyx'],
+        include_dirs=[numpy_include()],
     )
 ]
 

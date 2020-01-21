@@ -2,12 +2,10 @@
 import datetime
 import logging
 import time
-from collections import OrderedDict
 from contextlib import contextmanager
 
 import torch
 
-from ..utils.comm import is_main_process
 from ..utils.logger import log_every_n_seconds
 
 
@@ -27,7 +25,10 @@ class DatasetEvaluator:
         """
         pass
 
-    def process(self, input, output):
+    def preprocess_inputs(self, inputs):
+        pass
+
+    def process(self, output):
         """
         Process an input/output pair.
         Args:
@@ -50,31 +51,31 @@ class DatasetEvaluator:
         pass
 
 
-class DatasetEvaluators(DatasetEvaluator):
-    def __init__(self, evaluators):
-        assert len(evaluators)
-        super().__init__()
-        self._evaluators = evaluators
-
-    def reset(self):
-        for evaluator in self._evaluators:
-            evaluator.reset()
-
-    def process(self, input, output):
-        for evaluator in self._evaluators:
-            evaluator.process(input, output)
-
-    def evaluate(self):
-        results = OrderedDict()
-        for evaluator in self._evaluators:
-            result = evaluator.evaluate()
-            if is_main_process() and result is not None:
-                for k, v in result.items():
-                    assert (
-                            k not in results
-                    ), "Different evaluators produce results with the same key {}".format(k)
-                    results[k] = v
-        return results
+# class DatasetEvaluators(DatasetEvaluator):
+#     def __init__(self, evaluators):
+#         assert len(evaluators)
+#         super().__init__()
+#         self._evaluators = evaluators
+#
+#     def reset(self):
+#         for evaluator in self._evaluators:
+#             evaluator.reset()
+#
+#     def process(self, input, output):
+#         for evaluator in self._evaluators:
+#             evaluator.process(input, output)
+#
+#     def evaluate(self):
+#         results = OrderedDict()
+#         for evaluator in self._evaluators:
+#             result = evaluator.evaluate()
+#             if is_main_process() and result is not None:
+#                 for k, v in result.items():
+#                     assert (
+#                             k not in results
+#                     ), "Different evaluators produce results with the same key {}".format(k)
+#                     results[k] = v
+#         return results
 
 
 def inference_on_dataset(model, data_loader, evaluator):
@@ -94,7 +95,7 @@ def inference_on_dataset(model, data_loader, evaluator):
     Returns:
         The return value of `evaluator.evaluate()`
     """
-    num_devices = torch.distributed.get_world_size() if torch.distributed.is_initialized() else 1
+    # num_devices = torch.distributed.get_world_size() if torch.distributed.is_initialized() else 1
     logger = logging.getLogger(__name__)
     logger.info("Start inference on {} images".format(len(data_loader.dataset)))
 
@@ -111,11 +112,12 @@ def inference_on_dataset(model, data_loader, evaluator):
                 total_compute_time = 0
 
             start_compute_time = time.perf_counter()
-            outputs = model(inputs)
+            inputs = evaluator.preprocess_inputs(inputs)
+            outputs = model(*inputs)
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             total_compute_time += time.perf_counter() - start_compute_time
-            evaluator.process(inputs, outputs)
+            evaluator.process(*outputs)
 
             iters_after_start = idx + 1 - num_warmup * int(idx >= num_warmup)
             seconds_per_img = total_compute_time / iters_after_start
@@ -135,14 +137,14 @@ def inference_on_dataset(model, data_loader, evaluator):
     total_time_str = str(datetime.timedelta(seconds=total_time))
     # NOTE this format is parsed by grep
     logger.info(
-        "Total inference time: {} ({:.6f} s / img per device, on {} devices)".format(
-            total_time_str, total_time / (total - num_warmup), num_devices
+        "Total inference time: {} ({:.6f} s / img per device)".format(
+            total_time_str, total_time / (total - num_warmup)
         )
     )
     total_compute_time_str = str(datetime.timedelta(seconds=int(total_compute_time)))
     logger.info(
-        "Total inference pure compute time: {} ({:.6f} s / img per device, on {} devices)".format(
-            total_compute_time_str, total_compute_time / (total - num_warmup), num_devices
+        "Total inference pure compute time: {} ({:.6f} s / img per device)".format(
+            total_compute_time_str, total_compute_time / (total - num_warmup)
         )
     )
 

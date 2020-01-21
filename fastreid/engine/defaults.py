@@ -13,32 +13,33 @@ import logging
 import os
 from collections import OrderedDict
 import torch
-from fastreid.utils.file_io import PathManager
+from ..utils.file_io import PathManager
 # from fvcore.nn.precise_bn import get_bn_modules
 from torch.nn import DataParallel
-from fastreid.evaluation import (
+from ..evaluation import (
     DatasetEvaluator,
     inference_on_dataset,
     print_csv_format,
     verify_results,
-
 )
 
 # import torchvision.transforms as T
-from fastreid.utils.checkpoint import Checkpointer
-from fastreid.data import (
+from ..utils.checkpoint import Checkpointer
+from ..data import (
     build_reid_test_loader,
     build_reid_train_loader,
 )
 
-from fastreid.modeling.meta_arch import build_model
-from fastreid.solver import build_lr_scheduler, build_optimizer
-from fastreid.utils import comm
-from fastreid.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
-from fastreid.utils.logger import setup_logger
+from ..modeling.meta_arch import build_model
+from ..modeling.heads.baseline_heads import StandardOutputs
+from ..solver import build_lr_scheduler, build_optimizer
+from ..utils import comm
+from ..utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
+from ..utils.logger import setup_logger
 
 from . import hooks
 from .train_loop import SimpleTrainer
+import numpy as np
 
 __all__ = ["default_argument_parser", "default_setup", "DefaultPredictor", "DefaultTrainer"]
 
@@ -49,7 +50,7 @@ def default_argument_parser():
     Returns:
         argparse.ArgumentParser:
     """
-    parser = argparse.ArgumentParser(description="FastReID Training")
+    parser = argparse.ArgumentParser(description="fastreid Training")
     parser.add_argument("--config-file", default="", metavar="FILE", help="path to config file")
     parser.add_argument(
         "--resume",
@@ -57,17 +58,17 @@ def default_argument_parser():
         help="whether to attempt to resume from the checkpoint directory",
     )
     parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
-    parser.add_argument("--num-gpus", type=int, default=1, help="number of gpus *per machine*")
-    parser.add_argument("--num-machines", type=int, default=1)
-    parser.add_argument(
-        "--machine-rank", type=int, default=0, help="the rank of this machine (unique per machine)"
-    )
+    # parser.add_argument("--num-gpus", type=int, default=1, help="number of gpus *per machine*")
+    # parser.add_argument("--num-machines", type=int, default=1)
+    # parser.add_argument(
+    #     "--machine-rank", type=int, default=0, help="the rank of this machine (unique per machine)"
+    # )
 
     # PyTorch still may leave orphan processes in multi-gpu training.
     # Therefore we use a deterministic way to obtain port,
     # so that users are aware of orphan processes by seeing the port occupied.
-    port = 2 ** 15 + 2 ** 14 + hash(os.getuid()) % 2 ** 14
-    parser.add_argument("--dist-url", default="tcp://127.0.0.1:{}".format(port))
+    # port = 2 ** 15 + 2 ** 14 + hash(os.getuid()) % 2 ** 14
+    # parser.add_argument("--dist-url", default="tcp://127.0.0.1:{}".format(port))
     parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
@@ -221,13 +222,15 @@ class DefaultTrainer(SimpleTrainer):
         model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)
         data_loader = self.build_train_loader(cfg)
+        preprocess_inputs = self.build_preprocess_inputs()
+        postprocess_outputs = self.build_postprocess_outputs(cfg)
 
         # For training, wrap with DDP. But don't need this for inference.
         # if comm.get_world_size() > 1:
         #     model = DistributedDataParallel(model, device_ids=[comm.get_local_rank()])
-        # For training, wrap with DP. But don't need this for inference.
-        model = DataParallel(model)
-        super().__init__(model, data_loader, optimizer)
+        model = DataParallel(model).cuda()
+        # model = model.cuda()
+        super().__init__(model, data_loader, optimizer, preprocess_inputs, postprocess_outputs)
 
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)
         # Assume no other objects need to be checkpointed.
@@ -291,8 +294,8 @@ class DefaultTrainer(SimpleTrainer):
         # be saved by checkpointer.
         # This is not always the best: if checkpointing has a different frequency,
         # some checkpoints may have more precise statistics than others.
-        if comm.is_main_process():
-            ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
+        # if comm.is_main_process():
+        ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
 
         def test_and_save_results():
             self._last_eval_results = self.test(self.cfg, self.model)
@@ -302,9 +305,9 @@ class DefaultTrainer(SimpleTrainer):
         # we can use the saved checkpoint to debug.
         ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results))
 
-        if comm.is_main_process():
-            # run writers in the end, so that evaluation metrics are written
-            ret.append(hooks.PeriodicWriter(self.build_writers(), cfg.SOLVER.LOG_PERIOD))
+        # if comm.is_main_process():
+        # run writers in the end, so that evaluation metrics are written
+        ret.append(hooks.PeriodicWriter(self.build_writers(), cfg.SOLVER.LOG_PERIOD))
         return ret
 
     def build_writers(self):
@@ -339,9 +342,28 @@ class DefaultTrainer(SimpleTrainer):
             OrderedDict of results, if evaluation is enabled. Otherwise None.
         """
         super().train(self.start_iter, self.max_iter)
-        if hasattr(self, "_last_eval_results") and comm.is_main_process():
-            verify_results(self.cfg, self._last_eval_results)
-            return self._last_eval_results
+        # if hasattr(self, "_last_eval_results") and comm.is_main_process():
+        #     verify_results(self.cfg, self._last_eval_results)
+        #     return self._last_eval_results
+
+    @classmethod
+    def build_preprocess_inputs(cls):
+        def preprocess_inputs(batched_inputs):
+            # images
+            images = [x["images"] for x in batched_inputs]
+            w = images[0].size[0]
+            h = images[0].size[1]
+            tensor = torch.zeros((len(images), 3, h, w), dtype=torch.uint8)
+            for i, image in enumerate(images):
+                image = np.asarray(image, dtype=np.uint8)
+                numpy_array = np.rollaxis(image, 2)
+                tensor[i] += torch.from_numpy(numpy_array)
+            tensor = tensor.to(dtype=torch.float32)
+            # labels
+            labels = torch.stack([torch.tensor(x["targets"]).long().to(torch.long) for x in batched_inputs])
+            return tensor, labels
+
+        return preprocess_inputs
 
     @classmethod
     def build_model(cls, cfg):
@@ -352,9 +374,13 @@ class DefaultTrainer(SimpleTrainer):
         Overwrite it if you'd like a different model.
         """
         model = build_model(cfg)
-        logger = logging.getLogger(__name__)
-        logger.info("Model:\n{}".format(model))
+        # logger = logging.getLogger(__name__)
+        # logger.info("Model:\n{}".format(model))
         return model
+
+    @classmethod
+    def build_postprocess_outputs(cls, cfg):
+        return StandardOutputs(cfg)
 
     @classmethod
     def build_optimizer(cls, cfg, model):
@@ -385,14 +411,14 @@ class DefaultTrainer(SimpleTrainer):
         return build_reid_train_loader(cfg)
 
     @classmethod
-    def build_test_loader(cls, cfg):
+    def build_test_loader(cls, cfg, dataset_name):
         """
         Returns:
             iterable
         It now calls :func:`detectron2.data.build_detection_test_loader`.
         Overwrite it if you'd like a different data loader.
         """
-        return build_reid_test_loader(cfg)
+        return build_reid_test_loader(cfg, dataset_name)
 
     @classmethod
     def build_evaluator(cls, cfg, num_query):
@@ -429,7 +455,7 @@ class DefaultTrainer(SimpleTrainer):
 
         results = OrderedDict()
         for idx, dataset_name in enumerate(cfg.DATASETS.TEST):
-            data_loader, num_query = cls.build_test_loader(cfg)
+            data_loader, num_query = cls.build_test_loader(cfg, dataset_name)
             # When evaluators are passed in as arguments,
             # implicitly assume that evaluators can be created before data_loader.
             if evaluators is not None:

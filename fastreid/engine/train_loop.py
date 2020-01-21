@@ -158,7 +158,7 @@ class SimpleTrainer(TrainerBase):
     or write your own training loop.
     """
 
-    def __init__(self, model, data_loader, optimizer):
+    def __init__(self, model, data_loader, optimizer, preprocess_inputs, postprocess_outputs):
         """
         Args:
             model: a torch Module. Takes a data from data_loader and returns a
@@ -180,6 +180,8 @@ class SimpleTrainer(TrainerBase):
         self.data_loader = data_loader
         self._data_loader_iter = iter(data_loader)
         self.optimizer = optimizer
+        self.preprocess_inputs = preprocess_inputs
+        self.postprocess_outputs = postprocess_outputs
 
     def run_step(self):
         """
@@ -196,7 +198,9 @@ class SimpleTrainer(TrainerBase):
         """
         If your want to do something with the heads, you can wrap the model.
         """
-        loss_dict = self.model(data)
+        inputs = self.preprocess_inputs(data)
+        outputs = self.model(*inputs)
+        loss_dict = self.postprocess_outputs.losses(*outputs)
         losses = sum(loss for loss in loss_dict.values())
         self._detect_anomaly(losses, loss_dict)
 
@@ -239,19 +243,20 @@ class SimpleTrainer(TrainerBase):
         # supported method in detectron2.
         all_metrics_dict = comm.gather(metrics_dict)
 
-        if comm.is_main_process():
-            if "data_time" in all_metrics_dict[0]:
-                # data_time among workers can have high variance. The actual latency
-                # caused by data_time is the maximum among workers.
-                data_time = np.max([x.pop("data_time") for x in all_metrics_dict])
-                self.storage.put_scalar("data_time", data_time)
+        # if comm.is_main_process():
+        if "data_time" in all_metrics_dict[0]:
+            # data_time among workers can have high variance. The actual latency
+            # caused by data_time is the maximum among workers.
+            data_time = np.max([x.pop("data_time") for x in all_metrics_dict])
+            self.storage.put_scalar("data_time", data_time)
 
-            # average the rest metrics
-            metrics_dict = {
-                k: np.mean([x[k] for x in all_metrics_dict]) for k in all_metrics_dict[0].keys()
-            }
-            total_losses_reduced = sum(loss for loss in metrics_dict.values())
+        # average the rest metrics
+        metrics_dict = {
+            k: np.mean([x[k] for x in all_metrics_dict]) for k in all_metrics_dict[0].keys()
+        }
+        total_losses_reduced = sum(loss for loss in metrics_dict.values())
 
-            self.storage.put_scalar("total_loss", total_losses_reduced)
-            if len(metrics_dict) > 1:
-                self.storage.put_scalars(**metrics_dict)
+        self.storage.put_scalar("total_loss", total_losses_reduced)
+        if len(metrics_dict) > 1:
+            self.storage.put_scalars(**metrics_dict)
+
