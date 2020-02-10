@@ -5,14 +5,15 @@
 """
 
 import glob
-import re
-
 import os.path as osp
-
-from .bases import ImageDataset
+import re
 import warnings
 
+from .bases import ImageDataset
+from ..datasets import DATASET_REGISTRY
 
+
+@DATASET_REGISTRY.register()
 class Market1501(ImageDataset):
     """Market1501.
 

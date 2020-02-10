@@ -3,15 +3,14 @@
 @author:  l1aoxingyu
 @contact: sherlockliao01@gmail.com
 """
-import torch
-import numpy as np
+import logging
+
 from torch.utils.data import DataLoader
 
 from .common import ReidDataset
-from .datasets import init_dataset
+from .datasets import DATASET_REGISTRY
 from .samplers import RandomIdentitySampler
 from .transforms import build_transforms
-import logging
 
 
 def build_reid_train_loader(cfg):
@@ -21,7 +20,7 @@ def build_reid_train_loader(cfg):
     train_img_items = list()
     for d in cfg.DATASETS.NAMES:
         logger.info('prepare training set {}'.format(d))
-        dataset = init_dataset(d)
+        dataset = DATASET_REGISTRY.get(d)()
         train_img_items.extend(dataset.train)
 
     train_set = ReidDataset(train_img_items, train_transforms, relabel=True)
@@ -45,9 +44,9 @@ def build_reid_test_loader(cfg, dataset_name):
 
     logger = logging.getLogger(__name__)
     logger.info('prepare test set {}'.format(dataset_name))
-    dataset = init_dataset(dataset_name)
+    dataset = DATASET_REGISTRY.get(dataset_name)()
     query_names, gallery_names = dataset.query, dataset.gallery
-    test_img_items = list(set(query_names) | set(gallery_names))
+    test_img_items = query_names + gallery_names
 
     num_workers = cfg.DATALOADER.NUM_WORKERS
     batch_size = cfg.TEST.IMS_PER_BATCH
@@ -65,7 +64,6 @@ def build_reid_test_loader(cfg, dataset_name):
     test_loader = DataLoader(test_set, batch_size, num_workers=num_workers,
                              collate_fn=trivial_batch_collator, pin_memory=True)
     return test_loader, len(query_names)
-    # return tng_dataloader, test_dataloader, len(query_names)
 
 
 def trivial_batch_collator(batch):

@@ -12,34 +12,33 @@ import argparse
 import logging
 import os
 from collections import OrderedDict
+
+import numpy as np
 import torch
-from ..utils.file_io import PathManager
 # from fvcore.nn.precise_bn import get_bn_modules
 from torch.nn import DataParallel
-from ..evaluation import (
-    DatasetEvaluator,
-    inference_on_dataset,
-    print_csv_format,
-    verify_results,
-)
 
-# import torchvision.transforms as T
-from ..utils.checkpoint import Checkpointer
+from . import hooks
+from .train_loop import SimpleTrainer
 from ..data import (
     build_reid_test_loader,
     build_reid_train_loader,
 )
-
+from ..evaluation import (
+    DatasetEvaluator,
+    inference_on_dataset,
+    print_csv_format,
+    ReidEvaluator,
+)
+from ..modeling.losses import build_criterion
 from ..modeling.meta_arch import build_model
-from ..modeling.heads.baseline_heads import StandardOutputs
 from ..solver import build_lr_scheduler, build_optimizer
 from ..utils import comm
+# import torchvision.transforms as T
+from ..utils.checkpoint import Checkpointer
 from ..utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
+from ..utils.file_io import PathManager
 from ..utils.logger import setup_logger
-
-from . import hooks
-from .train_loop import SimpleTrainer
-import numpy as np
 
 __all__ = ["default_argument_parser", "default_setup", "DefaultPredictor", "DefaultTrainer"]
 
@@ -222,12 +221,13 @@ class DefaultTrainer(SimpleTrainer):
         model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)
         data_loader = self.build_train_loader(cfg)
-        preprocess_inputs = self.build_preprocess_inputs()
-        postprocess_outputs = self.build_postprocess_outputs(cfg)
+        preprocess_inputs = self.build_preprocess_inputs(cfg)
+        criterion = self.build_criterion(cfg)
 
         # For training, wrap with DP. But don't need this for inference.
-        model = DataParallel(model).cuda()
-        super().__init__(model, data_loader, optimizer, preprocess_inputs, postprocess_outputs)
+        model = DataParallel(model)
+        model = model.cuda()
+        super().__init__(model, data_loader, optimizer, preprocess_inputs, criterion)
 
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)
         # Assume no other objects need to be checkpointed.
@@ -344,21 +344,34 @@ class DefaultTrainer(SimpleTrainer):
         #     return self._last_eval_results
 
     @classmethod
-    def build_preprocess_inputs(cls):
+    def build_preprocess_inputs(cls, cfg):
+        assert len(cfg.MODEL.PIXEL_MEAN) == len(cfg.MODEL.PIXEL_STD)
+        num_channels = len(cfg.MODEL.PIXEL_MEAN)
+        pixel_mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(1, num_channels, 1, 1)
+        pixel_std = torch.tensor(cfg.MODEL.PIXEL_STD).view(1, num_channels, 1, 1)
+        normalizer = lambda x: (x - pixel_mean) / pixel_std
+
         def preprocess_inputs(batched_inputs):
             # images
             images = [x["images"] for x in batched_inputs]
-            w = images[0].size[0]
-            h = images[0].size[1]
-            tensor = torch.zeros((len(images), 3, h, w), dtype=torch.uint8)
+            is_ndarray = isinstance(images[0], np.ndarray)
+            if not is_ndarray:
+                w = images[0].size[0]
+                h = images[0].size[1]
+            else:
+                w = images[0].shape[1]
+                h = images[0].shape[0]
+            tensor = torch.zeros((len(images), 3, h, w), dtype=torch.float32)
             for i, image in enumerate(images):
-                image = np.asarray(image, dtype=np.uint8)
+                if not is_ndarray:
+                    image = np.asarray(image, dtype=np.float32)
                 numpy_array = np.rollaxis(image, 2)
                 tensor[i] += torch.from_numpy(numpy_array)
-            tensor = tensor.to(dtype=torch.float32)
+
             # labels
-            labels = torch.stack([torch.tensor(x["targets"]).long().to(torch.long) for x in batched_inputs])
-            return tensor, labels
+            labels = torch.tensor([x["targets"] for x in batched_inputs]).long()
+
+            return normalizer(tensor), labels
 
         return preprocess_inputs
 
@@ -376,8 +389,8 @@ class DefaultTrainer(SimpleTrainer):
         return model
 
     @classmethod
-    def build_postprocess_outputs(cls, cfg):
-        return StandardOutputs(cfg)
+    def build_criterion(cls, cfg):
+        return build_criterion(cfg)
 
     @classmethod
     def build_optimizer(cls, cfg, model):
@@ -419,15 +432,7 @@ class DefaultTrainer(SimpleTrainer):
 
     @classmethod
     def build_evaluator(cls, cfg, num_query):
-        """
-        Returns:
-            DatasetEvaluator
-        It is not implemented by default.
-        """
-        raise NotImplementedError(
-            "Please either implement `build_evaluator()` in subclasses, or pass "
-            "your evaluator as arguments to `DefaultTrainer.test()`."
-        )
+        return ReidEvaluator(cfg, num_query)
 
     @classmethod
     def test(cls, cfg, model, evaluators=None):
@@ -451,7 +456,7 @@ class DefaultTrainer(SimpleTrainer):
             )
 
         results = OrderedDict()
-        for idx, dataset_name in enumerate(cfg.DATASETS.TEST):
+        for idx, dataset_name in enumerate(cfg.DATASETS.TESTS):
             data_loader, num_query = cls.build_test_loader(cfg, dataset_name)
             # When evaluators are passed in as arguments,
             # implicitly assume that evaluators can be created before data_loader.

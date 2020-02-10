@@ -9,16 +9,7 @@ import sys
 sys.path.append('.')
 from fastreid.config import cfg
 from fastreid.engine import DefaultTrainer, default_argument_parser, default_setup
-from fastreid.evaluation import ReidEvaluator
 from fastreid.utils.checkpoint import Checkpointer
-
-
-class Trainer(DefaultTrainer):
-    @classmethod
-    def build_evaluator(cls, cfg, num_query, output_folder=None):
-        # if output_folder is None:
-        #     output_folder = os.path.join(cfg.OUTPUT_DIR, "inference")
-        return ReidEvaluator(cfg, num_query)
 
 
 def setup(args):
@@ -43,7 +34,7 @@ def main(args):
         res = DefaultTrainer.test(cfg, model)
         return res
 
-    trainer = Trainer(cfg)
+    trainer = DefaultTrainer(cfg)
     trainer.resume_or_load(resume=args.resume)
     return trainer.train()
 
@@ -53,17 +44,3 @@ if __name__ == "__main__":
     print("Command Line Args:", args)
     main(args)
 
-    # log_save_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST_NAMES, cfg.MODEL.VERSION)
-    # if not os.path.exists(log_save_dir):
-    #     os.makedirs(log_save_dir)
-    #
-    # logger = setup_logger(cfg.MODEL.VERSION, log_save_dir, 0)
-    # logger.info("Using {} GPUs.".format(num_gpus))
-    # logger.info(args)
-    #
-    # if args.config_file != "":
-    #     logger.info("Loaded configuration file {}".format(args.config_file))
-    # logger.info("Running with config:\n{}".format(cfg))
-    #
-    # logger.info('start training')
-    # cudnn.benchmark = True

@@ -114,14 +114,12 @@ class TrainerBase:
         self.max_iter = max_iter
 
         with EventStorage(start_iter) as self.storage:
-            try:
-                self.before_train()
-                for self.iter in range(start_iter, max_iter):
-                    self.before_step()
-                    self.run_step()
-                    self.after_step()
-            finally:
-                self.after_train()
+            self.before_train()
+            for self.iter in range(start_iter, max_iter):
+                self.before_step()
+                self.run_step()
+                self.after_step()
+            self.after_train()
 
     def before_train(self):
         for h in self._hooks:
@@ -158,7 +156,7 @@ class SimpleTrainer(TrainerBase):
     or write your own training loop.
     """
 
-    def __init__(self, model, data_loader, optimizer, preprocess_inputs, postprocess_outputs):
+    def __init__(self, model, data_loader, optimizer, preprocess_inputs, criterion):
         """
         Args:
             model: a torch Module. Takes a data from data_loader and returns a
@@ -181,7 +179,7 @@ class SimpleTrainer(TrainerBase):
         self._data_loader_iter = iter(data_loader)
         self.optimizer = optimizer
         self.preprocess_inputs = preprocess_inputs
-        self.postprocess_outputs = postprocess_outputs
+        self.criterion = criterion
 
     def run_step(self):
         """
@@ -200,7 +198,7 @@ class SimpleTrainer(TrainerBase):
         """
         inputs = self.preprocess_inputs(data)
         outputs = self.model(*inputs)
-        loss_dict = self.postprocess_outputs.losses(*outputs)
+        loss_dict = self.criterion(*outputs)
         losses = sum(loss for loss in loss_dict.values())
         self._detect_anomaly(losses, loss_dict)
 

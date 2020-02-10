@@ -9,9 +9,11 @@ import os.path as osp
 import re
 
 from .bases import ImageDataset
+from ..datasets import DATASET_REGISTRY
 
 
-class DukeMTMCreID(ImageDataset):
+@DATASET_REGISTRY.register()
+class DukeMTMC(ImageDataset):
     """DukeMTMC-reID.
 
     Reference:
@@ -48,7 +50,7 @@ class DukeMTMCreID(ImageDataset):
         query = self.process_dir(self.query_dir, relabel=False)
         gallery = self.process_dir(self.gallery_dir, relabel=False)
 
-        super(DukeMTMCreID, self).__init__(train, query, gallery, **kwargs)
+        super(DukeMTMC, self).__init__(train, query, gallery, **kwargs)
 
     def process_dir(self, dir_path, relabel=False):
         img_paths = glob.glob(osp.join(dir_path, '*.jpg'))

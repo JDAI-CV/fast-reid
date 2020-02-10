@@ -4,14 +4,16 @@
 @contact: liaoxingyu2@jd.com
 """
 
-import os.path as osp
 import json
+import os.path as osp
 
 # from utils.iotools import mkdir_if_missing, write_json, read_json
 from fastreid.utils.file_io import PathManager
 from .bases import ImageDataset
+from fastreid.data.datasets import DATASET_REGISTRY
 
 
+@DATASET_REGISTRY.register()
 class CUHK03(ImageDataset):
     """CUHK03.
 
@@ -262,4 +264,3 @@ class CUHK03(ImageDataset):
             'num_gallery_imgs': gallery_info[2]
         }]
         write_json(split, self.split_new_lab_json_path)
-

@@ -165,7 +165,7 @@ class CommonMetricPrinter(EventWriter):
             pass
 
         try:
-            lr = "{:.6f}".format(storage.history("lr").latest())
+            lr = "{:.2e}".format(storage.history("lr").latest())
         except KeyError:
             lr = "N/A"
 

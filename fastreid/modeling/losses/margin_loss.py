@@ -5,6 +5,19 @@
 """
 
 import torch
+from torch import nn
+from .build import LOSS_REGISTRY
+
+
+def normalize(x, axis=-1):
+    """Normalizing to unit length along the specified dimension.
+    Args:
+      x: pytorch Variable
+    Returns:
+      x: pytorch Variable, same shape as input
+    """
+    x = 1. * x / (torch.norm(x, 2, axis, keepdim=True).expand_as(x) + 1e-12)
+    return x
 
 
 def euclidean_dist(x, y):
@@ -24,20 +37,6 @@ def cosine_dist(x, y):
                 (torch.sqrt(torch.sum(torch.pow(y, 2), 1))).view(1, bs2).repeat(bs1, 1)
     cosine = frac_up / frac_down
     return 1 - cosine
-
-
-def _batch_hard(mat_distance, mat_similarity, indice=False):
-    sorted_mat_distance, positive_indices = torch.sort(mat_distance + (-9999999.) * (1 - mat_similarity), dim=1,
-                                                       descending=True)
-    hard_p = sorted_mat_distance[:, 0]
-    hard_p_indice = positive_indices[:, 0]
-    sorted_mat_distance, negative_indices = torch.sort(mat_distance + (9999999.) * (mat_similarity), dim=1,
-                                                       descending=False)
-    hard_n = sorted_mat_distance[:, 0]
-    hard_n_indice = negative_indices[:, 0]
-    if indice:
-        return hard_p, hard_n, hard_p_indice, hard_n_indice
-    return hard_p, hard_n
 
 
 def hard_example_mining(dist_mat, labels, return_inds=False):
@@ -80,7 +79,6 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
     # an_weight = F.softmax(-neg_dist, dim=1)
     # dist_an = torch.sum(an_weight * neg_dist, dim=1)
 
-
     # shape [N]
     dist_ap = dist_ap.squeeze(1)
     dist_an = dist_an.squeeze(1)
@@ -101,3 +99,36 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
         return dist_ap, dist_an, p_inds, n_inds
 
     return dist_ap, dist_an
+
+
+@LOSS_REGISTRY.register()
+class TripletLoss(object):
+    """Modified from Tong Xiao's open-reid (https://github.com/Cysu/open-reid).
+    Related Triplet Loss theory can be found in paper 'In Defense of the Triplet
+    Loss for Person Re-Identification'."""
+
+    def __init__(self, cfg):
+        self._margin = cfg.MODEL.LOSSES.MARGIN
+        self._normalize_feature = cfg.MODEL.LOSSES.NORM_FEAT
+        self._scale = cfg.MODEL.LOSSES.SCALE_TRI
+
+        if self._margin > 0:
+            self.ranking_loss = nn.MarginRankingLoss(margin=self._margin)
+        else:
+            self.ranking_loss = nn.SoftMarginLoss()
+
+    def __call__(self, pred_class_logits, global_features, targets):
+        if self._normalize_feature:
+            global_features = normalize(global_features, axis=-1)
+
+        dist_mat = euclidean_dist(global_features, global_features)
+        dist_ap, dist_an = hard_example_mining(dist_mat, targets)
+        y = dist_an.new().resize_as_(dist_an).fill_(1)
+
+        if self._margin > 0:
+            loss = self.ranking_loss(dist_an, dist_ap, y)
+        else:
+            loss = self.ranking_loss(dist_an - dist_ap, y)
+        return {
+            "loss_triplet": loss*self._scale,
+        }

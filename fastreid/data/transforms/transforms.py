@@ -36,10 +36,10 @@ class RandomErasing(object):
         self.r1 = r1
 
     def __call__(self, img):
+        img = np.asarray(img, dtype=np.float32).copy()
         if random.uniform(0, 1) > self.probability:
             return img
 
-        img = np.asarray(img, dtype=np.uint8).copy()
         for attempt in range(100):
             area = img.shape[0] * img.shape[1]
             target_area = random.uniform(self.sl, self.sh) * area
@@ -57,8 +57,8 @@ class RandomErasing(object):
                     img[x1:x1 + h, y1:y1 + w, 2] = self.mean[2]
                 else:
                     img[x1:x1 + h, y1:y1 + w, 0] = self.mean[0]
-                return Image.fromarray(img)
-        return Image.fromarray(img)
+                return img
+        return img
 
 
 class Cutout(object):

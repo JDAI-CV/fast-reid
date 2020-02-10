@@ -42,13 +42,25 @@ _C.MODEL.BACKBONE.PRETRAIN_PATH = ''
 # ---------------------------------------------------------------------------- #
 # REID HEADS options
 # ---------------------------------------------------------------------------- #
-_C.MODEL.REID_HEADS = CN()
-_C.MODEL.REID_HEADS.NAME = "BaselineHeads"
-# Number of identity classes
-_C.MODEL.REID_HEADS.NUM_CLASSES = 751
+_C.MODEL.HEADS = CN()
+_C.MODEL.HEADS.NAME = "BaselineHeads"
+_C.MODEL.HEADS.NUM_CLASSES = 751
 
-_C.MODEL.REID_HEADS.MARGIN = 0.3
-_C.MODEL.REID_HEADS.SMOOTH_ON = False
+# ---------------------------------------------------------------------------- #
+# REID LOSSES options
+# ---------------------------------------------------------------------------- #
+_C.MODEL.LOSSES = CN()
+_C.MODEL.LOSSES.NAME = ("CrossEntropyLoss",)
+
+# Cross Entropy Loss options
+_C.MODEL.LOSSES.SMOOTH_ON = False
+_C.MODEL.LOSSES.EPSILON = 0.1
+_C.MODEL.LOSSES.SCALE_CE = 1.0
+
+# Triplet Loss options
+_C.MODEL.LOSSES.MARGIN = 0.3
+_C.MODEL.LOSSES.NORM_FEAT = False
+_C.MODEL.LOSSES.SCALE_TRI = 1.0
 
 # Path (possibly with schema like catalog:// or detectron2://) to a checkpoint file
 # to be loaded to the model. You can find available models in the model zoo.
@@ -98,9 +110,9 @@ _C.INPUT.CUTOUT.MEAN = [0, 0, 0]
 # -----------------------------------------------------------------------------
 _C.DATASETS = CN()
 # List of the dataset names for training
-_C.DATASETS.NAMES = ("market1501",)
+_C.DATASETS.NAMES = ("Market1501",)
 # List of the dataset names for testing
-_C.DATASETS.TEST = ("market1501",)
+_C.DATASETS.TESTS = ("Market1501",)
 
 # -----------------------------------------------------------------------------
 # DataLoader
@@ -116,7 +128,6 @@ _C.DATALOADER.NUM_WORKERS = 8
 # Solver
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
-_C.SOLVER.DIST = False
 
 _C.SOLVER.OPT = "adam"
 
@@ -151,8 +162,6 @@ _C.TEST = CN()
 
 _C.TEST.EVAL_PERIOD = 50
 _C.TEST.IMS_PER_BATCH = 128
-_C.TEST.NORM = True
-_C.TEST.WEIGHT = ""
 
 # ---------------------------------------------------------------------------- #
 # Misc options
