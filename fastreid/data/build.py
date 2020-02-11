@@ -29,7 +29,7 @@ def build_reid_train_loader(cfg):
     batch_size = cfg.SOLVER.IMS_PER_BATCH
     num_instance = cfg.DATALOADER.NUM_INSTANCE
     data_sampler = None
-    if cfg.DATALOADER.SAMPLER == 'triplet':
+    if cfg.DATALOADER.PK_SAMPLER:
         data_sampler = RandomIdentitySampler(train_set.img_items, batch_size, num_instance)
 
     train_loader = DataLoader(train_set, batch_size, shuffle=(data_sampler is None),

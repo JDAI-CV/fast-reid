@@ -40,7 +40,6 @@ class IBN(nn.Module):
     def forward(self, x):
         split = torch.split(x, self.half, 1)
         out1 = self.IN(split[0].contiguous())
-        # out2 = self.BN(torch.cat(split[1:], dim=1).contiguous())
         out2 = self.BN(split[1].contiguous())
         out = torch.cat((out1, out2), 1)
         return out

@@ -43,7 +43,7 @@ _C.MODEL.BACKBONE.PRETRAIN_PATH = ''
 # REID HEADS options
 # ---------------------------------------------------------------------------- #
 _C.MODEL.HEADS = CN()
-_C.MODEL.HEADS.NAME = "BaselineHeads"
+_C.MODEL.HEADS.NAME = "BNneckLinear"
 _C.MODEL.HEADS.NUM_CLASSES = 751
 
 # ---------------------------------------------------------------------------- #
@@ -118,8 +118,8 @@ _C.DATASETS.TESTS = ("Market1501",)
 # DataLoader
 # -----------------------------------------------------------------------------
 _C.DATALOADER = CN()
-# Sampler for data loading
-_C.DATALOADER.SAMPLER = 'softmax'
+# P/K Sampler for data loading
+_C.DATALOADER.PK_SAMPLER = True
 # Number of instance for each person
 _C.DATALOADER.NUM_INSTANCE = 4
 _C.DATALOADER.NUM_WORKERS = 8

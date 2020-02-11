@@ -13,7 +13,7 @@ from ...layers import bn_no_bias
 
 
 @REID_HEADS_REGISTRY.register()
-class BaselineHeads(nn.Module):
+class BNneckLinear(nn.Module):
 
     def __init__(self, cfg):
         super().__init__()

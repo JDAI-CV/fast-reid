@@ -51,7 +51,7 @@ class CrossEntropyLoss(object):
         """
         self._log_accuracy(pred_class_logits, gt_classes)
         if self._smooth_on:
-            log_probs = nn.LogSoftmax(pred_class_logits, dim=1)
+            log_probs = F.log_softmax(pred_class_logits, dim=1)
             targets = torch.zeros(log_probs.size()).scatter_(1, gt_classes.unsqueeze(1).data.cpu(), 1)
             targets = targets.to(pred_class_logits.device)
             targets = (1 - self._epsilon) * targets + self._epsilon / self._num_classes

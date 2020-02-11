@@ -114,12 +114,16 @@ class TrainerBase:
         self.max_iter = max_iter
 
         with EventStorage(start_iter) as self.storage:
-            self.before_train()
-            for self.iter in range(start_iter, max_iter):
-                self.before_step()
-                self.run_step()
-                self.after_step()
-            self.after_train()
+            try:
+                self.before_train()
+                for self.iter in range(start_iter, max_iter):
+                    self.before_step()
+                    self.run_step()
+                    self.after_step()
+            except Exception:
+                logger.exception("Exception during training:")
+            finally:
+                self.after_train()
 
     def before_train(self):
         for h in self._hooks:

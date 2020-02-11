@@ -6,6 +6,7 @@
 
 import torch
 from torch import nn
+
 from .build import LOSS_REGISTRY
 
 
@@ -130,5 +131,5 @@ class TripletLoss(object):
         else:
             loss = self.ranking_loss(dist_an - dist_ap, y)
         return {
-            "loss_triplet": loss*self._scale,
+            "loss_triplet": loss * self._scale,
         }

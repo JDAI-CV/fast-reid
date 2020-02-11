@@ -5,22 +5,23 @@ MODEL:
     NAME: "build_resnet_backbone"
     DEPTH: 50
     LAST_STRIDE: 1
-    WITH_IBN: False
+    WITH_IBN: True
     PRETRAIN: True
+    PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
 
   HEADS:
-    NAME: "BaselineHeads"
-    NUM_CLASSES: 702
+    NAME: "BNneckLinear"
+    NUM_CLASSES: 1041
 
   LOSSES:
     NAME: ("CrossEntropyLoss", "TripletLoss")
-    SMOOTH_ON: False
+    SMOOTH_ON: True
 
     MARGIN: 0.3
 
 DATASETS:
-  NAMES: ("DukeMTMC",)
-  TESTS: ("DukeMTMC",)
+  NAMES: ("MSMT17",)
+  TESTS: ("MSMT17",)
 
 INPUT:
   SIZE_TRAIN: [256, 128]
@@ -33,35 +34,33 @@ INPUT:
   DO_PAD: True
 
   DO_LIGHTING: False
-  BRIGHTNESS: 0.4
-  CONTRAST: 0.4
 
 DATALOADER:
-  SAMPLER: 'triplet'
+  PK_SAMPLER: True
   NUM_INSTANCE: 4
   NUM_WORKERS: 16
 
 SOLVER:
   OPT: "adam"
-  MAX_ITER: 24000
+  MAX_ITER: 45000
   BASE_LR: 0.00035
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.0005
   IMS_PER_BATCH: 64
 
-  STEPS: [8000, 18000]
+  STEPS: [20000, 35000]
   GAMMA: 0.1
 
   WARMUP_FACTOR: 0.1
-  WARMUP_ITERS: 2000
+  WARMUP_ITERS: 5000
 
-  LOG_PERIOD: 200
-  CHECKPOINT_PERIOD: 2000
+  LOG_PERIOD: 500
+  CHECKPOINT_PERIOD: 15000
 
 TEST:
-  EVAL_PERIOD: 2000
+  EVAL_PERIOD: 15000
   IMS_PER_BATCH: 512
 
 CUDNN_BENCHMARK: True
 
-OUTPUT_DIR: "logs/market1501_softmax_triplet"
+OUTPUT_DIR: "logs/fastreid_msmt17/ibn_softmax_triplet"

@@ -327,6 +327,7 @@ class EvalHook(HookBase):
         # Evaluation may take different time among workers.
         # A barrier make them start the next iteration together.
         comm.synchronize()
+        torch.cuda.empty_cache()
 
     def after_step(self):
         next_iter = self.trainer.iter + 1
