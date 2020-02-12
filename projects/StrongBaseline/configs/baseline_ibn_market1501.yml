@@ -1,4 +1,4 @@
-_BASE_: "Base-Strongbaseline.yml"
+_BASE_: "Base-Strongbaseline_ibn.yml"
 
 MODEL:
   HEADS:
@@ -8,4 +8,4 @@ DATASETS:
   NAMES: ("Market1501",)
   TESTS: ("Market1501",)
 
-OUTPUT_DIR: "logs/fastreid_market1501/softmax_softmargin"
+OUTPUT_DIR: "logs/fastreid_market1501/ibn_softmax_softmargin"

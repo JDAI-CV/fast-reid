@@ -74,14 +74,12 @@ class RandomIdentitySampler(Sampler):
             yield from ret
 
     def _infinite_indices(self):
-        g = torch.Generator()
-        g.manual_seed(self._seed)
+        np.random.seed(self._seed)
         while True:
             if self._shuffle:
-                identities = torch.randperm(self.num_identities, generator=g)
+                identities = np.random.permutation(self.num_identities)
             else:
-                identities = torch.arange(self.num_identities)
+                identities = np.arange(self.num_identities)
             drop_indices = self.num_identities % self.num_pids_per_batch
             yield from identities[:-drop_indices]
-
 

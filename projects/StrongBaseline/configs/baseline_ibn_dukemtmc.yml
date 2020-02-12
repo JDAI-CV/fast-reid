@@ -1,0 +1,11 @@
+_BASE_: "Base-Strongbaseline_ibn.yml"
+
+MODEL:
+  HEADS:
+    NUM_CLASSES: 702
+
+DATASETS:
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
+
+OUTPUT_DIR: "logs/fastreid_dukemtmc/ibn_softmax_softmargin"

@@ -34,7 +34,6 @@ from ..modeling.losses import build_criterion
 from ..modeling.meta_arch import build_model
 from ..solver import build_lr_scheduler, build_optimizer
 from ..utils import comm
-# import torchvision.transforms as T
 from ..utils.checkpoint import Checkpointer
 from ..utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
 from ..utils.file_io import PathManager
@@ -302,7 +301,6 @@ class DefaultTrainer(SimpleTrainer):
         # we can use the saved checkpoint to debug.
         ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results))
 
-        # if comm.is_main_process():
         # run writers in the end, so that evaluation metrics are written
         ret.append(hooks.PeriodicWriter(self.build_writers(), cfg.SOLVER.LOG_PERIOD))
         return ret

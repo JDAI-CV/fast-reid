@@ -1,4 +1,4 @@
-_BASE_: "Base-Strongbaseline.yml"
+_BASE_: "Base-Strongbaseline_ibn.yml"
 
 MODEL:
   HEADS:
@@ -21,4 +21,4 @@ SOLVER:
 TEST:
   EVAL_PERIOD: 15000
 
-OUTPUT_DIR: "logs/fastreid_msmt17/softmax_softmargin"
+OUTPUT_DIR: "logs/fastreid_msmt17/ibn_softmax_softmargin"

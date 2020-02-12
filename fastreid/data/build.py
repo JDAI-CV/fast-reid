@@ -5,11 +5,12 @@
 """
 import logging
 
+import torch
 from torch.utils.data import DataLoader
 
+from . import samplers
 from .common import ReidDataset
 from .datasets import DATASET_REGISTRY
-from .samplers import RandomIdentitySampler
 from .transforms import build_transforms
 
 
@@ -28,13 +29,19 @@ def build_reid_train_loader(cfg):
     num_workers = cfg.DATALOADER.NUM_WORKERS
     batch_size = cfg.SOLVER.IMS_PER_BATCH
     num_instance = cfg.DATALOADER.NUM_INSTANCE
-    data_sampler = None
-    if cfg.DATALOADER.PK_SAMPLER:
-        data_sampler = RandomIdentitySampler(train_set.img_items, batch_size, num_instance)
 
-    train_loader = DataLoader(train_set, batch_size, shuffle=(data_sampler is None),
-                              num_workers=num_workers, sampler=data_sampler, collate_fn=trivial_batch_collator,
-                              pin_memory=True)
+    if cfg.DATALOADER.PK_SAMPLER:
+        data_sampler = samplers.RandomIdentitySampler(train_set.img_items, batch_size, num_instance)
+    else:
+        data_sampler = samplers.TrainingSampler(len(train_set))
+    batch_sampler = torch.utils.data.sampler.BatchSampler(data_sampler, batch_size, True)
+
+    train_loader = torch.utils.data.DataLoader(
+        train_set,
+        num_workers=num_workers,
+        batch_sampler=batch_sampler,
+        collate_fn=trivial_batch_collator,
+    )
     return train_loader
 
 

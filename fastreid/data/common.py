@@ -4,17 +4,9 @@
 @contact: sherlockliao01@gmail.com
 """
 
-import os.path as osp
-import numpy as np
-import torch.nn.functional as F
-import torch
-import random
-import re
-
-from PIL import Image
-from .data_utils import read_image
 from torch.utils.data import Dataset
-import torchvision.transforms as T
+
+from .data_utils import read_image
 
 
 class ReidDataset(Dataset):
@@ -36,10 +28,6 @@ class ReidDataset(Dataset):
             self.pid2label = dict([(p, i) for i, p in enumerate(self.pids)])
         else:
             self.img_items = img_items
-
-    @property
-    def c(self):
-        return len(self.pid2label) if self.pid2label is not None else 0
 
     def __len__(self):
         return len(self.img_items)
