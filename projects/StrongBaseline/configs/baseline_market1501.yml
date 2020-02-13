@@ -1,6 +1,8 @@
 _BASE_: "Base-Strongbaseline.yml"
 
 MODEL:
+  BACKBONE:
+    PRETRAIN: False
   HEADS:
     NUM_CLASSES: 751
 
@@ -8,4 +10,4 @@ DATASETS:
   NAMES: ("Market1501",)
   TESTS: ("Market1501",)
 
-OUTPUT_DIR: "logs/fastreid_market1501/softmax_softmargin"
+OUTPUT_DIR: "logs/fastreid_market1501/softmax_softmargin_wo_pretrain"

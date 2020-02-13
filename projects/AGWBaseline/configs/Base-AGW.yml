@@ -2,22 +2,23 @@ MODEL:
   META_ARCHITECTURE: 'Baseline'
 
   BACKBONE:
-    NAME: "build_resnet_backbone"
+    NAME: "build_resnetNL_backbone"
     DEPTH: 50
     LAST_STRIDE: 1
     WITH_IBN: False
     PRETRAIN: True
 
   HEADS:
-    NAME: "BaselineHeads"
-    NUM_CLASSES: 751
+    NAME: "GeM_BN_Linear"
+    NUM_CLASSES: 702
 
   LOSSES:
-    NAME: ("CrossEntropyLoss", "TripletLoss")
-    SMOOTH_ON: False
+    NAME: ("CrossEntropyLoss", "WeightedRegularizedTriplet")
+    SMOOTH_ON: True
+    SCALE_CE: 1.0
 
-    MARGIN: 0.3
-    HARD_FACTOR: 0.0
+    MARGIN: 0.0
+    SCALE_TRI: 1.0
 
 DATASETS:
   NAMES: ("DukeMTMC",)
@@ -34,30 +35,28 @@ INPUT:
   DO_PAD: True
 
   DO_LIGHTING: False
-  BRIGHTNESS: 0.4
-  CONTRAST: 0.4
 
 DATALOADER:
-  SAMPLER: 'triplet'
+  PK_SAMPLER: True
   NUM_INSTANCE: 4
   NUM_WORKERS: 16
 
 SOLVER:
   OPT: "adam"
-  MAX_ITER: 24000
+  MAX_ITER: 18000
   BASE_LR: 0.00035
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.0005
   IMS_PER_BATCH: 64
 
-  STEPS: [8000, 18000]
+  STEPS: [8000, 14000]
   GAMMA: 0.1
 
   WARMUP_FACTOR: 0.1
   WARMUP_ITERS: 2000
 
-  LOG_PERIOD: 200
-  CHECKPOINT_PERIOD: 2000
+  LOG_PERIOD: 20
+  CHECKPOINT_PERIOD: 6000
 
 TEST:
   EVAL_PERIOD: 2000
@@ -65,4 +64,4 @@ TEST:
 
 CUDNN_BENCHMARK: True
 
-OUTPUT_DIR: "logs/dukemtmc_softmax_triplet"
+OUTPUT_DIR: "logs/fastreid_dukemtmc/ibn_softmax_softtriplet"

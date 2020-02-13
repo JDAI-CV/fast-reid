@@ -6,10 +6,12 @@
 
 import sys
 
-sys.path.append('.')
+sys.path.append('../..')
 from fastreid.config import cfg
 from fastreid.engine import DefaultTrainer, default_argument_parser, default_setup
 from fastreid.utils.checkpoint import Checkpointer
+
+from agwbaseline import *
 
 
 def setup(args):

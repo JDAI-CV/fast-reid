@@ -22,11 +22,6 @@ class Baseline(nn.Module):
 
     def forward(self, inputs, labels=None):
         global_feat = self.backbone(inputs)  # (bs, 2048, 16, 8)
-
-        if not self.training:
-            pred_features = self.heads(global_feat)
-            return pred_features
-
         outputs = self.heads(global_feat, labels)
         return outputs
 

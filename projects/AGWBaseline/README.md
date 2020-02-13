@@ -1,4 +1,4 @@
-# Strong Baseline in FastReID
+# AGW Baseline in FastReID
 
 ## Training
 
@@ -21,22 +21,19 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train_net.py --config-file='configs/baseline
 
 | Method | Pretrained | Rank@1 | mAP |
 | :---: | :---: | :---: |:---: |
-| BagTricks | ImageNet | 93.3% | 85.2% |
-| BagTricks + Ibn-a | ImageNet | 94.9% | 87.1% |
-| BagTricks + Ibn-a + softMargin | ImageNet | 94.8% | 87.7% |
+| AGW |  ImageNet | 95.2% | 87.9% |
+| AGW + Ibn-a | ImageNet | 95.1% | 88.2% |
 
 ### DukeMTMC dataset
 
 | Method | Pretrained | Rank@1 | mAP |
 | :---: | :---: | :---: |:---: |
-| BagTricks | ImageNet | 86.6% | 77.3% |
-| BagTricks + Ibn-a | ImageNet | 88.8% | 78.6% |
-| BagTricks + Ibn-a + softMargin | ImageNet | 89.1% | 78.9% |
+| AGW |  ImageNet | 88.4% | 79.4% |
+| AGW + Ibn-a | ImageNet | 89.3% | 80.2% |
 
 ### MSMT17 dataset
 
 | Method | Pretrained | Rank@1 | mAP |
 | :---: | :---: | :---: |:---: |
-| BagTricks | ImageNet | 72.0% | 48.6% |
-| BagTricks + Ibn-a | ImageNet | 77.7% | 54.6% |
-| BagTricks + Ibn-a + softMargin | ImageNet | 77.3% | 55.7% |
+| AGW | ImageNet | | |
+| AGW + Ibn-a | ImageNet | |
