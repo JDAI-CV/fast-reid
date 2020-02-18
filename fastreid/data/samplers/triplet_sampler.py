@@ -63,7 +63,7 @@ class RandomIdentitySampler(Sampler):
                 select_indexes = No_index(index, i)
                 if not select_indexes:
                     # only one image for this identity
-                    ind_indexes = [i] * (self.num_instances - 1)
+                    ind_indexes = [0] * (self.num_instances - 1)
                 elif len(select_indexes) >= self.num_instances:
                     ind_indexes = np.random.choice(select_indexes, size=self.num_instances - 1, replace=False)
                 else:

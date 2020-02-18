@@ -186,5 +186,6 @@ def build_resnet_backbone(cfg):
             state_dict = new_state_dict
         res = model.load_state_dict(state_dict, strict=False)
         logger = logging.getLogger(__name__)
-        logger.info('missing keys is {} and unexpected keys is {}'.format(res.missing_keys, res.unexpected_keys))
+        logger.info('missing keys is {}'.format(res.missing_keys))
+        logger.info('unexpected keys is {}'.format(res.unexpected_keys))
     return model

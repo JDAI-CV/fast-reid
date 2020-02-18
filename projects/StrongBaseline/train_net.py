@@ -11,6 +11,8 @@ from fastreid.config import get_cfg
 from fastreid.engine import DefaultTrainer, default_argument_parser, default_setup
 from fastreid.utils.checkpoint import Checkpointer
 
+from non_linear_head import NonLinear
+
 
 def setup(args):
     """
@@ -36,6 +38,11 @@ def main(args):
         return res
 
     trainer = DefaultTrainer(cfg)
+    # moco pretrain
+    # import torch
+    # state_dict = torch.load('logs/model_0109999.pth')['model_ema']
+    # ret = trainer.model.module.load_state_dict(state_dict, strict=False)
+    #
     trainer.resume_or_load(resume=args.resume)
     return trainer.train()
 

@@ -18,18 +18,9 @@ import torch
 # from fvcore.nn.precise_bn import get_bn_modules
 from torch.nn import DataParallel
 
-from . import hooks
-from .train_loop import SimpleTrainer
-from ..data import (
-    build_reid_test_loader,
-    build_reid_train_loader,
-)
-from ..evaluation import (
-    DatasetEvaluator,
-    inference_on_dataset,
-    print_csv_format,
-    ReidEvaluator,
-)
+from ..data import build_reid_test_loader, build_reid_train_loader
+from ..evaluation import (DatasetEvaluator, ReidEvaluator,
+                          inference_on_dataset, print_csv_format)
 from ..modeling.losses import build_criterion
 from ..modeling.meta_arch import build_model
 from ..solver import build_lr_scheduler, build_optimizer
@@ -38,6 +29,8 @@ from ..utils.checkpoint import Checkpointer
 from ..utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
 from ..utils.file_io import PathManager
 from ..utils.logger import setup_logger
+from . import hooks
+from .train_loop import SimpleTrainer
 
 __all__ = ["default_argument_parser", "default_setup", "DefaultPredictor", "DefaultTrainer"]
 
@@ -147,13 +140,6 @@ class DefaultPredictor:
         checkpointer = Checkpointer(self.model)
         checkpointer.load(cfg.MODEL.WEIGHTS)
 
-        # self.transform_gen = T.Resize(
-        #     [cfg.INPUT.MIN_SIZE_TEST, cfg.INPUT.MIN_SIZE_TEST], cfg.INPUT.MAX_SIZE_TEST
-        # )
-
-        self.input_format = cfg.INPUT.FORMAT
-        assert self.input_format in ["RGB", "BGR"], self.input_format
-
     def __call__(self, original_image):
         """
         Args:
@@ -213,20 +199,19 @@ class DefaultTrainer(SimpleTrainer):
         Args:
             cfg (CfgNode):
         """
-        logger = logging.getLogger("fastreid")
+        logger = logging.getLogger("fastreid."+__name__)
         if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for d2
             setup_logger()
         # Assume these objects must be constructed in this order.
         model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)
         data_loader = self.build_train_loader(cfg)
-        preprocess_inputs = self.build_preprocess_inputs(cfg)
         criterion = self.build_criterion(cfg)
 
         # For training, wrap with DP. But don't need this for inference.
         model = DataParallel(model)
         model = model.cuda()
-        super().__init__(model, data_loader, optimizer, preprocess_inputs, criterion)
+        super().__init__(model, data_loader, optimizer, criterion)
 
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)
         # Assume no other objects need to be checkpointed.
@@ -340,38 +325,6 @@ class DefaultTrainer(SimpleTrainer):
         # if hasattr(self, "_last_eval_results") and comm.is_main_process():
         #     verify_results(self.cfg, self._last_eval_results)
         #     return self._last_eval_results
-
-    @classmethod
-    def build_preprocess_inputs(cls, cfg):
-        assert len(cfg.MODEL.PIXEL_MEAN) == len(cfg.MODEL.PIXEL_STD)
-        num_channels = len(cfg.MODEL.PIXEL_MEAN)
-        pixel_mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(1, num_channels, 1, 1)
-        pixel_std = torch.tensor(cfg.MODEL.PIXEL_STD).view(1, num_channels, 1, 1)
-        normalizer = lambda x: (x - pixel_mean) / pixel_std
-
-        def preprocess_inputs(batched_inputs):
-            # images
-            images = [x["images"] for x in batched_inputs]
-            is_ndarray = isinstance(images[0], np.ndarray)
-            if not is_ndarray:
-                w = images[0].size[0]
-                h = images[0].size[1]
-            else:
-                w = images[0].shape[1]
-                h = images[0].shape[0]
-            tensor = torch.zeros((len(images), 3, h, w), dtype=torch.float32)
-            for i, image in enumerate(images):
-                if not is_ndarray:
-                    image = np.asarray(image, dtype=np.float32)
-                numpy_array = np.rollaxis(image, 2)
-                tensor[i] += torch.from_numpy(numpy_array)
-
-            # labels
-            labels = torch.tensor([x["targets"] for x in batched_inputs]).long()
-
-            return normalizer(tensor), labels
-
-        return preprocess_inputs
 
     @classmethod
     def build_model(cls, cfg):

@@ -35,7 +35,7 @@ class BNneckLinear(nn.Module):
         bn_features = self.bnneck(global_features)
 
         if not self.training:
-            return F.normalize(bn_features),
+            return F.normalize(bn_features)
 
         pred_class_logits = self.classifier(bn_features)
-        return pred_class_logits, global_features, targets,
+        return pred_class_logits, global_features, targets

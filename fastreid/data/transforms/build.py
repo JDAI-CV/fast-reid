@@ -22,10 +22,10 @@ def build_transforms(cfg, is_train=True):
         padding = cfg.INPUT.PADDING
         padding_mode = cfg.INPUT.PADDING_MODE
         # random erasing
-        do_re = cfg.INPUT.RE.DO
+        do_re = cfg.INPUT.RE.ENABLED
         re_prob = cfg.INPUT.RE.PROB
         re_mean = cfg.INPUT.RE.MEAN
-        res.append(T.Resize(size_train))
+        res.append(T.Resize(size_train, interpolation=3))
         if do_flip:
             res.append(T.RandomHorizontalFlip(p=flip_prob))
         if do_pad:
@@ -38,5 +38,6 @@ def build_transforms(cfg, is_train=True):
         #                       mean=cfg.INPUT.CUTOUT.MEAN))
     else:
         size_test = cfg.INPUT.SIZE_TEST
-        res.append(T.Resize(size_test))
+        res.append(T.Resize(size_test, interpolation=3))
+    res.append(ToTensor())
     return T.Compose(res)

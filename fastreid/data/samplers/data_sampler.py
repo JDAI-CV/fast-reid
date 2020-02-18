@@ -47,3 +47,30 @@ class TrainingSampler(Sampler):
                 yield from np.random.permutation(self._size)
             else:
                 yield from np.arange(self._size)
+
+
+class InferenceSampler(Sampler):
+    """
+    Produce indices for inference.
+    Inference needs to run on the __exact__ set of samples,
+    therefore when the total number of samples is not divisible by the number of workers,
+    this sampler produces different number of samples on different workers.
+    """
+
+    def __init__(self, size: int):
+        """
+        Args:
+            size (int): the total number of data of the underlying dataset to sample from
+        """
+        self._size = size
+        assert size > 0
+
+        begin = 0
+        end = self._size
+        self._local_indices = range(begin, end)
+
+    def __iter__(self):
+        yield from self._local_indices
+
+    def __len__(self):
+        return len(self._local_indices)

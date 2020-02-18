@@ -5,4 +5,4 @@
 """
 
 from .triplet_sampler import RandomIdentitySampler
-from .training_sampler import TrainingSampler
+from .data_sampler import TrainingSampler, InferenceSampler

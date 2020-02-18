@@ -28,10 +28,10 @@ INPUT:
   SIZE_TRAIN: [256, 128]
   SIZE_TEST: [256, 128]
   RE:
-    DO: True
+    ENABLED: True
     PROB: 0.5
   CUTOUT:
-    DO: False
+    ENABLED: False
   DO_PAD: True
 
   DO_LIGHTING: False

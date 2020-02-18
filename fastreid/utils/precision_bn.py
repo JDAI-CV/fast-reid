@@ -5,8 +5,9 @@
 """
 
 import itertools
+
 import torch
-from data.prefetcher import data_prefetcher
+
 
 BN_MODULE_TYPES = (
     torch.nn.BatchNorm1d,
@@ -57,26 +58,19 @@ def update_bn_stats(model, data_loader, num_iters: int = 200):
     running_mean = [torch.zeros_like(bn.running_mean) for bn in bn_layers]
     running_var = [torch.zeros_like(bn.running_var) for bn in bn_layers]
 
-    ind = 0
-    num_epoch = num_iters // len(data_loader) + 1
-    for _ in range(num_epoch):
-        prefetcher = data_prefetcher(data_loader)
-        batch = prefetcher.next()
-        while batch[0] is not None:
-            model(batch[0], batch[1])
+    for ind, inputs in enumerate(itertools.islice(data_loader, num_iters)):
+        with torch.no_grad():  # No need to backward
+            model(inputs)
 
-            for i, bn in enumerate(bn_layers):
-                # Accumulates the bn stats.
-                running_mean[i] += (bn.running_mean - running_mean[i]) / (ind + 1)
-                running_var[i] += (bn.running_var - running_var[i]) / (ind + 1)
-                # We compute the "average of variance" across iterations.
-
-            if ind == (num_iters - 1):
-                print(f"update_bn_stats is running for {num_iters} iterations.")
-                break
-
-            ind += 1
-            batch = prefetcher.next()
+        for i, bn in enumerate(bn_layers):
+            # Accumulates the bn stats.
+            running_mean[i] += (bn.running_mean - running_mean[i]) / (ind + 1)
+            running_var[i] += (bn.running_var - running_var[i]) / (ind + 1)
+            # We compute the "average of variance" across iterations.
+    assert ind == num_iters - 1, (
+        "update_bn_stats is meant to run for {} iterations, "
+        "but the dataloader stops at {} iterations.".format(num_iters, ind)
+    )
 
     for i, bn in enumerate(bn_layers):
         # Sets the precise bn stats.

@@ -2,12 +2,24 @@ _BASE_: "Base-Strongbaseline.yml"
 
 MODEL:
   BACKBONE:
-    PRETRAIN: False
+    PRETRAIN: True
+
   HEADS:
+    NAME: "BNneckLinear"
     NUM_CLASSES: 751
+
+  LOSSES:
+    NAME: ("CrossEntropyLoss", "TripletLoss")
+    SMOOTH_ON: True
+    SCALE_CE: 1.0
+
+    MARGIN: 0.0
+    SCALE_TRI: 1.0
+
 
 DATASETS:
   NAMES: ("Market1501",)
   TESTS: ("Market1501",)
 
-OUTPUT_DIR: "logs/fastreid_market1501/softmax_softmargin_wo_pretrain"
+
+OUTPUT_DIR: "logs/market1501/test"

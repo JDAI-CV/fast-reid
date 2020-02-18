@@ -4,16 +4,17 @@
 @contact: sherlockliao01@gmail.com
 """
 
+import torch
 from torch.utils.data import Dataset
 
 from .data_utils import read_image
 
 
-class ReidDataset(Dataset):
+class CommDataset(Dataset):
     """Image Person ReID Dataset"""
 
     def __init__(self, img_items, transform=None, relabel=True):
-        self.tfms = transform
+        self.transform = transform
         self.relabel = relabel
 
         self.pid2label = None
@@ -35,8 +36,10 @@ class ReidDataset(Dataset):
     def __getitem__(self, index):
         img_path, pid, camid = self.img_items[index]
         img = read_image(img_path)
-        if self.tfms is not None:   img = self.tfms(img)
-        if self.relabel:            pid = self.pid2label[pid]
+        if self.transform is not None:
+            img = self.transform(img)
+        if self.relabel:
+            pid = self.pid2label[pid]
         return {
             'images': img,
             'targets': pid,
@@ -50,3 +53,31 @@ class ReidDataset(Dataset):
         else:
             prefix = file_path.split('/')[1]
         return prefix + '_' + str(pid)
+
+
+class data_prefetcher():
+    def __init__(self, cfg, loader):
+        self.loader = loader
+        self.loader_iter = iter(loader)
+
+        # normalize
+        assert len(cfg.MODEL.PIXEL_MEAN) == len(cfg.MODEL.PIXEL_STD)
+        num_channels = len(cfg.MODEL.PIXEL_MEAN)
+        self.mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(1, num_channels, 1, 1)
+        self.std = torch.tensor(cfg.MODEL.PIXEL_STD).view(1, num_channels, 1, 1)
+
+        self.preload()
+
+    def preload(self):
+        try:
+            self.next_inputs = next(self.loader_iter)
+        except StopIteration:
+            self.next_inputs = None
+            return
+
+        self.next_inputs["images"].sub_(self.mean).div_(self.std)
+
+    def next(self):
+        inputs = self.next_inputs
+        self.preload()
+        return inputs
