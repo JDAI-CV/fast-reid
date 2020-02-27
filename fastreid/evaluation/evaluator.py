@@ -100,6 +100,7 @@ def inference_on_dataset(model, data_loader, evaluator):
     logger.info("Start inference on {} images".format(len(data_loader.loader.dataset)))
 
     total = len(data_loader.loader)  # inference data loader must have a fixed length
+    data_loader.reset()
     evaluator.reset()
 
     num_warmup = min(5, total - 1)
@@ -150,7 +151,6 @@ def inference_on_dataset(model, data_loader, evaluator):
             total_compute_time_str, total_compute_time / (total - num_warmup)
         )
     )
-
     results = evaluator.evaluate()
     # An evaluator may return None when not in main process.
     # Replace it by an empty dict instead to make it easier for downstream code to handle

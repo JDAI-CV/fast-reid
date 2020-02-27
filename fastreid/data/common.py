@@ -68,6 +68,10 @@ class data_prefetcher():
 
         self.preload()
 
+    def reset(self):
+        self.loader_iter = iter(self.loader)
+        self.preload()
+
     def preload(self):
         try:
             self.next_inputs = next(self.loader_iter)

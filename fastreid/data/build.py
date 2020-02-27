@@ -64,7 +64,7 @@ def build_reid_test_loader(cfg, dataset_name):
         test_set,
         batch_sampler=batch_sampler,
         num_workers=num_workers,
-        collate_fn=fast_batch_collator, pin_memory=True)
+        collate_fn=fast_batch_collator)
     return data_prefetcher(cfg, test_loader), len(dataset.query)
 
 

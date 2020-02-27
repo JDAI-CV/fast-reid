@@ -15,7 +15,6 @@ from collections import OrderedDict
 
 import numpy as np
 import torch
-# from fvcore.nn.precise_bn import get_bn_modules
 from torch.nn import DataParallel
 
 from ..data import build_reid_test_loader, build_reid_train_loader
@@ -382,8 +381,8 @@ class DefaultTrainer(SimpleTrainer):
         return build_reid_test_loader(cfg, dataset_name)
 
     @classmethod
-    def build_evaluator(cls, cfg, num_query):
-        return ReidEvaluator(cfg, num_query)
+    def build_evaluator(cls, cfg, num_query, output_dir=None):
+        return ReidEvaluator(cfg, num_query, output_dir)
 
     @classmethod
     def test(cls, cfg, model, evaluators=None):
