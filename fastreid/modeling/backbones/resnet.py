@@ -167,16 +167,11 @@ def build_resnet_backbone(cfg):
     if pretrain:
         if not with_ibn:
             # original resnet
+            # state_dict = torch.load(pretrain_path)['model_ema']
             state_dict = model_zoo.load_url(model_urls[depth])
-            # remove fully-connected-layers
-            state_dict.pop('fc.weight')
-            state_dict.pop('fc.bias')
         else:
             # ibn resnet
             state_dict = torch.load(pretrain_path)['state_dict']
-            # remove fully-connected-layers
-            state_dict.pop('module.fc.weight')
-            state_dict.pop('module.fc.bias')
             # remove module in name
             new_state_dict = {}
             for k in state_dict:
