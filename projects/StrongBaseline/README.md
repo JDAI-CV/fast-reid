@@ -36,4 +36,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train_net.py --config-file='configs/baseline
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
 | BagTricks | ImageNet | 70.4%  | 47.5% | 9.6% |
-| BagTricks + Ibn-a | ImageNet | 76.9% | 55.0% |  |
+| BagTricks + Ibn-a | ImageNet | 76.9% | 55.0% | 13.5% |
