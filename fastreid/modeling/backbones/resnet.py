@@ -10,6 +10,7 @@ import math
 import torch
 from torch import nn
 from torch.utils import model_zoo
+from ...layers.mish import Mish
 
 from .build import BACKBONE_REGISTRY
 
@@ -45,10 +46,28 @@ class IBN(nn.Module):
         return out
 
 
+class SELayer(nn.Module):
+    def __init__(self, channel, reduction=16):
+        super(SELayer, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(
+            nn.Linear(channel, int(channel / reduction), bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(int(channel / reduction), channel, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).view(b, c)
+        y = self.fc(y).view(b, c, 1, 1)
+        return x * y.expand_as(x)
+
+
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, with_ibn=False, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, with_ibn=False, with_se=False, stride=1, downsample=None, reduction=16):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         if with_ibn:
@@ -61,6 +80,11 @@ class Bottleneck(nn.Module):
         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
         self.bn3 = nn.BatchNorm2d(planes * 4)
         self.relu = nn.ReLU(inplace=True)
+        # self.relu = Mish()
+        if with_se:
+            self.se = SELayer(planes * 4, reduction)
+        else:
+            self.se = nn.Identity()
         self.downsample = downsample
         self.stride = stride
 
@@ -77,6 +101,7 @@ class Bottleneck(nn.Module):
 
         out = self.conv3(out)
         out = self.bn3(out)
+        # out = self.se(out)
 
         if self.downsample is not None:
             residual = self.downsample(x)
@@ -96,15 +121,16 @@ class ResNet(nn.Module):
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
+        # self.relu = Mish()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, scale, layers[0], with_ibn=with_ibn)
-        self.layer2 = self._make_layer(block, scale * 2, layers[1], stride=2, with_ibn=with_ibn)
-        self.layer3 = self._make_layer(block, scale * 4, layers[2], stride=2, with_ibn=with_ibn)
-        self.layer4 = self._make_layer(block, scale * 8, layers[3], stride=last_stride)
+        self.layer1 = self._make_layer(block, scale, layers[0], with_ibn=with_ibn, with_se=with_se)
+        self.layer2 = self._make_layer(block, scale * 2, layers[1], stride=2, with_ibn=with_ibn, with_se=with_se)
+        self.layer3 = self._make_layer(block, scale * 4, layers[2], stride=2, with_ibn=with_ibn, with_se=with_se)
+        self.layer4 = self._make_layer(block, scale * 8, layers[3], stride=last_stride, with_se=with_se)
 
         self.random_init()
 
-    def _make_layer(self, block, planes, blocks, stride=1, with_ibn=False):
+    def _make_layer(self, block, planes, blocks, stride=1, with_ibn=False, with_se=False):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
@@ -116,10 +142,10 @@ class ResNet(nn.Module):
         layers = []
         if planes == 512:
             with_ibn = False
-        layers.append(block(self.inplanes, planes, with_ibn, stride, downsample))
+        layers.append(block(self.inplanes, planes, with_ibn, with_se, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes, with_ibn))
+            layers.append(block(self.inplanes, planes, with_ibn, with_se))
 
         return nn.Sequential(*layers)
 
@@ -167,7 +193,6 @@ def build_resnet_backbone(cfg):
     if pretrain:
         if not with_ibn:
             # original resnet
-            # state_dict = torch.load(pretrain_path)['model_ema']
             state_dict = model_zoo.load_url(model_urls[depth])
         else:
             # ibn resnet
@@ -176,7 +201,7 @@ def build_resnet_backbone(cfg):
             new_state_dict = {}
             for k in state_dict:
                 new_k = '.'.join(k.split('.')[1:])
-                if model.state_dict()[new_k].shape == state_dict[k].shape:
+                if new_k in model.state_dict() and (model.state_dict()[new_k].shape == state_dict[k].shape):
                     new_state_dict[new_k] = state_dict[k]
             state_dict = new_state_dict
         res = model.load_state_dict(state_dict, strict=False)
@@ -184,3 +209,5 @@ def build_resnet_backbone(cfg):
         logger.info('missing keys is {}'.format(res.missing_keys))
         logger.info('unexpected keys is {}'.format(res.unexpected_keys))
     return model
+
+

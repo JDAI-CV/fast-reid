@@ -4,19 +4,21 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 from .build import REID_HEADS_REGISTRY
+from ..losses import CrossEntropyLoss, TripletLoss
 from ..model_utils import weights_init_classifier, weights_init_kaiming
 from ...layers import bn_no_bias
 
 
 @REID_HEADS_REGISTRY.register()
-class BNneckLinear(nn.Module):
+class StandardHead(nn.Module):
 
     def __init__(self, cfg):
         super().__init__()
+        self._cfg = cfg
         self._num_classes = cfg.MODEL.HEADS.NUM_CLASSES
 
         self.gap = nn.AdaptiveAvgPool2d(1)
@@ -39,3 +41,14 @@ class BNneckLinear(nn.Module):
 
         pred_class_logits = self.classifier(bn_features)
         return pred_class_logits, global_features, targets
+
+    @classmethod
+    def losses(cls, cfg, pred_class_logits, global_features, gt_classes):
+        loss_dict = {}
+        if "CrossEntropyLoss" in cfg.MODEL.LOSSES.NAME:
+            loss = CrossEntropyLoss(cfg)(pred_class_logits, gt_classes)
+            loss_dict.update(loss)
+        if "TripletLoss" in cfg.MODEL.LOSSES.NAME:
+            loss = TripletLoss(cfg)(global_features, gt_classes)
+            loss_dict.update(loss)
+        return loss_dict

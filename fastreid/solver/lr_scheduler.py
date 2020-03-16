@@ -8,9 +8,12 @@ from bisect import bisect_right
 from typing import List
 
 import torch
+from torch.optim.lr_scheduler import _LRScheduler, CosineAnnealingLR
+
+__all__ = ["WarmupMultiStepLR", "DelayerScheduler"]
 
 
-class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
+class WarmupMultiStepLR(_LRScheduler):
     def __init__(
             self,
             optimizer: torch.optim.Optimizer,
@@ -72,3 +75,48 @@ def _get_warmup_factor_at_iter(
     else:
         raise ValueError("Unknown warmup method: {}".format(method))
 
+
+class DelayerScheduler(_LRScheduler):
+    """ Starts with a flat lr schedule until it reaches N epochs the applies a scheduler
+    Args:
+        optimizer (Optimizer): Wrapped optimizer.
+        delay_epochs: number of epochs to keep the initial lr until starting aplying the scheduler
+        after_scheduler: after target_epoch, use this scheduler(eg. ReduceLROnPlateau)
+    """
+
+    def __init__(self, optimizer, delay_epochs, after_scheduler, warmup_factor, warmup_iters, warmup_method):
+        self.delay_epochs = delay_epochs
+        self.after_scheduler = after_scheduler
+        self.finished = False
+        self.warmup_factor = warmup_factor
+        self.warmup_iters = warmup_iters
+        self.warmup_method = warmup_method
+        super().__init__(optimizer)
+
+    def get_lr(self):
+
+        if self.last_epoch >= self.delay_epochs:
+            if not self.finished:
+                self.after_scheduler.base_lrs = self.base_lrs
+                self.finished = True
+            return self.after_scheduler.get_lr()
+
+        warmup_factor = _get_warmup_factor_at_iter(
+            self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
+        )
+        return [base_lr * warmup_factor for base_lr in self.base_lrs]
+
+    def step(self, epoch=None):
+        if self.finished:
+            if epoch is None:
+                self.after_scheduler.step(None)
+            else:
+                self.after_scheduler.step(epoch - self.delay_epochs)
+        else:
+            return super(DelayerScheduler, self).step(epoch)
+
+
+def DelayedCosineAnnealingLR(optimizer, delay_epochs, cosine_annealing_epochs, warmup_factor,
+                             warmup_iters, warmup_method):
+    base_scheduler = CosineAnnealingLR(optimizer, cosine_annealing_epochs, eta_min=0)
+    return DelayerScheduler(optimizer, delay_epochs, base_scheduler, warmup_factor, warmup_iters, warmup_method)

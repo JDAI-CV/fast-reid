@@ -9,6 +9,7 @@ from torch import nn
 from .build import META_ARCH_REGISTRY
 from ..backbones import build_backbone
 from ..heads import build_reid_heads
+from functools import partial
 
 
 @META_ARCH_REGISTRY.register()
@@ -17,6 +18,7 @@ class Baseline(nn.Module):
         super().__init__()
         self.backbone = build_backbone(cfg)
         self.heads = build_reid_heads(cfg)
+        self.losses = partial(self.heads.losses, cfg)
 
     def forward(self, inputs):
         if not self.training:

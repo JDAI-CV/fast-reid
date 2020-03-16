@@ -5,13 +5,10 @@
 """
 import torch
 import torch.nn.functional as F
-from torch import nn
 
-from .build import LOSS_REGISTRY
 from ...utils.events import get_event_storage
 
 
-@LOSS_REGISTRY.register()
 class CrossEntropyLoss(object):
     """
     A class that stores information and compute losses about outputs of a Baseline head.
@@ -43,7 +40,7 @@ class CrossEntropyLoss(object):
         storage = get_event_storage()
         storage.put_scalar("cls_accuracy", ret[0])
 
-    def __call__(self, pred_class_logits, pred_features, gt_classes):
+    def __call__(self, pred_class_logits, gt_classes):
         """
         Compute the softmax cross entropy loss for box classification.
         Returns:
@@ -59,5 +56,5 @@ class CrossEntropyLoss(object):
         else:
             loss = F.cross_entropy(pred_class_logits, gt_classes, reduction="mean")
         return {
-            "loss_cls": loss*self._scale,
+            "loss_cls": loss * self._scale,
         }

@@ -8,4 +8,4 @@ DATASETS:
   NAMES: ("DukeMTMC",)
   TESTS: ("DukeMTMC",)
 
-OUTPUT_DIR: "logs/fastreid_dukemtmc/softmax_softmargin"
+OUTPUT_DIR: "logs/dukemtmc/bagtricks"

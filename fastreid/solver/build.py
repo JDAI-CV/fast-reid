@@ -4,9 +4,8 @@
 @contact: sherlockliao01@gmail.com
 """
 
-
-import torch
-from .lr_scheduler import WarmupMultiStepLR
+from . import lr_scheduler
+from . import optim
 
 
 def build_optimizer(cfg, model):
@@ -22,23 +21,33 @@ def build_optimizer(cfg, model):
             lr = cfg.SOLVER.BASE_LR * cfg.SOLVER.BIAS_LR_FACTOR
             weight_decay = cfg.SOLVER.WEIGHT_DECAY_BIAS
         params += [{"params": [value], "lr": lr, "weight_decay": weight_decay}]
-    if cfg.SOLVER.OPT == 'sgd':
-        opt_fns = torch.optim.SGD(params, momentum=cfg.SOLVER.MOMENTUM)
-    elif cfg.SOLVER.OPT == 'adam':
-        opt_fns = torch.optim.Adam(params)
-    elif cfg.SOLVER.OPT == 'adamw':
-        opt_fns = torch.optim.AdamW(params)
+    solver_opt = cfg.SOLVER.OPT
+    if hasattr(optim, solver_opt):
+        if solver_opt == "SGD":
+            opt_fns = getattr(optim, solver_opt)(params, momentum=cfg.SOLVER.MOMENTUM)
+        else:
+            opt_fns = getattr(optim, solver_opt)(params)
     else:
-        raise NameError(f'optimizer {cfg.SOLVER.OPT} not support')
+        raise NameError("optimizer {} not support".format(cfg.SOLVER.OPT))
     return opt_fns
 
 
 def build_lr_scheduler(cfg, optimizer):
-    return WarmupMultiStepLR(
-        optimizer,
-        cfg.SOLVER.STEPS,
-        cfg.SOLVER.GAMMA,
-        warmup_factor=cfg.SOLVER.WARMUP_FACTOR,
-        warmup_iters=cfg.SOLVER.WARMUP_ITERS,
-        warmup_method=cfg.SOLVER.WARMUP_METHOD
-    )
+    if cfg.SOLVER.SCHED == "warmup":
+        return lr_scheduler.WarmupMultiStepLR(
+            optimizer,
+            cfg.SOLVER.STEPS,
+            cfg.SOLVER.GAMMA,
+            warmup_factor=cfg.SOLVER.WARMUP_FACTOR,
+            warmup_iters=cfg.SOLVER.WARMUP_ITERS,
+            warmup_method=cfg.SOLVER.WARMUP_METHOD
+        )
+    elif cfg.SOLVER.SCHED == "delay":
+        return lr_scheduler.DelayedCosineAnnealingLR(
+            optimizer,
+            cfg.SOLVER.DELAY_ITERS,
+            cfg.SOLVER.COS_ANNEAL_ITERS,
+            warmup_factor=cfg.SOLVER.WARMUP_FACTOR,
+            warmup_iters=cfg.SOLVER.WARMUP_ITERS,
+            warmup_method=cfg.SOLVER.WARMUP_METHOD
+        )

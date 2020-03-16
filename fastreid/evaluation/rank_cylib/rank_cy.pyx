@@ -163,6 +163,7 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
 
         float[:,:] all_cmc = np.zeros((num_q, max_rank), dtype=np.float32)
         float[:] all_AP = np.zeros(num_q, dtype=np.float32)
+        float[:] all_INP = np.zeros(num_q, dtype=np.float32)
         float num_valid_q = 0. # number of valid query
 
         long q_idx, q_pid, q_camid, g_idx
@@ -171,6 +172,8 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
 
         float[:] raw_cmc = np.zeros(num_g, dtype=np.float32) # binary vector, positions with value 1 are correct matches
         float[:] cmc = np.zeros(num_g, dtype=np.float32)
+        long max_pos_idx = 0
+        float inp
         long num_g_real, rank_idx
         unsigned long meet_condition
 
@@ -183,16 +186,17 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
         q_pid = q_pids[q_idx]
         q_camid = q_camids[q_idx]
 
-        # remove gallery samples that have the same pid and camid with query
         for g_idx in range(num_g):
             order[g_idx] = indices[q_idx, g_idx]
         num_g_real = 0
         meet_condition = 0
 
+        # remove gallery samples that have the same pid and camid with query
         for g_idx in range(num_g):
             if (g_pids[order[g_idx]] != q_pid) or (g_camids[order[g_idx]] != q_camid):
                 raw_cmc[num_g_real] = matches[q_idx][g_idx]
                 num_g_real += 1
+                # this condition is true if query appear in gallery
                 if matches[q_idx][g_idx] > 1e-31:
                     meet_condition = 1
 
@@ -202,6 +206,15 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
 
         # compute cmc
         function_cumsum(raw_cmc, cmc, num_g_real)
+        # compute mean inverse negative penalty
+        # reference : https://github.com/mangye16/ReID-Survey/blob/master/utils/reid_metric.py
+        max_pos_idx = 0
+        for g_idx in range(num_g_real):
+            if (raw_cmc[g_idx] == 1) and (g_idx > max_pos_idx):
+                max_pos_idx = g_idx
+        inp = cmc[max_pos_idx] / (max_pos_idx + 1.0)
+        all_INP[q_idx] = inp
+
         for g_idx in range(num_g_real):
             if cmc[g_idx] > 1:
                 cmc[g_idx] = 1
@@ -230,11 +243,14 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
         avg_cmc[rank_idx] /= num_valid_q
 
     cdef float mAP = 0
+    cdef float mINP = 0
     for q_idx in range(num_q):
         mAP += all_AP[q_idx]
+        mINP += all_INP[q_idx]
     mAP /= num_valid_q
+    mINP /= num_valid_q
 
-    return np.asarray(avg_cmc).astype(np.float32), mAP
+    return np.asarray(avg_cmc).astype(np.float32), mAP, mINP
 
 
 # Compute the cumulative sum

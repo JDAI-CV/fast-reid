@@ -7,8 +7,6 @@
 import torch
 from torch import nn
 
-from .build import LOSS_REGISTRY
-
 
 def normalize(x, axis=-1):
     """Normalizing to unit length along the specified dimension.
@@ -102,7 +100,6 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
     return dist_ap, dist_an
 
 
-@LOSS_REGISTRY.register()
 class TripletLoss(object):
     """Modified from Tong Xiao's open-reid (https://github.com/Cysu/open-reid).
     Related Triplet Loss theory can be found in paper 'In Defense of the Triplet
@@ -118,7 +115,7 @@ class TripletLoss(object):
         else:
             self.ranking_loss = nn.SoftMarginLoss()
 
-    def __call__(self, pred_class_logits, global_features, targets):
+    def __call__(self, global_features, targets):
         if self._normalize_feature:
             global_features = normalize(global_features, axis=-1)
 

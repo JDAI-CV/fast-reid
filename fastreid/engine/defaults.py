@@ -17,10 +17,11 @@ import numpy as np
 import torch
 from torch.nn import DataParallel
 
+from . import hooks
+from .train_loop import SimpleTrainer
 from ..data import build_reid_test_loader, build_reid_train_loader
 from ..evaluation import (DatasetEvaluator, ReidEvaluator,
                           inference_on_dataset, print_csv_format)
-from ..modeling.losses import build_criterion
 from ..modeling.meta_arch import build_model
 from ..solver import build_lr_scheduler, build_optimizer
 from ..utils import comm
@@ -28,8 +29,6 @@ from ..utils.checkpoint import Checkpointer
 from ..utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
 from ..utils.file_io import PathManager
 from ..utils.logger import setup_logger
-from . import hooks
-from .train_loop import SimpleTrainer
 
 __all__ = ["default_argument_parser", "default_setup", "DefaultPredictor", "DefaultTrainer"]
 
@@ -198,19 +197,18 @@ class DefaultTrainer(SimpleTrainer):
         Args:
             cfg (CfgNode):
         """
-        logger = logging.getLogger("fastreid."+__name__)
+        logger = logging.getLogger("fastreid." + __name__)
         if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for d2
             setup_logger()
         # Assume these objects must be constructed in this order.
         model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)
         data_loader = self.build_train_loader(cfg)
-        criterion = self.build_criterion(cfg)
 
         # For training, wrap with DP. But don't need this for inference.
         model = DataParallel(model)
         model = model.cuda()
-        super().__init__(model, data_loader, optimizer, criterion)
+        super().__init__(model, data_loader, optimizer)
 
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)
         # Assume no other objects need to be checkpointed.
@@ -337,10 +335,6 @@ class DefaultTrainer(SimpleTrainer):
         # logger = logging.getLogger(__name__)
         # logger.info("Model:\n{}".format(model))
         return model
-
-    @classmethod
-    def build_criterion(cls, cfg):
-        return build_criterion(cfg)
 
     @classmethod
     def build_optimizer(cls, cfg, model):

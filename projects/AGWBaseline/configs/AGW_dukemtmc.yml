@@ -1,10 +1,6 @@
 _BASE_: "Base-AGW.yml"
 
 MODEL:
-  BACKBONE:
-    PRETRAIN: True
-    WITH_IBN: True
-    PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
   HEADS:
     NUM_CLASSES: 702
 
@@ -12,4 +8,4 @@ DATASETS:
   NAMES: ("DukeMTMC",)
   TESTS: ("DukeMTMC",)
 
-OUTPUT_DIR: "logs/fastreid_dukemtmc/agw-ibn_net"
+OUTPUT_DIR: "logs/dukemtmc/agw"

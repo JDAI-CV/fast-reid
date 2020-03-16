@@ -65,4 +65,4 @@ class ArcFace(nn.Module):
                     (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
         pred_class_logits *= self._s
 
-        return pred_class_logits, global_features, targets,
+        return pred_class_logits, global_features, targets
