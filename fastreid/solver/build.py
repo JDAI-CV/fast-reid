@@ -15,10 +15,10 @@ def build_optimizer(cfg, model):
             continue
         lr = cfg.SOLVER.BASE_LR
         weight_decay = cfg.SOLVER.WEIGHT_DECAY
-        # if "base" in key:
-        #     lr = cfg.SOLVER.BASE_LR * 0.1
+        # if "heads" in key:
+        #     lr = cfg.SOLVER.BASE_LR * 10
         if "bias" in key:
-            lr = cfg.SOLVER.BASE_LR * cfg.SOLVER.BIAS_LR_FACTOR
+            lr = lr * cfg.SOLVER.BIAS_LR_FACTOR
             weight_decay = cfg.SOLVER.WEIGHT_DECAY_BIAS
         params += [{"params": [value], "lr": lr, "weight_decay": weight_decay}]
     solver_opt = cfg.SOLVER.OPT

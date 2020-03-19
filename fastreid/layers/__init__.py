@@ -5,18 +5,14 @@
 """
 from torch import nn
 
-from .context_block import ContextBlock
 from .batch_drop import BatchDrop
 from .batch_norm import bn_no_bias
-from .pooling import GeM
+from .context_block import ContextBlock
 from .frn import FRN, TLU
+from .mish import Mish
+from .gem_pool import GeneralizedMeanPoolingP
 
 
-class Lambda(nn.Module):
-    "Create a layer that simply calls `func` with `x`"
-    def __init__(self, func):
-        super().__init__()
-        self.func=func
-
-    def forward(self, x):
-        return self.func(x)
+class Flatten(nn.Module):
+    def forward(self, input):
+        return input.view(input.size(0), -1)

@@ -198,7 +198,7 @@ class SimpleTrainer(TrainerBase):
         If your want to do something with the heads, you can wrap the model.
         """
         outputs = self.model(data)
-        loss_dict = self.model.module.losses(*outputs)
+        loss_dict = self.model.module.losses(outputs)
         losses = sum(loss for loss in loss_dict.values())
         self._detect_anomaly(losses, loss_dict)
 

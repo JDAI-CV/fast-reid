@@ -4,51 +4,42 @@
 @contact: sherlockliao01@gmail.com
 """
 
-import torch.nn.functional as F
 from torch import nn
 
 from .build import REID_HEADS_REGISTRY
 from ..losses import CrossEntropyLoss, TripletLoss
-from ..model_utils import weights_init_classifier, weights_init_kaiming
-from ...layers import bn_no_bias
+from ..model_utils import weights_init_classifier
 
 
 @REID_HEADS_REGISTRY.register()
 class StandardHead(nn.Module):
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, in_feat):
         super().__init__()
-        self._cfg = cfg
         self._num_classes = cfg.MODEL.HEADS.NUM_CLASSES
 
-        self.gap = nn.AdaptiveAvgPool2d(1)
-        self.bnneck = bn_no_bias(2048)
-        self.bnneck.apply(weights_init_kaiming)
-
-        self.classifier = nn.Linear(2048, self._num_classes, bias=False)
+        self.classifier = nn.Linear(in_feat, self._num_classes, bias=False)
         self.classifier.apply(weights_init_classifier)
 
     def forward(self, features, targets=None):
         """
         See :class:`ReIDHeads.forward`.
         """
-        global_features = self.gap(features)
-        global_features = global_features.view(global_features.shape[0], -1)
-        bn_features = self.bnneck(global_features)
-
-        if not self.training:
-            return F.normalize(bn_features)
-
-        pred_class_logits = self.classifier(bn_features)
-        return pred_class_logits, global_features, targets
+        pred_class_logits = self.classifier(features)
+        return pred_class_logits
 
     @classmethod
-    def losses(cls, cfg, pred_class_logits, global_features, gt_classes):
+    def losses(cls, cfg, pred_class_logits, global_features, gt_classes, prefix='') -> dict:
         loss_dict = {}
-        if "CrossEntropyLoss" in cfg.MODEL.LOSSES.NAME:
+        if "CrossEntropyLoss" in cfg.MODEL.LOSSES.NAME and pred_class_logits is not None:
             loss = CrossEntropyLoss(cfg)(pred_class_logits, gt_classes)
             loss_dict.update(loss)
-        if "TripletLoss" in cfg.MODEL.LOSSES.NAME:
+        if "TripletLoss" in cfg.MODEL.LOSSES.NAME and global_features is not None:
             loss = TripletLoss(cfg)(global_features, gt_classes)
             loss_dict.update(loss)
-        return loss_dict
+        # rename
+        name_loss_dict = {}
+        for name in loss_dict.keys():
+            name_loss_dict[prefix+name] = loss_dict[name]
+        del loss_dict
+        return name_loss_dict
