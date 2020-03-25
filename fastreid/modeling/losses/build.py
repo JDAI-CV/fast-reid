@@ -23,9 +23,9 @@ def build_criterion(cfg):
 
     loss_names = cfg.MODEL.LOSSES.NAME
     loss_funcs = [LOSS_REGISTRY.get(loss_name)(cfg) for loss_name in loss_names]
-    loss_dict = {}
 
     def criterion(*args):
+        loss_dict = {}
         for loss_func in loss_funcs:
             loss = loss_func(*args)
             loss_dict.update(loss)

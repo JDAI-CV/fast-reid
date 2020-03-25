@@ -43,7 +43,8 @@ _C.MODEL.BACKBONE.PRETRAIN_PATH = ''
 # REID HEADS options
 # ---------------------------------------------------------------------------- #
 _C.MODEL.HEADS = CN()
-_C.MODEL.HEADS.NAME = "BNneckLinear"
+_C.MODEL.HEADS.NAME = "StandardHead"
+_C.MODEL.HEADS.POOL_LAYER = 'avgpool'
 _C.MODEL.HEADS.NUM_CLASSES = 751
 
 # ---------------------------------------------------------------------------- #
@@ -95,7 +96,7 @@ _C.INPUT.BRIGHTNESS = 0.4
 _C.INPUT.CONTRAST = 0.4
 # Random erasing
 _C.INPUT.RE = CN()
-_C.INPUT.RE.ENABLED = True
+_C.INPUT.RE.ENABLED = False
 _C.INPUT.RE.PROB = 0.5
 _C.INPUT.RE.MEAN = [0.596*255, 0.558*255, 0.497*255]
 # Cutout
@@ -103,7 +104,7 @@ _C.INPUT.CUTOUT = CN()
 _C.INPUT.CUTOUT.ENABLED = False
 _C.INPUT.CUTOUT.PROB = 0.5
 _C.INPUT.CUTOUT.SIZE = 64
-_C.INPUT.CUTOUT.MEAN = [0, 0, 0]
+_C.INPUT.CUTOUT.MEAN = [0.485*255, 0.456*255, 0.406*255]
 
 # -----------------------------------------------------------------------------
 # Dataset
@@ -129,7 +130,7 @@ _C.DATALOADER.NUM_WORKERS = 8
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
 
-_C.SOLVER.OPT = "adam"
+_C.SOLVER.OPT = "Adam"
 
 _C.SOLVER.MAX_ITER = 40000
 
@@ -141,8 +142,14 @@ _C.SOLVER.MOMENTUM = 0.9
 _C.SOLVER.WEIGHT_DECAY = 0.0005
 _C.SOLVER.WEIGHT_DECAY_BIAS = 0.
 
+_C.SOLVER.SCHED = "warmup"
+# warmup config
 _C.SOLVER.GAMMA = 0.1
 _C.SOLVER.STEPS = (30, 55)
+
+# cosine annealing
+_C.SOLVER.DELAY_ITERS = 100
+_C.SOLVER.COS_ANNEAL_ITERS = 100
 
 _C.SOLVER.WARMUP_FACTOR = 0.1
 _C.SOLVER.WARMUP_ITERS = 10

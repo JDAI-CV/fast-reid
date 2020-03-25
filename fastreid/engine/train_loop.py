@@ -160,7 +160,7 @@ class SimpleTrainer(TrainerBase):
     or write your own training loop.
     """
 
-    def __init__(self, model, data_loader, optimizer, criterion):
+    def __init__(self, model, data_loader, optimizer):
         """
         Args:
             model: a torch Module. Takes a data from data_loader and returns a
@@ -181,7 +181,6 @@ class SimpleTrainer(TrainerBase):
         self.model = model
         self.data_loader = data_loader
         self.optimizer = optimizer
-        self.criterion = criterion
 
     def run_step(self):
         """
@@ -199,7 +198,7 @@ class SimpleTrainer(TrainerBase):
         If your want to do something with the heads, you can wrap the model.
         """
         outputs = self.model(data)
-        loss_dict = self.criterion(*outputs)
+        loss_dict = self.model.module.losses(outputs)
         losses = sum(loss for loss in loss_dict.values())
         self._detect_anomaly(losses, loss_dict)
 

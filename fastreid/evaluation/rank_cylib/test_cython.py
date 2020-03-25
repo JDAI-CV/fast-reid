@@ -33,36 +33,37 @@ q_camids = np.random.randint(0, 5, size=num_q)
 g_camids = np.random.randint(0, 5, size=num_g)
 '''
 
-print('=> Using market1501\'s metric')
-pytime = timeit.timeit(
-    'evaluation.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)',
-    setup=setup,
-    number=20
-)
-cytime = timeit.timeit(
-    'evaluation.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True)',
-    setup=setup,
-    number=20
-)
-print('Python time: {} s'.format(pytime))
-print('Cython time: {} s'.format(cytime))
-print('Cython is {} times faster than python\n'.format(pytime / cytime))
+# print('=> Using market1501\'s metric')
+# pytime = timeit.timeit(
+#     'evaluation.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)',
+#     setup=setup,
+#     number=20
+# )
+# cytime = timeit.timeit(
+#     'evaluation.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True)',
+#     setup=setup,
+#     number=20
+# )
+# print('Python time: {} s'.format(pytime))
+# print('Cython time: {} s'.format(cytime))
+# print('Cython is {} times faster than python\n'.format(pytime / cytime))
+#
+# print('=> Using cuhk03\'s metric')
+# pytime = timeit.timeit(
+#     'evaluation.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03=True, use_cython=False)',
+#     setup=setup,
+#     number=20
+# )
+# cytime = timeit.timeit(
+#     'evaluation.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03=True, use_cython=True)',
+#     setup=setup,
+#     number=20
+# )
+# print('Python time: {} s'.format(pytime))
+# print('Cython time: {} s'.format(cytime))
+# print('Cython is {} times faster than python\n'.format(pytime / cytime))
 
-print('=> Using cuhk03\'s metric')
-pytime = timeit.timeit(
-    'evaluation.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03=True, use_cython=False)',
-    setup=setup,
-    number=20
-)
-cytime = timeit.timeit(
-    'evaluation.evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03=True, use_cython=True)',
-    setup=setup,
-    number=20
-)
-print('Python time: {} s'.format(pytime))
-print('Cython time: {} s'.format(cytime))
-print('Cython is {} times faster than python\n'.format(pytime / cytime))
-"""
+from fastreid.evaluation import evaluate_rank
 print("=> Check precision")
 num_q = 30
 num_g = 300
@@ -72,8 +73,7 @@ q_pids = np.random.randint(0, num_q, size=num_q)
 g_pids = np.random.randint(0, num_g, size=num_g)
 q_camids = np.random.randint(0, 5, size=num_q)
 g_camids = np.random.randint(0, 5, size=num_g)
-cmc, mAP = evaluate(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)
-print("Python:\nmAP = {} \ncmc = {}\n".format(mAP, cmc))
-cmc, mAP = evaluate(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True)
-print("Cython:\nmAP = {} \ncmc = {}\n".format(mAP, cmc))
-"""
+cmc, mAP, mINP = evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)
+print("Python:\nmAP = {} \ncmc = {}\nmINP = {}".format(mAP, cmc, mINP))
+cmc, mAP, mINP = evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True)
+print("Cython:\nmAP = {} \ncmc = {}\nmINP = {}".format(mAP, cmc, mINP))

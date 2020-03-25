@@ -8,4 +8,4 @@ DATASETS:
   NAMES: ("Market1501",)
   TESTS: ("Market1501",)
 
-OUTPUT_DIR: "logs/fastreid_market1501/ibn_softmax_softmargin"
+OUTPUT_DIR: "logs/market1501/ibn_bagtricks"

@@ -93,14 +93,13 @@ class Cutout(object):
         self.size = size
 
     def __call__(self, img):
-        img = np.asarray(img, dtype=np.uint8).copy()
+        img = np.asarray(img, dtype=np.float32).copy()
         if random.uniform(0, 1) > self.probability:
             return img
 
         h = self.size
         w = self.size
         for attempt in range(100):
-            area = img.shape[0] * img.shape[1]
             if w < img.shape[1] and h < img.shape[0]:
                 x1 = random.randint(0, img.shape[0] - h)
                 y1 = random.randint(0, img.shape[1] - w)

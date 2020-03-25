@@ -7,5 +7,6 @@
 from .build import REID_HEADS_REGISTRY, build_reid_heads
 
 # import all the meta_arch, so they will be registered
-from .bn_linear import BNneckLinear
-from .arcface import ArcFace
+from .linear_head import LinearHead
+from .bnneck_head import BNneckHead
+from .arcface import ArcfaceHead

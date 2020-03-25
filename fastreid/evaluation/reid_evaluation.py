@@ -48,10 +48,10 @@ class ReidEvaluator(DatasetEvaluator):
         self._results = OrderedDict()
 
         cos_dist = torch.mm(query_features, gallery_features.t()).numpy()
-        cmc, mAP = evaluate_rank(1 - cos_dist, query_pids, gallery_pids, query_camids, gallery_camids)
+        cmc, mAP, mINP = evaluate_rank(1 - cos_dist, query_pids, gallery_pids, query_camids, gallery_camids)
         for r in [1, 5, 10]:
             self._results['Rank-{}'.format(r)] = cmc[r - 1]
         self._results['mAP'] = mAP
-        self._results['mINP'] = 0
+        self._results['mINP'] = mINP
 
         return copy.deepcopy(self._results)

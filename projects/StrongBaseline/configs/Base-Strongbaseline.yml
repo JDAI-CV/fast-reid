@@ -9,15 +9,14 @@ MODEL:
     PRETRAIN: True
 
   HEADS:
-    NAME: "BNneckLinear"
-    NUM_CLASSES: 702
+    NAME: "BNneckHead"
 
   LOSSES:
     NAME: ("CrossEntropyLoss", "TripletLoss")
     SMOOTH_ON: True
     SCALE_CE: 1.0
 
-    MARGIN: 0.0
+    MARGIN: 0.3
     SCALE_TRI: 1.0
 
 DATASETS:
@@ -42,17 +41,18 @@ DATALOADER:
   NUM_WORKERS: 16
 
 SOLVER:
-  OPT: "adam"
+  OPT: "Adam"
   MAX_ITER: 18000
   BASE_LR: 0.00035
+  BIAS_LR_FACTOR: 2
   WEIGHT_DECAY: 0.0005
-  WEIGHT_DECAY_BIAS: 0.0005
+  WEIGHT_DECAY_BIAS: 0.0
   IMS_PER_BATCH: 64
 
   STEPS: [8000, 14000]
   GAMMA: 0.1
 
-  WARMUP_FACTOR: 0.1
+  WARMUP_FACTOR: 0.01
   WARMUP_ITERS: 2000
 
   LOG_PERIOD: 200
@@ -64,4 +64,4 @@ TEST:
 
 CUDNN_BENCHMARK: True
 
-OUTPUT_DIR: "logs/fastreid_dukemtmc/ibn_softmax_softtriplet"
+OUTPUT_DIR: "logs/dukemtmc/softmax"

@@ -19,24 +19,21 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train_net.py --config-file='configs/baseline
 
 ### Market1501 dataset
 
-| Method | Pretrained | Rank@1 | mAP |
-| :---: | :---: | :---: |:---: |
-| BagTricks | ImageNet | 93.3% | 85.2% |
-| BagTricks + Ibn-a | ImageNet | 94.9% | 87.1% |
-| BagTricks + Ibn-a + softMargin | ImageNet | 94.8% | 87.7% |
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| BagTricks | ImageNet | 93.6% | 85.1% | 58.1% |
+| BagTricks + Ibn-a | ImageNet | 94.8% | 87.3% | 63.5% |
 
 ### DukeMTMC dataset
 
-| Method | Pretrained | Rank@1 | mAP |
-| :---: | :---: | :---: |:---: |
-| BagTricks | ImageNet | 86.6% | 77.3% |
-| BagTricks + Ibn-a | ImageNet | 88.8% | 78.6% |
-| BagTricks + Ibn-a + softMargin | ImageNet | 89.1% | 78.9% |
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| BagTricks | ImageNet | 86.1% | 75.9% | 38.7% |
+| BagTricks + Ibn-a | ImageNet | 89.0% | 78.8% | 43.6% |
 
 ### MSMT17 dataset
 
-| Method | Pretrained | Rank@1 | mAP |
-| :---: | :---: | :---: |:---: |
-| BagTricks | ImageNet | 72.0% | 48.6% |
-| BagTricks + Ibn-a | ImageNet | 77.7% | 54.6% |
-| BagTricks + Ibn-a + softMargin | ImageNet | 77.3% | 55.7% |
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| BagTricks | ImageNet | 70.4%  | 47.5% | 9.6% |
+| BagTricks + Ibn-a | ImageNet | 76.9% | 55.0% | 13.5% |
