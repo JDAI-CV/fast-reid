@@ -43,7 +43,7 @@ _C.MODEL.BACKBONE.PRETRAIN_PATH = ''
 # REID HEADS options
 # ---------------------------------------------------------------------------- #
 _C.MODEL.HEADS = CN()
-_C.MODEL.HEADS.NAME = "StandardHead"
+_C.MODEL.HEADS.NAME = "BNneckHead"
 _C.MODEL.HEADS.POOL_LAYER = 'avgpool'
 _C.MODEL.HEADS.NUM_CLASSES = 751
 
