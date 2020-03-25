@@ -9,11 +9,11 @@ MODEL:
     PRETRAIN: True
 
   HEADS:
-    NAME: "GeM_BN_Linear"
+    NAME: "GemHead"
     NUM_CLASSES: 702
 
   LOSSES:
-    NAME: ("CrossEntropyLoss", "WeightedRegularizedTriplet")
+    NAME: ("CrossEntropyLoss", "TripletLoss")
     SMOOTH_ON: True
     SCALE_CE: 1.0
 
@@ -42,7 +42,7 @@ DATALOADER:
   NUM_WORKERS: 16
 
 SOLVER:
-  OPT: "adam"
+  OPT: "Adam"
   MAX_ITER: 18000
   BASE_LR: 0.00035
   WEIGHT_DECAY: 0.0005
@@ -52,10 +52,10 @@ SOLVER:
   STEPS: [8000, 14000]
   GAMMA: 0.1
 
-  WARMUP_FACTOR: 0.1
+  WARMUP_FACTOR: 0.01
   WARMUP_ITERS: 2000
 
-  LOG_PERIOD: 20
+  LOG_PERIOD: 200
   CHECKPOINT_PERIOD: 6000
 
 TEST:

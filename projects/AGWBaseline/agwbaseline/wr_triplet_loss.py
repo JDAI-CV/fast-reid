@@ -6,7 +6,6 @@
 import torch
 from torch import nn
 from fastreid.modeling.losses.margin_loss import normalize, euclidean_dist
-from fastreid.modeling.losses import LOSS_REGISTRY
 
 
 def softmax_weights(dist, mask):
@@ -17,7 +16,6 @@ def softmax_weights(dist, mask):
     return W
 
 
-@LOSS_REGISTRY.register()
 class WeightedRegularizedTriplet(object):
 
     def __init__(self, cfg):

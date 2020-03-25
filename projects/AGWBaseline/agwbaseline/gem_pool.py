@@ -10,6 +10,8 @@ from torch import nn
 
 from fastreid.modeling.model_utils import weights_init_kaiming, weights_init_classifier
 from fastreid.modeling.heads import REID_HEADS_REGISTRY
+from fastreid.layers import bn_no_bias
+from fastreid.modeling.heads import StandardHead
 
 
 class GeneralizedMeanPooling(nn.Module):
@@ -53,15 +55,14 @@ class GeneralizedMeanPoolingP(GeneralizedMeanPooling):
 
 
 @REID_HEADS_REGISTRY.register()
-class GeM_BN_Linear(nn.Module):
+class GemHead(nn.Module):
 
     def __init__(self, cfg):
         super().__init__()
         self._num_classes = cfg.MODEL.HEADS.NUM_CLASSES
 
         self.gem_pool = GeneralizedMeanPoolingP()
-        self.bnneck = nn.BatchNorm1d(2048)
-        self.bnneck.bias.requires_grad_(False)
+        self.bnneck = bn_no_bias(2048)
         self.bnneck.apply(weights_init_kaiming)
 
         self.classifier = nn.Linear(2048, self._num_classes, bias=False)
@@ -76,4 +77,8 @@ class GeM_BN_Linear(nn.Module):
             return F.normalize(bn_features)
 
         pred_class_logits = self.classifier(bn_features)
-        return pred_class_logits, global_features, targets,
+        return pred_class_logits, global_features, targets
+
+    @classmethod
+    def losses(cls, cfg, pred_class_logits, global_features, gt_classes):
+        return StandardHead.losses(cfg, pred_class_logits, global_features, gt_classes)

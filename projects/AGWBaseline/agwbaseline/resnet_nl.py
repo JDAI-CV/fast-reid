@@ -51,7 +51,7 @@ class ResNetNL(nn.Module):
         layers = []
         if planes == 512:
             with_ibn = False
-        layers.append(block(self.inplanes, planes, with_ibn, stride, downsample))
+        layers.append(block(self.inplanes, planes, with_ibn, stride=stride, downsample=downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes, with_ibn))
@@ -142,15 +142,9 @@ def build_resnetNL_backbone(cfg):
         if not with_ibn:
             # original resnet
             state_dict = model_zoo.load_url(model_urls[depth])
-            # remove fully-connected-layers
-            state_dict.pop('fc.weight')
-            state_dict.pop('fc.bias')
         else:
             # ibn resnet
             state_dict = torch.load(pretrain_path)['state_dict']
-            # remove fully-connected-layers
-            state_dict.pop('module.fc.weight')
-            state_dict.pop('module.fc.bias')
             # remove module in name
             new_state_dict = {}
             for k in state_dict:
@@ -160,6 +154,6 @@ def build_resnetNL_backbone(cfg):
             state_dict = new_state_dict
         res = model.load_state_dict(state_dict, strict=False)
         logger = logging.getLogger('fastreid.'+__name__)
-        logger.info('missing keys is {}\n '
-                    'unexpected keys is {}'.format(res.missing_keys, res.unexpected_keys))
+        logger.info('missing keys is {}'.format(res.missing_keys))
+        logger.info('unexpected keys is {}'.format(res.unexpected_keys))
     return model
