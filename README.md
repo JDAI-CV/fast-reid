@@ -43,3 +43,29 @@ The designed architecture follows this guide [PyTorch-Project-Template](https://
     ```
 
 ## Model Zoo and Baselines
+
+### Market1501 dataset
+
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| BagTricks | ImageNet | 93.6% | 85.1% | 58.1% |
+| BagTricks + Ibn-a | ImageNet | 94.8% | 87.3% | 63.5% |
+| AGW |  ImageNet | 94.9% | 87.4% | 63.1% |
+
+
+### DukeMTMC dataset
+
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| BagTricks | ImageNet | 86.1% | 75.9% | 38.7% |
+| BagTricks + Ibn-a | ImageNet | 89.0% | 78.8% | 43.6% |
+| AGW |  ImageNet | 88.9% | 79.1% | 43.2% |
+
+
+### MSMT17 dataset
+
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| BagTricks | ImageNet | 70.4%  | 47.5% | 9.6% |
+| BagTricks + Ibn-a | ImageNet | 76.9% | 55.0% | 13.5% |
+| AGW | ImageNet | 75.6% | 52.6% | 11.9% |
