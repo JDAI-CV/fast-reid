@@ -14,7 +14,6 @@ from ...layers import bn_no_bias, Flatten
 
 @REID_HEADS_REGISTRY.register()
 class BNneckHead(nn.Module):
-
     def __init__(self, cfg, in_feat, pool_layer=nn.AdaptiveAvgPool2d(1)):
         super().__init__()
         self._num_classes = cfg.MODEL.HEADS.NUM_CLASSES
