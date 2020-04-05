@@ -14,33 +14,44 @@ def build_transforms(cfg, is_train=True):
 
     if is_train:
         size_train = cfg.INPUT.SIZE_TRAIN
-        # filp lr
+
+        # horizontal filp
         do_flip = cfg.INPUT.DO_FLIP
         flip_prob = cfg.INPUT.FLIP_PROB
+
         # padding
         do_pad = cfg.INPUT.DO_PAD
         padding = cfg.INPUT.PADDING
         padding_mode = cfg.INPUT.PADDING_MODE
+
+        # augmix augmentation
+        do_augmix = cfg.INPUT.DO_AUGMIX
+
+        # color jitter
+        do_cj = cfg.INPUT.DO_CJ
+
         # random erasing
-        do_re = cfg.INPUT.RE.ENABLED
-        re_prob = cfg.INPUT.RE.PROB
-        re_mean = cfg.INPUT.RE.MEAN
-        # cutout
-        do_cutout = cfg.INPUT.CUTOUT.ENABLED
-        cutout_prob = cfg.INPUT.CUTOUT.PROB
-        cutout_size = cfg.INPUT.CUTOUT.SIZE
-        cutout_mean = cfg.INPUT.CUTOUT.MEAN
+        do_rea = cfg.INPUT.REA.ENABLED
+        rea_prob = cfg.INPUT.REA.PROB
+        rea_mean = cfg.INPUT.REA.MEAN
+        # random patch
+        do_rpt = cfg.INPUT.RPT.ENABLED
+        rpt_prob = cfg.INPUT.RPT.PROB
+
         res.append(T.Resize(size_train, interpolation=3))
         if do_flip:
             res.append(T.RandomHorizontalFlip(p=flip_prob))
         if do_pad:
             res.extend([T.Pad(padding, padding_mode=padding_mode),
                         T.RandomCrop(size_train)])
-        if do_re:
-            res.append(RandomErasing(probability=re_prob, mean=re_mean))
-        if do_cutout:
-            res.append(Cutout(probability=cutout_prob, size=cutout_size,
-                              mean=cutout_mean))
+        if do_cj:
+            res.append(ColorJitter())
+        if do_augmix:
+            res.append(AugMix())
+        if do_rea:
+            res.append(RandomErasing(probability=rea_prob, mean=rea_mean))
+        if do_rpt:
+            res.append(RandomPatch(prob_happen=rpt_prob))
     else:
         size_test = cfg.INPUT.SIZE_TEST
         res.append(T.Resize(size_test, interpolation=3))

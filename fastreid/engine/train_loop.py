@@ -193,7 +193,6 @@ class SimpleTrainer(TrainerBase):
         """
         data = self.data_loader.next()
         data_time = time.perf_counter() - start
-
         """
         If your want to do something with the heads, you can wrap the model.
         """

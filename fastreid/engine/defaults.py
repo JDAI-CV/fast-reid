@@ -216,6 +216,7 @@ class DefaultTrainer(SimpleTrainer):
         self.checkpointer = Checkpointer(
             # Assume you want to save checkpoints together with logs/statistics
             model,
+            data_loader.loader.dataset,
             cfg.OUTPUT_DIR,
             optimizer=optimizer,
             scheduler=self.scheduler,
@@ -266,6 +267,7 @@ class DefaultTrainer(SimpleTrainer):
             # )
             # if cfg.TEST.PRECISE_BN.ENABLED and get_bn_modules(self.model)
             # else None,
+            hooks.FreezeLayer(self.model, cfg.MODEL.OPEN_LAYERS, cfg.SOLVER.FREEZE_ITERS)
         ]
 
         # Do PreciseBN before checkpointer, because it updates the model and need to

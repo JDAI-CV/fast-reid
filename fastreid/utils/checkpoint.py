@@ -11,6 +11,7 @@ from typing import Any
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.utils.data import Dataset
 from termcolor import colored
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
@@ -26,6 +27,7 @@ class Checkpointer(object):
     def __init__(
             self,
             model: nn.Module,
+            dataset: Dataset,
             save_dir: str = "",
             *,
             save_to_disk: bool = True,
@@ -45,6 +47,7 @@ class Checkpointer(object):
         if isinstance(model, (DistributedDataParallel, DataParallel)):
             model = model.module
         self.model = model
+        self.dataset = dataset
         self.checkpointables = copy.copy(checkpointables)
         self.logger = logging.getLogger(__name__)
         self.save_dir = save_dir
@@ -62,6 +65,7 @@ class Checkpointer(object):
 
         data = {}
         data["model"] = self.model.state_dict()
+        data["pid_dict"] = self.dataset.pid_dict
         for key, obj in self.checkpointables.items():
             data[key] = obj.state_dict()
         data.update(kwargs)
@@ -99,6 +103,7 @@ class Checkpointer(object):
             assert os.path.isfile(path), "Checkpoint {} not found!".format(path)
 
         checkpoint = self._load_file(path)
+        self._load_dataset_pid_dict(checkpoint)
         self._load_model(checkpoint)
         for key, obj in self.checkpointables.items():
             if key in checkpoint:
@@ -182,6 +187,10 @@ class Checkpointer(object):
                 to torch.Tensor or numpy arrays.
         """
         return torch.load(f, map_location=torch.device("cpu"))
+
+    def _load_dataset_pid_dict(self, checkpoint: Any):
+        checkpoint_pid_dict = checkpoint.pop("pid_dict")
+        self.dataset.update_pid_dict(checkpoint_pid_dict)
 
     def _load_model(self, checkpoint: Any):
         """

@@ -6,7 +6,6 @@
 import copy
 
 import torch
-import torch.nn.functional as F
 from torch import nn
 
 from .build import META_ARCH_REGISTRY
@@ -149,6 +148,18 @@ class MGN(nn.Module):
                (b1_pool_feat, b2_pool_feat, b3_pool_feat), \
                targets
 
+    def losses(self, outputs):
+        loss_dict = {}
+        loss_dict.update(self.b1_head.losses(self._cfg, outputs[0][0], outputs[1][0], outputs[2], 'b1_'))
+        loss_dict.update(self.b2_head.losses(self._cfg, outputs[0][1], outputs[1][1], outputs[2], 'b2_'))
+        loss_dict.update(self.b3_head.losses(self._cfg, outputs[0][2], outputs[1][2], outputs[2], 'b3_'))
+        loss_dict.update(self.b2_head.losses(self._cfg, outputs[0][3], None, outputs[2], 'b21_'))
+        loss_dict.update(self.b2_head.losses(self._cfg, outputs[0][4], None, outputs[2], 'b22_'))
+        loss_dict.update(self.b3_head.losses(self._cfg, outputs[0][5], None, outputs[2], 'b31_'))
+        loss_dict.update(self.b3_head.losses(self._cfg, outputs[0][6], None, outputs[2], 'b32_'))
+        loss_dict.update(self.b3_head.losses(self._cfg, outputs[0][7], None, outputs[2], 'b33_'))
+        return loss_dict
+
     def inference(self, images):
         assert not self.training
         features = self.backbone(images)  # (bs, 2048, 16, 8)
@@ -192,16 +203,6 @@ class MGN(nn.Module):
         pred_feat = torch.cat([b1_pool_feat, b2_pool_feat, b3_pool_feat, b21_pool_feat,
                                b22_pool_feat, b31_pool_feat, b32_pool_feat, b33_pool_feat], dim=1)
 
-        return F.normalize(pred_feat)
+        return nn.functional.normalize(pred_feat)
 
-    def losses(self, outputs):
-        loss_dict = {}
-        loss_dict.update(self.b1_head.losses(self._cfg, outputs[0][0], outputs[1][0], outputs[2], 'b1_'))
-        loss_dict.update(self.b2_head.losses(self._cfg, outputs[0][1], outputs[1][1], outputs[2], 'b2_'))
-        loss_dict.update(self.b3_head.losses(self._cfg, outputs[0][2], outputs[1][2], outputs[2], 'b3_'))
-        loss_dict.update(self.b2_head.losses(self._cfg, outputs[0][3], None, outputs[2], 'b21_'))
-        loss_dict.update(self.b2_head.losses(self._cfg, outputs[0][4], None, outputs[2], 'b22_'))
-        loss_dict.update(self.b3_head.losses(self._cfg, outputs[0][5], None, outputs[2], 'b31_'))
-        loss_dict.update(self.b3_head.losses(self._cfg, outputs[0][6], None, outputs[2], 'b32_'))
-        loss_dict.update(self.b3_head.losses(self._cfg, outputs[0][7], None, outputs[2], 'b33_'))
-        return loss_dict
+

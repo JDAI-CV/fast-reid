@@ -61,15 +61,15 @@ class Market1501(ImageDataset):
             required_files.append(self.extra_gallery_dir)
         self.check_before_run(required_files)
 
-        train = self.process_dir(self.train_dir, relabel=True)
-        query = self.process_dir(self.query_dir, relabel=False)
-        gallery = self.process_dir(self.gallery_dir, relabel=False)
+        train = self.process_dir(self.train_dir)
+        query = self.process_dir(self.query_dir)
+        gallery = self.process_dir(self.gallery_dir)
         if self.market1501_500k:
-            gallery += self.process_dir(self.extra_gallery_dir, relabel=False)
+            gallery += self.process_dir(self.extra_gallery_dir)
 
         super(Market1501, self).__init__(train, query, gallery, **kwargs)
 
-    def process_dir(self, dir_path, relabel=False):
+    def process_dir(self, dir_path):
         img_paths = glob.glob(osp.join(dir_path, '*.jpg'))
         pattern = re.compile(r'([-\d]+)_c(\d)')
 
@@ -79,7 +79,6 @@ class Market1501(ImageDataset):
             if pid == -1:
                 continue  # junk images are just ignored
             pid_container.add(pid)
-        pid2label = {pid: label for label, pid in enumerate(pid_container)}
 
         data = []
         for img_path in img_paths:
@@ -89,8 +88,6 @@ class Market1501(ImageDataset):
             assert 0 <= pid <= 1501  # pid == 0 means background
             assert 1 <= camid <= 6
             camid -= 1  # index starts from 0
-            if relabel:
-                pid = pid2label[pid]
             data.append((img_path, pid, camid))
 
         return data

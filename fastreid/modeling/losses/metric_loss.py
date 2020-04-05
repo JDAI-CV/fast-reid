@@ -38,7 +38,15 @@ def cosine_dist(x, y):
     return 1 - cosine
 
 
-def hard_example_mining(dist_mat, labels, return_inds=False):
+def softmax_weights(dist, mask):
+    max_v = torch.max(dist * mask, dim=1, keepdim=True)[0]
+    diff = dist - max_v
+    Z = torch.sum(torch.exp(diff) * mask, dim=1, keepdim=True) + 1e-6  # avoid division by zero
+    W = torch.exp(diff) * mask / Z
+    return W
+
+
+def hard_example_mining(dist_mat, is_pos, is_neg):
     """For each anchor, find the hardest positive and negative sample.
     Args:
       dist_mat: pytorch Variable, pair wise distance between samples, shape [N, N]
@@ -59,10 +67,6 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
     assert dist_mat.size(0) == dist_mat.size(1)
     N = dist_mat.size(0)
 
-    # shape [N, N]
-    is_pos = labels.expand(N, N).eq(labels.expand(N, N).t())
-    is_neg = labels.expand(N, N).ne(labels.expand(N, N).t())
-
     # `dist_ap` means distance(anchor, positive)
     # both `dist_ap` and `relative_p_inds` with shape [N, 1]
     # pos_dist = dist_mat[is_pos].contiguous().view(N, -1)
@@ -82,20 +86,29 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
     dist_ap = dist_ap.squeeze(1)
     dist_an = dist_an.squeeze(1)
 
-    if return_inds:
-        # shape [N, N]
-        ind = (labels.new().resize_as_(labels)
-               .copy_(torch.arange(0, N).long())
-               .unsqueeze(0).expand(N, N))
-        # shape [N, 1]
-        p_inds = torch.gather(
-            ind[is_pos].contiguous().view(N, -1), 1, relative_p_inds.data)
-        n_inds = torch.gather(
-            ind[is_neg].contiguous().view(N, -1), 1, relative_n_inds.data)
-        # shape [N]
-        p_inds = p_inds.squeeze(1)
-        n_inds = n_inds.squeeze(1)
-        return dist_ap, dist_an, p_inds, n_inds
+    return dist_ap, dist_an
+
+
+def weighted_example_mining(dist_mat, is_pos, is_neg):
+    """For each anchor, find the weighted positive and negative sample.
+    Args:
+      dist_mat: pytorch Variable, pair wise distance between samples, shape [N, N]
+    Returns:
+      dist_ap: pytorch Variable, distance(anchor, positive); shape [N]
+      dist_an: pytorch Variable, distance(anchor, negative); shape [N]
+    """
+
+    assert len(dist_mat.size()) == 2
+    assert dist_mat.size(0) == dist_mat.size(1)
+
+    dist_ap = dist_mat * is_pos.float()
+    dist_an = dist_mat * is_neg.float()
+
+    weights_ap = softmax_weights(dist_ap, is_pos)
+    weights_an = softmax_weights(-dist_an, is_neg)
+
+    dist_ap = torch.sum(dist_ap * weights_ap, dim=1)
+    dist_an = torch.sum(dist_an * weights_an, dim=1)
 
     return dist_ap, dist_an
 
@@ -109,6 +122,8 @@ class TripletLoss(object):
         self._margin = cfg.MODEL.LOSSES.MARGIN
         self._normalize_feature = cfg.MODEL.LOSSES.NORM_FEAT
         self._scale = cfg.MODEL.LOSSES.SCALE_TRI
+        self._hard_mining = cfg.MODEL.LOSSES.HARD_MINING
+        self._use_cosine_dist = cfg.MODEL.LOSSES.USE_COSINE_DIST
 
         if self._margin > 0:
             self.ranking_loss = nn.MarginRankingLoss(margin=self._margin)
@@ -119,8 +134,20 @@ class TripletLoss(object):
         if self._normalize_feature:
             global_features = normalize(global_features, axis=-1)
 
-        dist_mat = euclidean_dist(global_features, global_features)
-        dist_ap, dist_an = hard_example_mining(dist_mat, targets)
+        if self._use_cosine_dist:
+            dist_mat = cosine_dist(global_features, global_features)
+        else:
+            dist_mat = euclidean_dist(global_features, global_features)
+
+        N = dist_mat.size(0)
+        is_pos = targets.expand(N, N).eq(targets.expand(N, N).t())
+        is_neg = targets.expand(N, N).ne(targets.expand(N, N).t())
+
+        if self._hard_mining:
+            dist_ap, dist_an = hard_example_mining(dist_mat, is_pos, is_neg)
+        else:
+            dist_ap, dist_an = weighted_example_mining(dist_mat, is_pos, is_neg)
+
         y = dist_an.new().resize_as_(dist_an).fill_(1)
 
         if self._margin > 0:

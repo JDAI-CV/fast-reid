@@ -17,7 +17,7 @@ class CommDataset(Dataset):
         self.transform = transform
         self.relabel = relabel
 
-        self.pid2label = None
+        self.pid_dict = {}
         if self.relabel:
             self.img_items = []
             pids = set()
@@ -26,7 +26,7 @@ class CommDataset(Dataset):
                 self.img_items.append((item[0], pid, item[2]))  # replace pid
                 pids.add(pid)
             self.pids = pids
-            self.pid2label = dict([(p, i) for i, p in enumerate(self.pids)])
+            self.pid_dict = dict([(p, i) for i, p in enumerate(self.pids)])
         else:
             self.img_items = img_items
 
@@ -39,11 +39,12 @@ class CommDataset(Dataset):
         if self.transform is not None:
             img = self.transform(img)
         if self.relabel:
-            pid = self.pid2label[pid]
+            pid = self.pid_dict[pid]
         return {
             'images': img,
             'targets': pid,
-            'camid': camid
+            'camid': camid,
+            'img_path': img_path
         }
 
     def get_pids(self, file_path, pid):
@@ -53,6 +54,9 @@ class CommDataset(Dataset):
         else:
             prefix = file_path.split('/')[1]
         return prefix + '_' + str(pid)
+
+    def update_pid_dict(self, pid_dict):
+        self.pid_dict = pid_dict
 
 
 class data_prefetcher():

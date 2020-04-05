@@ -10,6 +10,7 @@ import time
 from collections import Counter
 
 import torch
+from torch import nn
 
 from ..evaluation.testing import flatten_results_dict
 from ..utils import comm
@@ -29,6 +30,8 @@ __all__ = [
     "AutogradProfiler",
     "EvalHook",
     "PreciseBN",
+    "LRFinder",
+    "FreezeLayer",
 ]
 
 """
@@ -412,3 +415,59 @@ class PreciseBN(HookBase):
                 + "Note that this could produce different statistics every time."
             )
             update_bn_stats(self._model, data_loader(), self._num_iter)
+
+
+class LRFinder(HookBase):
+    pass
+
+
+class FreezeLayer(HookBase):
+    def __init__(self, model, open_layer_names, freeze_iters):
+        self._logger = logging.getLogger(__name__)
+
+        if isinstance(model, nn.DataParallel):
+            model = model.module
+        self.model = model
+
+        self.freeze_iters = freeze_iters
+        if open_layer_names == '':
+            self.freeze_iters = -1
+        elif isinstance(open_layer_names, str):
+            open_layer_names = [open_layer_names]
+
+        self.open_layer_names = open_layer_names
+
+        # previous requires grad status
+        param_grad = {}
+        for name, param in self.model.named_parameters():
+            param_grad[name] = param.requires_grad
+        self.param_grad = param_grad
+
+    def before_step(self):
+        # freeze specific layers
+        if self.trainer.iter < self.freeze_iters:
+            self.freeze_specific_layer()
+
+        # recover original layers status
+        elif self.trainer.iter == self.freeze_iters:
+            self.open_all_layer()
+
+    def freeze_specific_layer(self):
+        for layer in self.open_layer_names:
+            if not hasattr(self.model, layer):
+                self._logger.info('"{}" is not an attribute of the model, will skip this layer'.format(layer))
+
+        for name, module in self.model.named_children():
+            if name in self.open_layer_names:
+                module.train()
+                for p in module.parameters():
+                    p.requires_grad = True
+            else:
+                module.eval()
+                for p in module.parameters():
+                    p.requires_grad = False
+
+    def open_all_layer(self):
+        self.model.train()
+        for name, param in self.model.named_parameters():
+            param.requires_grad = self.param_grad[name]

@@ -5,4 +5,4 @@
 """
 
 from .cross_entroy_loss import CrossEntropyLoss
-from .margin_loss import TripletLoss
+from .metric_loss import TripletLoss

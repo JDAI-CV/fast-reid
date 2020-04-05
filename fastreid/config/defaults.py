@@ -21,6 +21,7 @@ _C = CN()
 # -----------------------------------------------------------------------------
 _C.MODEL = CN()
 _C.MODEL.META_ARCHITECTURE = 'Baseline'
+_C.MODEL.OPEN_LAYERS = ''
 
 # ---------------------------------------------------------------------------- #
 # Backbone options
@@ -61,6 +62,8 @@ _C.MODEL.LOSSES.SCALE_CE = 1.0
 # Triplet Loss options
 _C.MODEL.LOSSES.MARGIN = 0.3
 _C.MODEL.LOSSES.NORM_FEAT = False
+_C.MODEL.LOSSES.HARD_MINING = True
+_C.MODEL.LOSSES.USE_COSINE_DIST = True
 _C.MODEL.LOSSES.SCALE_TRI = 1.0
 
 # Path (possibly with schema like catalog:// or detectron2://) to a checkpoint file
@@ -90,21 +93,19 @@ _C.INPUT.FLIP_PROB = 0.5
 _C.INPUT.DO_PAD = True
 _C.INPUT.PADDING_MODE = 'constant'
 _C.INPUT.PADDING = 10
-# Random lightning and contrast change 
-_C.INPUT.DO_LIGHTING = False
-_C.INPUT.BRIGHTNESS = 0.4
-_C.INPUT.CONTRAST = 0.4
-# Random erasing
-_C.INPUT.RE = CN()
-_C.INPUT.RE.ENABLED = False
-_C.INPUT.RE.PROB = 0.5
-_C.INPUT.RE.MEAN = [0.596*255, 0.558*255, 0.497*255]
-# Cutout
-_C.INPUT.CUTOUT = CN()
-_C.INPUT.CUTOUT.ENABLED = False
-_C.INPUT.CUTOUT.PROB = 0.5
-_C.INPUT.CUTOUT.SIZE = 64
-_C.INPUT.CUTOUT.MEAN = [0.485*255, 0.456*255, 0.406*255]
+# Random color jitter
+_C.INPUT.DO_CJ = False
+# Augmix augmentation
+_C.INPUT.DO_AUGMIX = False
+# Random Erasing
+_C.INPUT.REA = CN()
+_C.INPUT.REA.ENABLED = False
+_C.INPUT.REA.PROB = 0.5
+_C.INPUT.REA.MEAN = [0.596*255, 0.558*255, 0.497*255]  # [0.485*255, 0.456*255, 0.406*255]
+# Random Patch
+_C.INPUT.RPT = CN()
+_C.INPUT.RPT.ENABLED = False
+_C.INPUT.RPT.PROB = 0.5
 
 # -----------------------------------------------------------------------------
 # Dataset
@@ -154,6 +155,8 @@ _C.SOLVER.COS_ANNEAL_ITERS = 100
 _C.SOLVER.WARMUP_FACTOR = 0.1
 _C.SOLVER.WARMUP_ITERS = 10
 _C.SOLVER.WARMUP_METHOD = "linear"
+
+_C.SOLVER.FREEZE_ITERS = 0
 
 _C.SOLVER.CHECKPOINT_PERIOD = 5000
 
