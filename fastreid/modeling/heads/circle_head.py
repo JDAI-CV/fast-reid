@@ -48,20 +48,19 @@ class CircleHead(nn.Module):
         if not self.training:
             return bn_feat
 
-        cos_sim = F.linear(F.normalize(bn_feat), F.normalize(self.weight))
-        alpha_p = F.relu(-cos_sim + 1 + self._m)
-        alpha_n = F.relu(cos_sim + self._m)
-        margin_p = 1 - self._m
-        margin_n = self._m
+        sim_mat = F.linear(F.normalize(bn_feat), F.normalize(self.weight))
+        alpha_p = F.relu(-sim_mat.detach() + 1 + self._m)
+        alpha_n = F.relu(sim_mat.detach() + self._m)
+        delta_p = 1 - self._m
+        delta_n = self._m
 
-        sp = alpha_p * (cos_sim - margin_p)
-        sn = alpha_n * (cos_sim - margin_n)
+        s_p = self._s * alpha_p * (sim_mat - delta_p)
+        s_n = self._s * alpha_n * (sim_mat - delta_n)
 
-        one_hot = torch.zeros(cos_sim.size()).to(targets.device)
+        one_hot = torch.zeros(sim_mat.size()).to(targets.device)
         one_hot.scatter_(1, targets.view(-1, 1).long(), 1)
 
-        pred_class_logits = one_hot * sp + ((1.0 - one_hot) * sn)
-        pred_class_logits *= self._s
+        pred_class_logits = one_hot * s_p + (1.0 - one_hot) * s_n
 
         return pred_class_logits, global_feat
 

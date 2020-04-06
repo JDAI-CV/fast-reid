@@ -40,7 +40,7 @@ class CrossEntropyLoss(object):
         storage = get_event_storage()
         storage.put_scalar("cls_accuracy", ret[0])
 
-    def __call__(self, pred_class_logits, gt_classes):
+    def __call__(self, pred_class_logits, _, gt_classes):
         """
         Compute the softmax cross entropy loss for box classification.
         Returns:

@@ -38,7 +38,8 @@ class BNneckHead(nn.Module):
             return bn_feat
         # training
         pred_class_logits = self.classifier(bn_feat)
-        return pred_class_logits, global_feat
+        # return pred_class_logits, global_feat
+        return pred_class_logits, bn_feat
 
     @classmethod
     def losses(cls, cfg, pred_class_logits, global_features, gt_classes, prefix='') -> dict:

@@ -173,6 +173,11 @@ _C.TEST = CN()
 _C.TEST.EVAL_PERIOD = 50
 _C.TEST.IMS_PER_BATCH = 128
 
+# Precise BN
+_C.TEST.PRECISE_BN = CN()
+_C.TEST.PRECISE_BN.ENABLED = False
+_C.TEST.PRECISE_BN.DATASET = 'Market1501'
+_C.TEST.PRECISE_BN.NUM_ITER = 300
 # ---------------------------------------------------------------------------- #
 # Misc options
 # ---------------------------------------------------------------------------- #

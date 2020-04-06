@@ -257,17 +257,21 @@ class DefaultTrainer(SimpleTrainer):
         ret = [
             hooks.IterationTimer(),
             hooks.LRScheduler(self.optimizer, self.scheduler),
-            # hooks.PreciseBN(
-            #     # Run at the same freq as (but before) evaluation.
-            #     cfg.TEST.EVAL_PERIOD,
-            #     self.model,
-            #     # Build a new data loader to not affect training
-            #     self.build_train_loader(cfg),
-            #     cfg.TEST.PRECISE_BN.NUM_ITER,
-            # )
-            # if cfg.TEST.PRECISE_BN.ENABLED and get_bn_modules(self.model)
-            # else None,
-            hooks.FreezeLayer(self.model, cfg.MODEL.OPEN_LAYERS, cfg.SOLVER.FREEZE_ITERS)
+            hooks.PreciseBN(
+                # Run at the same freq as (but before) evaluation.
+                cfg.TEST.EVAL_PERIOD,
+                self.model,
+                # Build a new data loader to not affect training
+                self.build_train_loader(cfg),
+                cfg.TEST.PRECISE_BN.NUM_ITER,
+            )
+            if cfg.TEST.PRECISE_BN.ENABLED and hooks.get_bn_modules(self.model)
+            else None,
+            hooks.FreezeLayer(
+                self.model,
+                cfg.MODEL.OPEN_LAYERS,
+                cfg.SOLVER.FREEZE_ITERS)
+            if cfg.MODEL.OPEN_LAYERS != '' and cfg.SOLVER.FREEZE_ITERS > 0 else None,
         ]
 
         # Do PreciseBN before checkpointer, because it updates the model and need to

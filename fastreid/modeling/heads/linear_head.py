@@ -7,9 +7,9 @@
 from torch import nn
 
 from .build import REID_HEADS_REGISTRY
-from ..losses import CrossEntropyLoss, TripletLoss
-from ..model_utils import weights_init_classifier, weights_init_kaiming
-from ...layers import bn_no_bias, Flatten
+from .. import losses as Loss
+from ..model_utils import weights_init_classifier
+from ...layers import Flatten
 
 
 @REID_HEADS_REGISTRY.register()
@@ -41,11 +41,8 @@ class LinearHead(nn.Module):
     @classmethod
     def losses(cls, cfg, pred_class_logits, global_features, gt_classes, prefix='') -> dict:
         loss_dict = {}
-        if "CrossEntropyLoss" in cfg.MODEL.LOSSES.NAME and pred_class_logits is not None:
-            loss = CrossEntropyLoss(cfg)(pred_class_logits, gt_classes)
-            loss_dict.update(loss)
-        if "TripletLoss" in cfg.MODEL.LOSSES.NAME and global_features is not None:
-            loss = TripletLoss(cfg)(global_features, gt_classes)
+        for loss_name in cfg.MODEL.LOSSES.NAME:
+            loss = getattr(Loss, loss_name)(cfg)(pred_class_logits, global_features, gt_classes)
             loss_dict.update(loss)
         # rename
         name_loss_dict = {}

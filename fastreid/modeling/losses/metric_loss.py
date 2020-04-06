@@ -6,7 +6,10 @@
 
 import torch
 from torch import nn
+import torch.nn.functional as F
 
+
+__all__ = ["TripletLoss", "CircleLoss"]
 
 def normalize(x, axis=-1):
     """Normalizing to unit length along the specified dimension.
@@ -101,8 +104,10 @@ def weighted_example_mining(dist_mat, is_pos, is_neg):
     assert len(dist_mat.size()) == 2
     assert dist_mat.size(0) == dist_mat.size(1)
 
-    dist_ap = dist_mat * is_pos.float()
-    dist_an = dist_mat * is_neg.float()
+    is_pos = is_pos.float()
+    is_neg = is_neg.float()
+    dist_ap = dist_mat * is_pos
+    dist_an = dist_mat * is_neg
 
     weights_ap = softmax_weights(dist_ap, is_pos)
     weights_an = softmax_weights(-dist_an, is_neg)
@@ -130,7 +135,7 @@ class TripletLoss(object):
         else:
             self.ranking_loss = nn.SoftMarginLoss()
 
-    def __call__(self, global_features, targets):
+    def __call__(self, _, global_features, targets):
         if self._normalize_feature:
             global_features = normalize(global_features, axis=-1)
 
@@ -156,4 +161,39 @@ class TripletLoss(object):
             loss = self.ranking_loss(dist_an - dist_ap, y)
         return {
             "loss_triplet": loss * self._scale,
+        }
+
+
+class CircleLoss(object):
+    def __init__(self, cfg):
+        self._scale = cfg.MODEL.LOSSES.SCALE_TRI
+
+        self.m = 0.25
+        self.s = 128
+
+    def __call__(self, _, global_features, targets):
+        global_features = normalize(global_features, axis=-1)
+
+        sim_mat = torch.matmul(global_features, global_features.t())
+
+        N = sim_mat.size(0)
+        is_pos = targets.expand(N, N).eq(targets.expand(N, N).t()).float() - torch.eye(N).to(sim_mat.device)
+        is_pos = is_pos.bool()
+        is_neg = targets.expand(N, N).ne(targets.expand(N, N).t())
+
+        s_p = sim_mat[is_pos].contiguous().view(N, -1)
+        s_n = sim_mat[is_neg].contiguous().view(N, -1)
+
+        alpha_p = F.relu(-s_p.detach() + 1 + self.m)
+        alpha_n = F.relu(s_n.detach() + self.m)
+        delta_p = 1 - self.m
+        delta_n = self.m
+
+        logit_p = - self.s * alpha_p * (s_p - delta_p)
+        logit_n = self.s * alpha_n * (s_n - delta_n)
+
+        loss = F.softplus(torch.logsumexp(logit_p, dim=1) + torch.logsumexp(logit_n, dim=1)).mean()
+
+        return {
+            "loss_circle": loss * self._scale,
         }
