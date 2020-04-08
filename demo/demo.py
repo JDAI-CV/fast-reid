@@ -114,7 +114,8 @@ class ReidDemo(object):
         # else:
         #     model = model
         traced_script_module = torch.jit.trace_module(model, {"inference": example})
-        traced_script_module.save(os.path.join(output_dir, "traced_reid_module.pt"))
+        if not os.path.exists(output_dir): os.makedirs(output_dir)
+        traced_script_module.save(os.path.join(output_dir, "traced_module.pt"))
 
 
 if __name__ == '__main__':

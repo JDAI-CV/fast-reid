@@ -7,7 +7,7 @@ from torch import nn
 
 from .batch_drop import BatchDrop
 from .attention import *
-from .batch_norm import bn_no_bias
+from .batch_norm import NoBiasBatchNorm1d
 from .context_block import ContextBlock
 from .frn import FRN, TLU
 from .mish import Mish

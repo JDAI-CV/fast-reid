@@ -13,7 +13,7 @@ from ..backbones import build_backbone
 from ..backbones.resnet import Bottleneck
 from ..heads import build_reid_heads, BNneckHead
 from ..model_utils import weights_init_kaiming
-from ...layers import BatchDrop, bn_no_bias, Flatten, GeneralizedMeanPoolingP
+from ...layers import BatchDrop, NoBiasBatchNorm1d, Flatten, GeneralizedMeanPoolingP
 
 
 @META_ARCH_REGISTRY.register()

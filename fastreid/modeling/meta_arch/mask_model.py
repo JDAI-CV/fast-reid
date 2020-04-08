@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from fastreid.modeling.backbones import *
 from fastreid.modeling.model_utils import *
 from fastreid.modeling.heads import *
-from fastreid.layers import bn_no_bias, GeM
+from fastreid.layers import NoBiasBatchNorm1d, GeM
 
 
 class MaskUnit(nn.Module):
@@ -70,7 +70,7 @@ class Maskmodel(nn.Module):
             nn.BatchNorm1d(1024),
             nn.LeakyReLU(0.1)
         )
-        self.global_bnneck = bn_no_bias(1024)
+        self.global_bnneck = NoBiasBatchNorm1d(1024)
         self.global_bnneck.apply(weights_init_kaiming)
         self.global_fc = nn.Linear(1024, self.num_classes, bias=False)
         self.global_fc.apply(weights_init_classifier)
@@ -81,7 +81,7 @@ class Maskmodel(nn.Module):
             nn.BatchNorm1d(1024),
             nn.LeakyReLU(0.1)
         )
-        self.mask_bnneck = bn_no_bias(1024)
+        self.mask_bnneck = NoBiasBatchNorm1d(1024)
         self.mask_bnneck.apply(weights_init_kaiming)
 
         self.mask_fc = nn.Linear(1024, self.num_classes, bias=False)

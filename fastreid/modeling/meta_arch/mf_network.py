@@ -12,7 +12,7 @@ from .build import META_ARCH_REGISTRY
 from ..model_utils import weights_init_kaiming
 from ..backbones import build_backbone
 from ..heads import build_reid_heads, BNneckHead
-from ...layers import Flatten, bn_no_bias
+from ...layers import Flatten, NoBiasBatchNorm1d
 
 
 @META_ARCH_REGISTRY.register()

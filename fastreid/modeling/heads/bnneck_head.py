@@ -9,7 +9,7 @@ from torch import nn
 from .build import REID_HEADS_REGISTRY
 from .linear_head import LinearHead
 from ..model_utils import weights_init_classifier, weights_init_kaiming
-from ...layers import bn_no_bias, Flatten
+from ...layers import NoBiasBatchNorm1d, Flatten
 
 
 @REID_HEADS_REGISTRY.register()
@@ -22,7 +22,7 @@ class BNneckHead(nn.Module):
             pool_layer,
             Flatten()
         )
-        self.bnneck = bn_no_bias(in_feat)
+        self.bnneck = NoBiasBatchNorm1d(in_feat)
         self.bnneck.apply(weights_init_kaiming)
 
         self.classifier = nn.Linear(in_feat, self._num_classes, bias=False)
@@ -38,8 +38,7 @@ class BNneckHead(nn.Module):
             return bn_feat
         # training
         pred_class_logits = self.classifier(bn_feat)
-        # return pred_class_logits, global_feat
-        return pred_class_logits, bn_feat
+        return pred_class_logits, global_feat
 
     @classmethod
     def losses(cls, cfg, pred_class_logits, global_features, gt_classes, prefix='') -> dict:

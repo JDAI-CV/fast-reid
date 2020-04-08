@@ -14,7 +14,7 @@ from torch.nn import Parameter
 from .build import REID_HEADS_REGISTRY
 from .linear_head import LinearHead
 from ..model_utils import weights_init_kaiming
-from ...layers import bn_no_bias, Flatten
+from ...layers import NoBiasBatchNorm1d, Flatten
 
 
 @REID_HEADS_REGISTRY.register()
@@ -28,7 +28,7 @@ class ArcfaceHead(nn.Module):
             Flatten()
         )
         # bnneck
-        self.bnneck = bn_no_bias(in_feat)
+        self.bnneck = NoBiasBatchNorm1d(in_feat)
         self.bnneck.apply(weights_init_kaiming)
 
         # classifier

@@ -14,7 +14,7 @@ from .build import META_ARCH_REGISTRY
 from ..backbones import build_backbone
 from ..heads import build_reid_heads, BNneckHead
 from ..model_utils import weights_init_kaiming
-from ...layers import CAM_Module, PAM_Module, DANetHead, Flatten, bn_no_bias
+from ...layers import CAM_Module, PAM_Module, DANetHead, Flatten, NoBiasBatchNorm1d
 
 
 @META_ARCH_REGISTRY.register()
