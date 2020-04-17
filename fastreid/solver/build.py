@@ -15,12 +15,13 @@ def build_optimizer(cfg, model):
             continue
         lr = cfg.SOLVER.BASE_LR
         weight_decay = cfg.SOLVER.WEIGHT_DECAY
-        # if "heads" in key:
-        #     lr = cfg.SOLVER.BASE_LR * 10
+        if "heads" in key:
+            lr *= cfg.SOLVER.HEADS_LR_FACTOR
         if "bias" in key:
-            lr = lr * cfg.SOLVER.BIAS_LR_FACTOR
+            lr *= cfg.SOLVER.BIAS_LR_FACTOR
             weight_decay = cfg.SOLVER.WEIGHT_DECAY_BIAS
         params += [{"params": [value], "lr": lr, "weight_decay": weight_decay}]
+
     solver_opt = cfg.SOLVER.OPT
     if hasattr(optim, solver_opt):
         if solver_opt == "SGD":

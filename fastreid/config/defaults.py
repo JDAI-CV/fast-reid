@@ -48,6 +48,16 @@ _C.MODEL.HEADS.NAME = "BNneckHead"
 _C.MODEL.HEADS.POOL_LAYER = 'avgpool'
 _C.MODEL.HEADS.NUM_CLASSES = 751
 
+# Arcface head
+_C.MODEL.HEADS.ARCFACE = CN()
+_C.MODEL.HEADS.ARCFACE.MARGIN = 0.5
+_C.MODEL.HEADS.ARCFACE.SCALE = 30.0
+
+# Circle Loss
+_C.MODEL.HEADS.CIRCLE = CN()
+_C.MODEL.HEADS.CIRCLE.MARGIN = 0.15
+_C.MODEL.HEADS.CIRCLE.SCALE = 128.0
+
 # ---------------------------------------------------------------------------- #
 # REID LOSSES options
 # ---------------------------------------------------------------------------- #
@@ -55,16 +65,26 @@ _C.MODEL.LOSSES = CN()
 _C.MODEL.LOSSES.NAME = ("CrossEntropyLoss",)
 
 # Cross Entropy Loss options
-_C.MODEL.LOSSES.SMOOTH_ON = False
-_C.MODEL.LOSSES.EPSILON = 0.1
-_C.MODEL.LOSSES.SCALE_CE = 1.0
+_C.MODEL.LOSSES.CE = CN()
+# if epsilon == 0, it means no label smooth regularization,
+# if epsilon == -1, it means adaptive label smooth regularization
+_C.MODEL.LOSSES.CE.EPSILON = 0.0
+_C.MODEL.LOSSES.CE.ALPHA = 0.2
+_C.MODEL.LOSSES.CE.SCALE = 1.0
 
 # Triplet Loss options
-_C.MODEL.LOSSES.MARGIN = 0.3
-_C.MODEL.LOSSES.NORM_FEAT = False
-_C.MODEL.LOSSES.HARD_MINING = True
-_C.MODEL.LOSSES.USE_COSINE_DIST = True
-_C.MODEL.LOSSES.SCALE_TRI = 1.0
+_C.MODEL.LOSSES.TRI = CN()
+_C.MODEL.LOSSES.TRI.MARGIN = 0.3
+_C.MODEL.LOSSES.TRI.NORM_FEAT = False
+_C.MODEL.LOSSES.TRI.HARD_MINING = True
+_C.MODEL.LOSSES.TRI.USE_COSINE_DIST = True
+_C.MODEL.LOSSES.TRI.SCALE = 1.0
+
+# Focal Loss options
+_C.MODEL.LOSSES.FL = CN()
+_C.MODEL.LOSSES.FL.ALPHA = 0.25
+_C.MODEL.LOSSES.FL.GAMMA = 2
+_C.MODEL.LOSSES.FL.SCALE = 1.0
 
 # Path (possibly with schema like catalog:// or detectron2://) to a checkpoint file
 # to be loaded to the model. You can find available models in the model zoo.
@@ -136,7 +156,8 @@ _C.SOLVER.OPT = "Adam"
 _C.SOLVER.MAX_ITER = 40000
 
 _C.SOLVER.BASE_LR = 3e-4
-_C.SOLVER.BIAS_LR_FACTOR = 1
+_C.SOLVER.BIAS_LR_FACTOR = 1.
+_C.SOLVER.HEADS_LR_FACTOR = 1.
 
 _C.SOLVER.MOMENTUM = 0.9
 
@@ -144,11 +165,11 @@ _C.SOLVER.WEIGHT_DECAY = 0.0005
 _C.SOLVER.WEIGHT_DECAY_BIAS = 0.
 
 _C.SOLVER.SCHED = "warmup"
-# warmup config
+# Warmup config
 _C.SOLVER.GAMMA = 0.1
 _C.SOLVER.STEPS = (30, 55)
 
-# cosine annealing
+# Cosine annealing
 _C.SOLVER.DELAY_ITERS = 100
 _C.SOLVER.COS_ANNEAL_ITERS = 100
 

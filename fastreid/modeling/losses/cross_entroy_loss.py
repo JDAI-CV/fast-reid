@@ -7,6 +7,7 @@ import torch
 import torch.nn.functional as F
 
 from ...utils.events import get_event_storage
+from .loss_utils import one_hot
 
 
 class CrossEntropyLoss(object):
@@ -16,9 +17,9 @@ class CrossEntropyLoss(object):
 
     def __init__(self, cfg):
         self._num_classes = cfg.MODEL.HEADS.NUM_CLASSES
-        self._epsilon = cfg.MODEL.LOSSES.EPSILON
-        self._smooth_on = cfg.MODEL.LOSSES.SMOOTH_ON
-        self._scale = cfg.MODEL.LOSSES.SCALE_CE
+        self._eps = cfg.MODEL.LOSSES.CE.EPSILON
+        self._alpha = cfg.MODEL.LOSSES.CE.ALPHA
+        self._scale = cfg.MODEL.LOSSES.CE.SCALE
 
         self._topk = (1,)
 
@@ -47,14 +48,20 @@ class CrossEntropyLoss(object):
             scalar Tensor
         """
         self._log_accuracy(pred_class_logits, gt_classes)
-        if self._smooth_on:
-            log_probs = F.log_softmax(pred_class_logits, dim=1)
-            targets = torch.zeros(log_probs.size()).scatter_(1, gt_classes.unsqueeze(1).data.cpu(), 1)
-            targets = targets.to(pred_class_logits.device)
-            targets = (1 - self._epsilon) * targets + self._epsilon / self._num_classes
-            loss = (-targets * log_probs).mean(0).sum()
+        if self._eps >= 0:
+            smooth_param = self._eps
         else:
-            loss = F.cross_entropy(pred_class_logits, gt_classes, reduction="mean")
+            # adaptive lsr
+            soft_label = F.softmax(pred_class_logits, dim=1)
+            smooth_param = self._alpha * soft_label[torch.arange(soft_label.size(0)), gt_classes].unsqueeze(1)
+
+        log_probs = F.log_softmax(pred_class_logits, dim=1)
+        with torch.no_grad():
+            targets = torch.ones_like(log_probs)
+            targets *= smooth_param / (self._num_classes - 1)
+            targets.scatter_(1, gt_classes.data.unsqueeze(1), (1 - smooth_param))
+
+        loss = (-targets * log_probs).mean(0).sum()
         return {
             "loss_cls": loss * self._scale,
         }

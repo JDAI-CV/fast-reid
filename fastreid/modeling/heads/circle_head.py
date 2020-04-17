@@ -33,8 +33,8 @@ class CircleHead(nn.Module):
         self.bnneck.apply(weights_init_kaiming)
 
         # classifier
-        self._s = 128.0
-        self._m = 0.15
+        self._s = cfg.MODEL.HEADS.CIRCLE.SCALE
+        self._m = cfg.MODEL.HEADS.CIRCLE.MARGIN
 
         self.weight = Parameter(torch.Tensor(self._num_classes, in_feat))
         self.reset_parameters()

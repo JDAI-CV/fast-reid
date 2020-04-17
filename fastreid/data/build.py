@@ -23,6 +23,7 @@ def build_reid_train_loader(cfg):
     for d in cfg.DATASETS.NAMES:
         logger.info('prepare training set {}'.format(d))
         dataset = DATASET_REGISTRY.get(d)()
+        dataset.show_summary()
         train_items.extend(dataset.train)
 
     train_set = CommDataset(train_items, train_transforms, relabel=True)
@@ -52,6 +53,7 @@ def build_reid_test_loader(cfg, dataset_name):
     logger = logging.getLogger(__name__)
     logger.info('prepare test set {}'.format(dataset_name))
     dataset = DATASET_REGISTRY.get(dataset_name)()
+    dataset.show_summary()
     test_items = dataset.query + dataset.gallery
 
     test_set = CommDataset(test_items, test_transforms, relabel=False)
