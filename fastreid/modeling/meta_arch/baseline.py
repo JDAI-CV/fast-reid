@@ -4,13 +4,14 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 from .build import META_ARCH_REGISTRY
 from ..backbones import build_backbone
 from ..heads import build_reid_heads
-from ...layers import GeneralizedMeanPoolingP
+from ..layers import GeneralizedMeanPoolingP
+from ..losses import reid_losses
 
 
 @META_ARCH_REGISTRY.register()
@@ -52,4 +53,5 @@ class Baseline(nn.Module):
         return F.normalize(pred_feat)
 
     def losses(self, outputs):
-        return self.heads.losses(self._cfg, *outputs)
+        logits, global_feat, targets = outputs
+        return reid_losses(self._cfg, logits, global_feat, targets)

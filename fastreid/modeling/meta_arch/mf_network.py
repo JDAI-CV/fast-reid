@@ -11,8 +11,8 @@ import torch.nn.functional as F
 from .build import META_ARCH_REGISTRY
 from ..model_utils import weights_init_kaiming
 from ..backbones import build_backbone
-from ..heads import build_reid_heads, BNneckHead
-from ...layers import Flatten, NoBiasBatchNorm1d
+from ..heads import build_reid_heads
+from fastreid.modeling.layers import Flatten
 
 
 @META_ARCH_REGISTRY.register()

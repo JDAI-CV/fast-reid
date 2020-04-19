@@ -13,7 +13,7 @@ from ..backbones import build_backbone
 from ..backbones.resnet import Bottleneck
 from ..heads import build_reid_heads
 from ..model_utils import weights_init_kaiming
-from ...layers import GeneralizedMeanPoolingP, Flatten
+from fastreid.modeling.layers import GeneralizedMeanPoolingP, Flatten
 
 
 @META_ARCH_REGISTRY.register()

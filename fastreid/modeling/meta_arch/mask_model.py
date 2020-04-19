@@ -8,10 +8,8 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from fastreid.modeling.backbones import *
 from fastreid.modeling.model_utils import *
-from fastreid.modeling.heads import *
-from fastreid.layers import NoBiasBatchNorm1d, GeM
+from fastreid.modeling.layers import NoBiasBatchNorm1d
 
 
 class MaskUnit(nn.Module):

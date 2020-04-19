@@ -45,18 +45,20 @@ _C.MODEL.BACKBONE.PRETRAIN_PATH = ''
 # ---------------------------------------------------------------------------- #
 _C.MODEL.HEADS = CN()
 _C.MODEL.HEADS.NAME = "BNneckHead"
-_C.MODEL.HEADS.POOL_LAYER = 'avgpool'
+
 _C.MODEL.HEADS.NUM_CLASSES = 751
+# Reduction dimension
+_C.MODEL.HEADS.REDUCTION_DIM = 512
+# Pooling layer type
+_C.MODEL.HEADS.POOL_LAYER = 'avgpool'
 
-# Arcface head
-_C.MODEL.HEADS.ARCFACE = CN()
-_C.MODEL.HEADS.ARCFACE.MARGIN = 0.5
-_C.MODEL.HEADS.ARCFACE.SCALE = 30.0
+# Classification layer type
+_C.MODEL.HEADS.CLS_LAYER = 'linear'  # 'arcface' or 'circle'
 
-# Circle Loss
-_C.MODEL.HEADS.CIRCLE = CN()
-_C.MODEL.HEADS.CIRCLE.MARGIN = 0.15
-_C.MODEL.HEADS.CIRCLE.SCALE = 128.0
+# Margin and Scale for margin-based classification layer
+_C.MODEL.HEADS.MARGIN = 0.15
+_C.MODEL.HEADS.SCALE = 128
+
 
 # ---------------------------------------------------------------------------- #
 # REID LOSSES options
@@ -69,7 +71,7 @@ _C.MODEL.LOSSES.CE = CN()
 # if epsilon == 0, it means no label smooth regularization,
 # if epsilon == -1, it means adaptive label smooth regularization
 _C.MODEL.LOSSES.CE.EPSILON = 0.0
-_C.MODEL.LOSSES.CE.ALPHA = 0.2
+_C.MODEL.LOSSES.CE.ALPHA = 0.3
 _C.MODEL.LOSSES.CE.SCALE = 1.0
 
 # Triplet Loss options
@@ -86,8 +88,7 @@ _C.MODEL.LOSSES.FL.ALPHA = 0.25
 _C.MODEL.LOSSES.FL.GAMMA = 2
 _C.MODEL.LOSSES.FL.SCALE = 1.0
 
-# Path (possibly with schema like catalog:// or detectron2://) to a checkpoint file
-# to be loaded to the model. You can find available models in the model zoo.
+# Path to a checkpoint file to be loaded to the model. You can find available models in the model zoo.
 _C.MODEL.WEIGHTS = ""
 
 # Values to be used for image normalization

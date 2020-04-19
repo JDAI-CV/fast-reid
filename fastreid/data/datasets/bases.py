@@ -197,17 +197,24 @@ class ImageDataset(Dataset):
     def __init__(self, train, query, gallery, **kwargs):
         super(ImageDataset, self).__init__(train, query, gallery, **kwargs)
 
-    def show_summary(self):
+    def show_train(self):
         logger = logging.getLogger(__name__)
         num_train_pids, num_train_cams = self.parse_data(self.train)
-        num_query_pids, num_query_cams = self.parse_data(self.query)
-        num_gallery_pids, num_gallery_cams = self.parse_data(self.gallery)
-
         logger.info('=> Loaded {}'.format(self.__class__.__name__))
         logger.info('  ----------------------------------------')
         logger.info('  subset   | # ids | # images | # cameras')
         logger.info('  ----------------------------------------')
         logger.info('  train    | {:5d} | {:8d} | {:9d}'.format(num_train_pids, len(self.train), num_train_cams))
+        logger.info('  ----------------------------------------')
+
+    def show_test(self):
+        logger = logging.getLogger(__name__)
+        num_query_pids, num_query_cams = self.parse_data(self.query)
+        num_gallery_pids, num_gallery_cams = self.parse_data(self.gallery)
+        logger.info('=> Loaded {}'.format(self.__class__.__name__))
+        logger.info('  ----------------------------------------')
+        logger.info('  subset   | # ids | # images | # cameras')
+        logger.info('  ----------------------------------------')
         logger.info('  query    | {:5d} | {:8d} | {:9d}'.format(num_query_pids, len(self.query), num_query_cams))
         logger.info('  gallery  | {:5d} | {:8d} | {:9d}'.format(num_gallery_pids, len(self.gallery), num_gallery_cams))
         logger.info('  ----------------------------------------')

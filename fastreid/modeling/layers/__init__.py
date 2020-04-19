@@ -12,6 +12,8 @@ from .context_block import ContextBlock
 from .frn import FRN, TLU
 from .mish import Mish
 from .gem_pool import GeneralizedMeanPoolingP
+from .arcface import Arcface
+from .circle import Circle
 
 
 class Flatten(nn.Module):

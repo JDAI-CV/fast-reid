@@ -124,11 +124,11 @@ class TripletLoss(object):
     Loss for Person Re-Identification'."""
 
     def __init__(self, cfg):
-        self._margin = cfg.MODEL.LOSSES.MARGIN
-        self._normalize_feature = cfg.MODEL.LOSSES.NORM_FEAT
-        self._scale = cfg.MODEL.LOSSES.SCALE_TRI
-        self._hard_mining = cfg.MODEL.LOSSES.HARD_MINING
-        self._use_cosine_dist = cfg.MODEL.LOSSES.USE_COSINE_DIST
+        self._margin = cfg.MODEL.LOSSES.TRI.MARGIN
+        self._normalize_feature = cfg.MODEL.LOSSES.TRI.NORM_FEAT
+        self._scale = cfg.MODEL.LOSSES.TRI.SCALE
+        self._hard_mining = cfg.MODEL.LOSSES.TRI.HARD_MINING
+        self._use_cosine_dist = cfg.MODEL.LOSSES.TRI.USE_COSINE_DIST
 
         if self._margin > 0:
             self.ranking_loss = nn.MarginRankingLoss(margin=self._margin)

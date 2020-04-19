@@ -7,18 +7,14 @@
 import math
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
 
-from .build import REID_HEADS_REGISTRY
-from .linear_head import LinearHead
+from ..layers import *
 from ..model_utils import weights_init_kaiming
-from ...layers import NoBiasBatchNorm1d, Flatten
 
 
-@REID_HEADS_REGISTRY.register()
-class CircleHead(nn.Module):
+class AdaCos(nn.Module):
     def __init__(self, cfg, in_feat, pool_layer=nn.AdaptiveAvgPool2d(1)):
         super().__init__()
         self._num_classes = cfg.MODEL.HEADS.NUM_CLASSES
@@ -27,20 +23,19 @@ class CircleHead(nn.Module):
             pool_layer,
             Flatten()
         )
-
         # bnneck
         self.bnneck = NoBiasBatchNorm1d(in_feat)
         self.bnneck.apply(weights_init_kaiming)
 
         # classifier
-        self._s = cfg.MODEL.HEADS.CIRCLE.SCALE
-        self._m = cfg.MODEL.HEADS.CIRCLE.MARGIN
+        self._s = math.sqrt(2) * math.log(self._num_classes - 1)
+        self._m = 0.50
 
         self.weight = Parameter(torch.Tensor(self._num_classes, in_feat))
         self.reset_parameters()
 
     def reset_parameters(self):
-        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        nn.init.xavier_uniform_(self.weight)
 
     def forward(self, features, targets=None):
         global_feat = self.pool_layer(features)
@@ -48,22 +43,23 @@ class CircleHead(nn.Module):
         if not self.training:
             return bn_feat
 
-        sim_mat = F.linear(F.normalize(bn_feat), F.normalize(self.weight))
-        alpha_p = F.relu(-sim_mat.detach() + 1 + self._m)
-        alpha_n = F.relu(sim_mat.detach() + self._m)
-        delta_p = 1 - self._m
-        delta_n = self._m
-
-        s_p = self._s * alpha_p * (sim_mat - delta_p)
-        s_n = self._s * alpha_n * (sim_mat - delta_n)
-
-        one_hot = torch.zeros(sim_mat.size()).to(targets.device)
+        # normalize features
+        x = F.normalize(bn_feat)
+        # normalize weights
+        weight = F.normalize(self.weight)
+        # dot product
+        logits = F.linear(x, weight)
+        # feature re-scale
+        theta = torch.acos(torch.clamp(logits, -1.0 + 1e-7, 1.0 - 1e-7))
+        one_hot = torch.zeros_like(logits)
         one_hot.scatter_(1, targets.view(-1, 1).long(), 1)
+        with torch.no_grad():
+            B_avg = torch.where(one_hot < 1, torch.exp(self._s * logits), torch.zeros_like(logits))
+            B_avg = torch.sum(B_avg) / x.size(0)
+            # print(B_avg)
+            theta_med = torch.median(theta[one_hot == 1])
+            self.s = torch.log(B_avg) / torch.cos(torch.min(math.pi / 4 * torch.ones_like(theta_med), theta_med))
 
-        pred_class_logits = one_hot * s_p + (1.0 - one_hot) * s_n
+        pred_class_logits = self.s * logits
 
         return pred_class_logits, global_feat
-
-    @classmethod
-    def losses(cls, cfg, pred_class_logits, global_feat, gt_classes):
-        return LinearHead.losses(cfg, pred_class_logits, global_feat, gt_classes)

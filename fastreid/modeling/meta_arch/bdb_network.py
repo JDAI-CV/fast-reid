@@ -11,9 +11,9 @@ import torch.nn.functional as F
 from .build import META_ARCH_REGISTRY
 from ..backbones import build_backbone
 from ..backbones.resnet import Bottleneck
-from ..heads import build_reid_heads, BNneckHead
+from ..heads import build_reid_heads
 from ..model_utils import weights_init_kaiming
-from ...layers import BatchDrop, NoBiasBatchNorm1d, Flatten, GeneralizedMeanPoolingP
+from fastreid.modeling.layers import BatchDrop, Flatten, GeneralizedMeanPoolingP
 
 
 @META_ARCH_REGISTRY.register()

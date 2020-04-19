@@ -4,12 +4,8 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from torch import nn
-
 from .build import REID_HEADS_REGISTRY
-from .. import losses as Loss
-from ..model_utils import weights_init_classifier
-from ...layers import Flatten
+from ..layers import *
 
 
 @REID_HEADS_REGISTRY.register()
@@ -24,8 +20,14 @@ class LinearHead(nn.Module):
             Flatten()
         )
 
-        self.classifier = nn.Linear(in_feat, self._num_classes, bias=False)
-        self.classifier.apply(weights_init_classifier)
+        if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
+            self.classifier = nn.Linear(in_feat, self._num_classes, bias=False)
+        elif cfg.MODEL.HEADS.CLS_LAYER == 'arcface':
+            self.classifier = Arcface(cfg, in_feat)
+        elif cfg.MODEL.HEADS.CLS_LAYER == 'circle':
+            self.classifier = Circle(cfg, in_feat)
+        else:
+            self.classifier = nn.Linear(in_feat, self._num_classes, bias=False)
 
     def forward(self, features, targets=None):
         """
@@ -35,18 +37,8 @@ class LinearHead(nn.Module):
         if not self.training:
             return global_feat
         # training
-        pred_class_logits = self.classifier(global_feat)
+        try:
+            pred_class_logits = self.classifier(global_feat)
+        except TypeError:
+            pred_class_logits = self.classifier(global_feat, targets)
         return pred_class_logits, global_feat
-
-    @classmethod
-    def losses(cls, cfg, pred_class_logits, global_features, gt_classes, prefix='') -> dict:
-        loss_dict = {}
-        for loss_name in cfg.MODEL.LOSSES.NAME:
-            loss = getattr(Loss, loss_name)(cfg)(pred_class_logits, global_features, gt_classes)
-            loss_dict.update(loss)
-        # rename
-        name_loss_dict = {}
-        for name in loss_dict.keys():
-            name_loss_dict[prefix + name] = loss_dict[name]
-        del loss_dict
-        return name_loss_dict
