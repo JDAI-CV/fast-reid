@@ -14,7 +14,7 @@ from .build import META_ARCH_REGISTRY
 from ..backbones import build_backbone
 from ..heads import build_reid_heads
 from ..model_utils import weights_init_kaiming
-from fastreid.modeling.layers import CAM_Module, PAM_Module, DANetHead, Flatten
+from fastreid.layers import CAM_Module, PAM_Module, DANetHead, Flatten
 
 
 @META_ARCH_REGISTRY.register()

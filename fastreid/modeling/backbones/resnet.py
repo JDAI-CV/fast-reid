@@ -12,6 +12,7 @@ from torch import nn
 from torch.utils import model_zoo
 
 from .build import BACKBONE_REGISTRY
+from ...layers import IBN, SELayer, Non_local
 
 model_urls = {
     18: 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
@@ -19,48 +20,9 @@ model_urls = {
     50: 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
     101: 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
     152: 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
-    # 'resnext50_32x4d': 'https://download.pytorch.org/models/resnext50_32x4d-7cdf4587.pth',
-    # 'resnext101_32x8d': 'https://download.pytorch.org/models/resnext101_32x8d-8ba56ff5.pth',
-    # 'wide_resnet50_2': 'https://download.pytorch.org/models/wide_resnet50_2-95faca4d.pth',
-    # 'wide_resnet101_2': 'https://download.pytorch.org/models/wide_resnet101_2-32ee1156.pth',
 }
 
 __all__ = ['ResNet', 'Bottleneck']
-
-
-class IBN(nn.Module):
-    def __init__(self, planes):
-        super(IBN, self).__init__()
-        half1 = int(planes / 2)
-        self.half = half1
-        half2 = planes - half1
-        self.IN = nn.InstanceNorm2d(half1, affine=True)
-        self.BN = nn.BatchNorm2d(half2)
-
-    def forward(self, x):
-        split = torch.split(x, self.half, 1)
-        out1 = self.IN(split[0].contiguous())
-        out2 = self.BN(split[1].contiguous())
-        out = torch.cat((out1, out2), 1)
-        return out
-
-
-class SELayer(nn.Module):
-    def __init__(self, channel, reduction=16):
-        super(SELayer, self).__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Sequential(
-            nn.Linear(channel, int(channel / reduction), bias=False),
-            nn.ReLU(inplace=True),
-            nn.Linear(int(channel / reduction), channel, bias=False),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        b, c, _, _ = x.size()
-        y = self.avg_pool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
-        return x * y.expand_as(x)
 
 
 class Bottleneck(nn.Module):
@@ -111,7 +73,7 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, last_stride, with_ibn, with_se, block, layers):
+    def __init__(self, last_stride, with_ibn, with_se, with_nl, block, layers, non_layers):
         scale = 64
         self.inplanes = scale
         super().__init__()
@@ -126,6 +88,12 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, scale * 8, layers[3], stride=last_stride, with_se=with_se)
 
         self.random_init()
+
+        if with_nl:
+            self._build_nonlocal(layers, non_layers)
+        else:
+            self.NL_1_idx = self.NL_2_idx = self.NL_3_idx = self.NL_4_idx = []
+
 
     def _make_layer(self, block, planes, blocks, stride=1, with_ibn=False, with_se=False):
         downsample = None
@@ -146,16 +114,65 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
+    def _build_nonlocal(self, layers, non_layers):
+        self.NL_1 = nn.ModuleList(
+            [Non_local(256) for _ in range(non_layers[0])])
+        self.NL_1_idx = sorted([layers[0] - (i + 1) for i in range(non_layers[0])])
+        self.NL_2 = nn.ModuleList(
+            [Non_local(512) for _ in range(non_layers[1])])
+        self.NL_2_idx = sorted([layers[1] - (i + 1) for i in range(non_layers[1])])
+        self.NL_3 = nn.ModuleList(
+            [Non_local(1024) for _ in range(non_layers[2])])
+        self.NL_3_idx = sorted([layers[2] - (i + 1) for i in range(non_layers[2])])
+        self.NL_4 = nn.ModuleList(
+            [Non_local(2048) for _ in range(non_layers[3])])
+        self.NL_4_idx = sorted([layers[3] - (i + 1) for i in range(non_layers[3])])
+
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        NL1_counter = 0
+        if len(self.NL_1_idx) == 0:
+            self.NL_1_idx = [-1]
+        for i in range(len(self.layer1)):
+            x = self.layer1[i](x)
+            if i == self.NL_1_idx[NL1_counter]:
+                _, C, H, W = x.shape
+                x = self.NL_1[NL1_counter](x)
+                NL1_counter += 1
+        # Layer 2
+        NL2_counter = 0
+        if len(self.NL_2_idx) == 0:
+            self.NL_2_idx = [-1]
+        for i in range(len(self.layer2)):
+            x = self.layer2[i](x)
+            if i == self.NL_2_idx[NL2_counter]:
+                _, C, H, W = x.shape
+                x = self.NL_2[NL2_counter](x)
+                NL2_counter += 1
+        # Layer 3
+        NL3_counter = 0
+        if len(self.NL_3_idx) == 0:
+            self.NL_3_idx = [-1]
+        for i in range(len(self.layer3)):
+            x = self.layer3[i](x)
+            if i == self.NL_3_idx[NL3_counter]:
+                _, C, H, W = x.shape
+                x = self.NL_3[NL3_counter](x)
+                NL3_counter += 1
+        # Layer 4
+        NL4_counter = 0
+        if len(self.NL_4_idx) == 0:
+            self.NL_4_idx = [-1]
+        for i in range(len(self.layer4)):
+            x = self.layer4[i](x)
+            if i == self.NL_4_idx[NL4_counter]:
+                _, C, H, W = x.shape
+                x = self.NL_4[NL4_counter](x)
+                NL4_counter += 1
 
         return x
 
@@ -183,10 +200,12 @@ def build_resnet_backbone(cfg):
     last_stride = cfg.MODEL.BACKBONE.LAST_STRIDE
     with_ibn = cfg.MODEL.BACKBONE.WITH_IBN
     with_se = cfg.MODEL.BACKBONE.WITH_SE
+    with_nl = cfg.MODEL.BACKBONE.WITH_NL
     depth = cfg.MODEL.BACKBONE.DEPTH
 
-    num_blocks_per_stage = {50: [3, 4, 6, 3], 101: [3, 4, 23, 3], 152: [3, 8, 36, 3]}[depth]
-    model = ResNet(last_stride, with_ibn, with_se, Bottleneck, num_blocks_per_stage)
+    num_blocks_per_stage = {50: [3, 4, 6, 3], 101: [3, 4, 23, 3], 152: [3, 8, 36, 3], }[depth]
+    nl_layers_per_stage = {50: [0, 2, 3, 0], 101: [0, 2, 3, 0]}[depth]
+    model = ResNet(last_stride, with_ibn, with_se, with_nl, Bottleneck, num_blocks_per_stage, nl_layers_per_stage)
     if pretrain:
         if not with_ibn:
             # original resnet
@@ -206,5 +225,3 @@ def build_resnet_backbone(cfg):
         logger.info('missing keys is {}'.format(res.missing_keys))
         logger.info('unexpected keys is {}'.format(res.unexpected_keys))
     return model
-
-

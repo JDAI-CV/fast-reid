@@ -35,6 +35,8 @@ _C.MODEL.BACKBONE.LAST_STRIDE = 1
 _C.MODEL.BACKBONE.WITH_IBN = False
 # If use SE block in backbone
 _C.MODEL.BACKBONE.WITH_SE = False
+# If use Non-local block in backbone
+_C.MODEL.BACKBONE.WITH_NL = False
 # If use ImageNet pretrain model
 _C.MODEL.BACKBONE.PRETRAIN = True
 # Pretrain model path

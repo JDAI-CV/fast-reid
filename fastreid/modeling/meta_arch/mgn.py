@@ -13,7 +13,7 @@ from ..backbones import build_backbone
 from ..backbones.resnet import Bottleneck
 from ..heads import build_reid_heads
 from ..model_utils import weights_init_kaiming
-from fastreid.modeling.layers import GeneralizedMeanPoolingP, Flatten
+from ...layers import GeneralizedMeanPoolingP, Flatten
 
 
 @META_ARCH_REGISTRY.register()
@@ -204,5 +204,3 @@ class MGN(nn.Module):
                                b22_pool_feat, b31_pool_feat, b32_pool_feat, b33_pool_feat], dim=1)
 
         return nn.functional.normalize(pred_feat)
-
-

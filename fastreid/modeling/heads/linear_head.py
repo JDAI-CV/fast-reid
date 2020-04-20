@@ -5,7 +5,7 @@
 """
 
 from .build import REID_HEADS_REGISTRY
-from ..layers import *
+from ...layers import *
 
 
 @REID_HEADS_REGISTRY.register()

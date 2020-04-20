@@ -5,8 +5,8 @@
 """
 
 from .build import REID_HEADS_REGISTRY
-from ..layers import *
 from ..model_utils import weights_init_kaiming
+from ...layers import *
 
 
 @REID_HEADS_REGISTRY.register()

@@ -1,7 +1,0 @@
-_BASE_: "Base-Strongbaseline.yml"
-
-MODEL:
-  BACKBONE:
-    WITH_IBN: True
-    PRETRAIN_PATH: "/export/home/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
-

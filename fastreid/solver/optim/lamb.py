@@ -3,28 +3,25 @@
 ####
 
 import collections
-import math
 
 import torch
 from torch.optim.optimizer import Optimizer
+from torch.utils.tensorboard import SummaryWriter
 
-try: 
-    from tensorboardX import SummaryWriter
 
-    def log_lamb_rs(optimizer: Optimizer, event_writer: SummaryWriter, token_count: int):
-        """Log a histogram of trust ratio scalars in across layers."""
-        results = collections.defaultdict(list)
-        for group in optimizer.param_groups:
-            for p in group['params']:
-                state = optimizer.state[p]
-                for i in ('weight_norm', 'adam_norm', 'trust_ratio'):
-                    if i in state:
-                        results[i].append(state[i])
+def log_lamb_rs(optimizer: Optimizer, event_writer: SummaryWriter, token_count: int):
+    """Log a histogram of trust ratio scalars in across layers."""
+    results = collections.defaultdict(list)
+    for group in optimizer.param_groups:
+        for p in group['params']:
+            state = optimizer.state[p]
+            for i in ('weight_norm', 'adam_norm', 'trust_ratio'):
+                if i in state:
+                    results[i].append(state[i])
 
-        for k, v in results.items():
-            event_writer.add_histogram(f'lamb/{k}', torch.tensor(v), token_count)
-except ModuleNotFoundError as e: 
-    print("To use this log_lamb_rs, please run 'pip install tensorboardx'. Also you must have Tensorboard running to see results")
+    for k, v in results.items():
+        event_writer.add_histogram(f'lamb/{k}', torch.tensor(v), token_count)
+
 
 class Lamb(Optimizer):
     r"""Implements Lamb algorithm.
@@ -102,7 +99,7 @@ class Lamb(Optimizer):
                 # bias_correction1 = 1 - beta1 ** state['step']
                 # bias_correction2 = 1 - beta2 ** state['step']
                 # Apply bias to lr to avoid broadcast.
-                step_size = group['lr'] # * math.sqrt(bias_correction2) / bias_correction1
+                step_size = group['lr']  # * math.sqrt(bias_correction2) / bias_correction1
 
                 weight_norm = p.data.pow(2).sum().sqrt().clamp(0, 10)
 

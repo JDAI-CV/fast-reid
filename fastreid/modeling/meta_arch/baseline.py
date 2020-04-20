@@ -10,7 +10,7 @@ from torch import nn
 from .build import META_ARCH_REGISTRY
 from ..backbones import build_backbone
 from ..heads import build_reid_heads
-from ..layers import GeneralizedMeanPoolingP
+from ...layers import GeneralizedMeanPoolingP
 from ..losses import reid_losses
 
 
