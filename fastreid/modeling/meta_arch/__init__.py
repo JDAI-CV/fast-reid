@@ -9,8 +9,3 @@ from .build import META_ARCH_REGISTRY, build_model
 
 # import all the meta_arch, so they will be registered
 from .baseline import Baseline
-from .bdb_network import BDB_net
-from .mf_network import MF_net
-from .abd_network import ABD_net
-from .mid_network import MidNetwork
-from .mgn import MGN
