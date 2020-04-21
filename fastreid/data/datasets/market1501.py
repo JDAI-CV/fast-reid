@@ -73,13 +73,6 @@ class Market1501(ImageDataset):
         img_paths = glob.glob(osp.join(dir_path, '*.jpg'))
         pattern = re.compile(r'([-\d]+)_c(\d)')
 
-        pid_container = set()
-        for img_path in img_paths:
-            pid, _ = map(int, pattern.search(img_path).groups())
-            if pid == -1:
-                continue  # junk images are just ignored
-            pid_container.add(pid)
-
         data = []
         for img_path in img_paths:
             pid, camid = map(int, pattern.search(img_path).groups())
