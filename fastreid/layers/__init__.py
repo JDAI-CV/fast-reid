@@ -12,10 +12,11 @@ from .context_block import ContextBlock
 from .non_local import Non_local
 from .se_layer import SELayer
 from .frn import FRN, TLU
-from .mish import Mish
+from .activation import *
 from .gem_pool import GeneralizedMeanPoolingP
 from .arcface import Arcface
 from .circle import Circle
+from .splat import SplAtConv2d
 
 
 class Flatten(nn.Module):
