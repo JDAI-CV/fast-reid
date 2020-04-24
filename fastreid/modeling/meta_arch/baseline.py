@@ -31,7 +31,9 @@ class Baseline(nn.Module):
             pool_layer = GeneralizedMeanPoolingP()
         else:
             pool_layer = nn.Identity()
-        self.heads = build_reid_heads(cfg, 2048, pool_layer)
+
+        in_feat = cfg.MODEL.HEADS.IN_FEAT
+        self.heads = build_reid_heads(cfg, in_feat, pool_layer)
 
     def forward(self, inputs):
         images = inputs["images"]
@@ -43,8 +45,7 @@ class Baseline(nn.Module):
 
         # training
         features = self.backbone(images)  # (bs, 2048, 16, 8)
-        logits, global_feat = self.heads(features, targets)
-        return logits, global_feat, targets
+        return self.heads(features, targets)
 
     def inference(self, images):
         assert not self.training

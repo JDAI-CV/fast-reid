@@ -48,8 +48,11 @@ _C.MODEL.BACKBONE.PRETRAIN_PATH = ''
 _C.MODEL.HEADS = CN()
 _C.MODEL.HEADS.NAME = "BNneckHead"
 
+# Number of identity
 _C.MODEL.HEADS.NUM_CLASSES = 751
-# Reduction dimension
+# Input feature dimension
+_C.MODEL.HEADS.IN_FEAT = 2048
+# Reduction dimension in head
 _C.MODEL.HEADS.REDUCTION_DIM = 512
 # Pooling layer type
 _C.MODEL.HEADS.POOL_LAYER = 'avgpool'
