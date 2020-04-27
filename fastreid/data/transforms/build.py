@@ -7,6 +7,7 @@
 import torchvision.transforms as T
 
 from .transforms import *
+from .autoaugment import *
 
 
 def build_transforms(cfg, is_train=True):
@@ -14,6 +15,13 @@ def build_transforms(cfg, is_train=True):
 
     if is_train:
         size_train = cfg.INPUT.SIZE_TRAIN
+
+        # augmix augmentation
+        do_augmix = cfg.INPUT.DO_AUGMIX
+
+        # auto augmentation
+        do_autoaug = cfg.INPUT.DO_AUTOAUG
+        total_iter = cfg.SOLVER.MAX_ITER
 
         # horizontal filp
         do_flip = cfg.INPUT.DO_FLIP
@@ -23,9 +31,6 @@ def build_transforms(cfg, is_train=True):
         do_pad = cfg.INPUT.DO_PAD
         padding = cfg.INPUT.PADDING
         padding_mode = cfg.INPUT.PADDING_MODE
-
-        # augmix augmentation
-        do_augmix = cfg.INPUT.DO_AUGMIX
 
         # color jitter
         do_cj = cfg.INPUT.DO_CJ
@@ -38,6 +43,8 @@ def build_transforms(cfg, is_train=True):
         do_rpt = cfg.INPUT.RPT.ENABLED
         rpt_prob = cfg.INPUT.RPT.PROB
 
+        if do_autoaug:
+            res.append(ImageNetPolicy(total_iter))
         res.append(T.Resize(size_train, interpolation=3))
         if do_flip:
             res.append(T.RandomHorizontalFlip(p=flip_prob))
@@ -45,7 +52,7 @@ def build_transforms(cfg, is_train=True):
             res.extend([T.Pad(padding, padding_mode=padding_mode),
                         T.RandomCrop(size_train)])
         if do_cj:
-            res.append(ColorJitter())
+            res.append(T.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0))
         if do_augmix:
             res.append(AugMix())
         if do_rea:

@@ -4,7 +4,7 @@
 @contact: sherlockliao01@gmail.com
 """
 
-__all__ = ['ToTensor', 'RandomErasing', 'RandomPatch', 'AugMix', 'ColorJitter', ]
+__all__ = ['ToTensor', 'RandomErasing', 'RandomPatch', 'AugMix', ]
 
 import math
 import random
@@ -205,67 +205,67 @@ class AugMix(object):
         return mixed
 
 
-class ColorJitter(object):
-    """docstring for do_color"""
-
-    def __init__(self, probability=0.5):
-        self.probability = probability
-
-    def do_brightness_shift(self, image, alpha=0.125):
-        image = image.astype(np.float32)
-        image = image + alpha * 255
-        image = np.clip(image, 0, 255).astype(np.uint8)
-        return image
-
-    def do_brightness_multiply(self, image, alpha=1):
-        image = image.astype(np.float32)
-        image = alpha * image
-        image = np.clip(image, 0, 255).astype(np.uint8)
-        return image
-
-    def do_contrast(self, image, alpha=1.0):
-        image = image.astype(np.float32)
-        gray = image * np.array([[[0.114, 0.587, 0.299]]])  # rgb to gray (YCbCr)
-        gray = (3.0 * (1.0 - alpha) / gray.size) * np.sum(gray)
-        image = alpha * image + gray
-        image = np.clip(image, 0, 255).astype(np.uint8)
-        return image
-
-    # https://www.pyimagesearch.com/2015/10/05/opencv-gamma-correction/
-    def do_gamma(self, image, gamma=1.0):
-        table = np.array([((i / 255.0) ** (1.0 / gamma)) * 255
-                          for i in np.arange(0, 256)]).astype("uint8")
-
-        return cv2.LUT(image, table)  # apply gamma correction using the lookup table
-
-    def do_clahe(self, image, clip=2, grid=16):
-        grid = int(grid)
-
-        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
-        gray, a, b = cv2.split(lab)
-        gray = cv2.createCLAHE(clipLimit=clip, tileGridSize=(grid, grid)).apply(gray)
-        lab = cv2.merge((gray, a, b))
-        image = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
-
-        return image
-
-    def __call__(self, image):
-        if random.uniform(0, 1) > self.probability:
-            return image
-
-        image = np.asarray(image, dtype=np.uint8).copy()
-        index = random.randint(0, 4)
-        if index == 0:
-            image = self.do_brightness_shift(image, 0.1)
-        elif index == 1:
-            image = self.do_gamma(image, 1)
-        elif index == 2:
-            image = self.do_clahe(image)
-        elif index == 3:
-            image = self.do_brightness_multiply(image)
-        elif index == 4:
-            image = self.do_contrast(image)
-        return image
+# class ColorJitter(object):
+#     """docstring for do_color"""
+#
+#     def __init__(self, probability=0.5):
+#         self.probability = probability
+#
+#     def do_brightness_shift(self, image, alpha=0.125):
+#         image = image.astype(np.float32)
+#         image = image + alpha * 255
+#         image = np.clip(image, 0, 255).astype(np.uint8)
+#         return image
+#
+#     def do_brightness_multiply(self, image, alpha=1):
+#         image = image.astype(np.float32)
+#         image = alpha * image
+#         image = np.clip(image, 0, 255).astype(np.uint8)
+#         return image
+#
+#     def do_contrast(self, image, alpha=1.0):
+#         image = image.astype(np.float32)
+#         gray = image * np.array([[[0.114, 0.587, 0.299]]])  # rgb to gray (YCbCr)
+#         gray = (3.0 * (1.0 - alpha) / gray.size) * np.sum(gray)
+#         image = alpha * image + gray
+#         image = np.clip(image, 0, 255).astype(np.uint8)
+#         return image
+#
+#     # https://www.pyimagesearch.com/2015/10/05/opencv-gamma-correction/
+#     def do_gamma(self, image, gamma=1.0):
+#         table = np.array([((i / 255.0) ** (1.0 / gamma)) * 255
+#                           for i in np.arange(0, 256)]).astype("uint8")
+#
+#         return cv2.LUT(image, table)  # apply gamma correction using the lookup table
+#
+#     def do_clahe(self, image, clip=2, grid=16):
+#         grid = int(grid)
+#
+#         lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+#         gray, a, b = cv2.split(lab)
+#         gray = cv2.createCLAHE(clipLimit=clip, tileGridSize=(grid, grid)).apply(gray)
+#         lab = cv2.merge((gray, a, b))
+#         image = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+#
+#         return image
+#
+#     def __call__(self, image):
+#         if random.uniform(0, 1) > self.probability:
+#             return image
+#
+#         image = np.asarray(image, dtype=np.uint8).copy()
+#         index = random.randint(0, 4)
+#         if index == 0:
+#             image = self.do_brightness_shift(image, 0.1)
+#         elif index == 1:
+#             image = self.do_gamma(image, 1)
+#         elif index == 2:
+#             image = self.do_clahe(image)
+#         elif index == 3:
+#             image = self.do_brightness_multiply(image)
+#         elif index == 4:
+#             image = self.do_contrast(image)
+#         return image
 
 
 # class random_shift(object):

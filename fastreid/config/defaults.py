@@ -121,6 +121,8 @@ _C.INPUT.PADDING_MODE = 'constant'
 _C.INPUT.PADDING = 10
 # Random color jitter
 _C.INPUT.DO_CJ = False
+# Auto augmentation
+_C.INPUT.DO_AUTOAUG = False
 # Augmix augmentation
 _C.INPUT.DO_AUGMIX = False
 # Random Erasing
@@ -170,15 +172,16 @@ _C.SOLVER.MOMENTUM = 0.9
 _C.SOLVER.WEIGHT_DECAY = 0.0005
 _C.SOLVER.WEIGHT_DECAY_BIAS = 0.
 
-_C.SOLVER.SCHED = "warmup"
-# Warmup config
+_C.SOLVER.SCHED = "WarmupMultiStepLR"
+# Multi-step learning rate options
 _C.SOLVER.GAMMA = 0.1
 _C.SOLVER.STEPS = (30, 55)
 
-# Cosine annealing
+# Cosine annealing learning rate options
 _C.SOLVER.DELAY_ITERS = 100
-_C.SOLVER.COS_ANNEAL_ITERS = 100
+_C.SOLVER.ETA_MIN_LR = 3e-7
 
+# Warmup options
 _C.SOLVER.WARMUP_FACTOR = 0.1
 _C.SOLVER.WARMUP_ITERS = 10
 _C.SOLVER.WARMUP_METHOD = "linear"
