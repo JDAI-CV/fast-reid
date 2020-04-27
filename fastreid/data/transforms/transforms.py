@@ -179,7 +179,7 @@ class AugMix(object):
         self.mixture_width = mixture_width
         self.mixture_depth = mixture_depth
         self.severity = severity
-        self.aug_list = augmentations_reid
+        self.aug_list = augmentations_all
 
     def __call__(self, image):
         """Perform AugMix augmentations and compute mixture.
