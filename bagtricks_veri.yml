@@ -1,0 +1,24 @@
+_BASE_: "Base-bagtricks.yml"
+
+MODEL:
+  HEADS:
+    NUM_CLASSES: 575
+
+DATASETS:
+  NAMES: ("VeRi",)
+  TESTS: ("VeRi",)
+
+SOLVER:
+  IMS_PER_BATCH: 512
+  MAX_ITER: 9000
+  STEPS: [3000, 6750]
+  WARMUP_ITERS: 750
+
+  LOG_PERIOD: 100
+  CHECKPOINT_PERIOD: 3000
+
+TEST:
+  EVAL_PERIOD: 750
+  IMS_PER_BATCH: 1024
+
+OUTPUT_DIR: "logs/veri/bagtricks"
