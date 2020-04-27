@@ -4,14 +4,13 @@
 @contact: sherlockliao01@gmail.com
 """
 
-import torch.nn.functional as F
 from torch import nn
 
 from .build import META_ARCH_REGISTRY
 from ..backbones import build_backbone
 from ..heads import build_reid_heads
-from ...layers import GeneralizedMeanPoolingP
 from ..losses import reid_losses
+from ...layers import GeneralizedMeanPoolingP
 
 
 @META_ARCH_REGISTRY.register()
@@ -51,8 +50,8 @@ class Baseline(nn.Module):
         assert not self.training
         features = self.backbone(images)  # (bs, 2048, 16, 8)
         pred_feat = self.heads(features)
-        return F.normalize(pred_feat)
+        return pred_feat
 
     def losses(self, outputs):
-        logits, global_feat, targets = outputs
-        return reid_losses(self._cfg, logits, global_feat, targets)
+        logits, feat, targets = outputs
+        return reid_losses(self._cfg, logits, feat, targets)

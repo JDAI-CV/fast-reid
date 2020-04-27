@@ -6,8 +6,9 @@
 import copy
 from collections import OrderedDict
 
-import torch
 import numpy as np
+import torch
+import torch.nn.functional as F
 
 from .evaluator import DatasetEvaluator
 from .rank import evaluate_rank
@@ -34,6 +35,8 @@ class ReidEvaluator(DatasetEvaluator):
 
     def evaluate(self):
         features = torch.cat(self.features, dim=0)
+        # normalize feature
+        features = F.normalize(features, dim=1)
 
         # query feature, person ids and camera ids
         query_features = features[:self._num_query]
