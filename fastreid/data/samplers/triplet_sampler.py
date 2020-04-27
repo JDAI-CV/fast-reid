@@ -81,5 +81,7 @@ class RandomIdentitySampler(Sampler):
             else:
                 identities = np.arange(self.num_identities)
             drop_indices = self.num_identities % self.num_pids_per_batch
+            if drop_indices == 0:
+                yield from identities
             yield from identities[:-drop_indices]
 
