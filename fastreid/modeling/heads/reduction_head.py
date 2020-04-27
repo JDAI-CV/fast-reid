@@ -32,6 +32,7 @@ class ReductionHead(nn.Module):
         self.bottleneck.apply(weights_init_kaiming)
         self.bnneck.apply(weights_init_kaiming)
 
+        # identity classification layer
         if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
             self.classifier = nn.Linear(reduction_dim, self._num_classes, bias=False)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'arcface':
@@ -55,4 +56,4 @@ class ReductionHead(nn.Module):
             pred_class_logits = self.classifier(bn_feat)
         except TypeError:
             pred_class_logits = self.classifier(bn_feat, targets)
-        return pred_class_logits, global_feat
+        return pred_class_logits, bn_feat, targets

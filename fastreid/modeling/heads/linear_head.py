@@ -20,6 +20,7 @@ class LinearHead(nn.Module):
             Flatten()
         )
 
+        # identity classification layer
         if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
             self.classifier = nn.Linear(in_feat, self._num_classes, bias=False)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'arcface':
@@ -41,4 +42,4 @@ class LinearHead(nn.Module):
             pred_class_logits = self.classifier(global_feat)
         except TypeError:
             pred_class_logits = self.classifier(global_feat, targets)
-        return pred_class_logits, global_feat
+        return pred_class_logits, global_feat, targets
