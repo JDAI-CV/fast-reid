@@ -22,6 +22,7 @@ class BNneckHead(nn.Module):
         self.bnneck = NoBiasBatchNorm1d(in_feat)
         self.bnneck.apply(weights_init_kaiming)
 
+        # identity classification layer
         if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
             self.classifier = nn.Linear(in_feat, self._num_classes, bias=False)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'arcface':
@@ -45,4 +46,4 @@ class BNneckHead(nn.Module):
             pred_class_logits = self.classifier(bn_feat)
         except TypeError:
             pred_class_logits = self.classifier(bn_feat, targets)
-        return pred_class_logits, global_feat
+        return pred_class_logits, bn_feat, targets
