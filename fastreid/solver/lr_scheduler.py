@@ -10,7 +10,7 @@ from typing import List
 import torch
 from torch.optim.lr_scheduler import _LRScheduler, CosineAnnealingLR
 
-__all__ = ["WarmupMultiStepLR", "DelayerScheduler"]
+__all__ = ["WarmupMultiStepLR", "DelayedScheduler"]
 
 
 class WarmupMultiStepLR(_LRScheduler):
@@ -23,6 +23,7 @@ class WarmupMultiStepLR(_LRScheduler):
             warmup_iters: int = 1000,
             warmup_method: str = "linear",
             last_epoch: int = -1,
+            **kwargs,
     ):
         if not list(milestones) == sorted(milestones):
             raise ValueError(
@@ -76,16 +77,16 @@ def _get_warmup_factor_at_iter(
         raise ValueError("Unknown warmup method: {}".format(method))
 
 
-class DelayerScheduler(_LRScheduler):
+class DelayedScheduler(_LRScheduler):
     """ Starts with a flat lr schedule until it reaches N epochs the applies a scheduler
     Args:
         optimizer (Optimizer): Wrapped optimizer.
-        delay_epochs: number of epochs to keep the initial lr until starting aplying the scheduler
+        delay_iters: number of epochs to keep the initial lr until starting applying the scheduler
         after_scheduler: after target_epoch, use this scheduler(eg. ReduceLROnPlateau)
     """
 
-    def __init__(self, optimizer, delay_epochs, after_scheduler, warmup_factor, warmup_iters, warmup_method):
-        self.delay_epochs = delay_epochs
+    def __init__(self, optimizer, delay_iters, after_scheduler, warmup_factor, warmup_iters, warmup_method):
+        self.delay_epochs = delay_iters
         self.after_scheduler = after_scheduler
         self.finished = False
         self.warmup_factor = warmup_factor
@@ -94,7 +95,6 @@ class DelayerScheduler(_LRScheduler):
         super().__init__(optimizer)
 
     def get_lr(self):
-
         if self.last_epoch >= self.delay_epochs:
             if not self.finished:
                 self.after_scheduler.base_lrs = self.base_lrs
@@ -113,10 +113,11 @@ class DelayerScheduler(_LRScheduler):
             else:
                 self.after_scheduler.step(epoch - self.delay_epochs)
         else:
-            return super(DelayerScheduler, self).step(epoch)
+            return super(DelayedScheduler, self).step(epoch)
 
 
-def DelayedCosineAnnealingLR(optimizer, delay_epochs, cosine_annealing_epochs, warmup_factor,
-                             warmup_iters, warmup_method):
-    base_scheduler = CosineAnnealingLR(optimizer, cosine_annealing_epochs, eta_min=0)
-    return DelayerScheduler(optimizer, delay_epochs, base_scheduler, warmup_factor, warmup_iters, warmup_method)
+def DelayedCosineAnnealingLR(optimizer, delay_iters, max_iters, eta_min_lr, warmup_factor,
+                             warmup_iters, warmup_method, **kwargs, ):
+    cosine_annealing_iters = max_iters - delay_iters
+    base_scheduler = CosineAnnealingLR(optimizer, cosine_annealing_iters, eta_min_lr)
+    return DelayedScheduler(optimizer, delay_iters, base_scheduler, warmup_factor, warmup_iters, warmup_method)

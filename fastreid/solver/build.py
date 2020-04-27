@@ -34,21 +34,22 @@ def build_optimizer(cfg, model):
 
 
 def build_lr_scheduler(cfg, optimizer):
-    if cfg.SOLVER.SCHED == "warmup":
-        return lr_scheduler.WarmupMultiStepLR(
-            optimizer,
-            cfg.SOLVER.STEPS,
-            cfg.SOLVER.GAMMA,
-            warmup_factor=cfg.SOLVER.WARMUP_FACTOR,
-            warmup_iters=cfg.SOLVER.WARMUP_ITERS,
-            warmup_method=cfg.SOLVER.WARMUP_METHOD
-        )
-    elif cfg.SOLVER.SCHED == "delay":
-        return lr_scheduler.DelayedCosineAnnealingLR(
-            optimizer,
-            cfg.SOLVER.DELAY_ITERS,
-            cfg.SOLVER.COS_ANNEAL_ITERS,
-            warmup_factor=cfg.SOLVER.WARMUP_FACTOR,
-            warmup_iters=cfg.SOLVER.WARMUP_ITERS,
-            warmup_method=cfg.SOLVER.WARMUP_METHOD
-        )
+    scheduler_args = {
+        "optimizer": optimizer,
+
+        # warmup options
+        "warmup_factor": cfg.SOLVER.WARMUP_FACTOR,
+        "warmup_iters": cfg.SOLVER.WARMUP_ITERS,
+        "warmup_method": cfg.SOLVER.WARMUP_METHOD,
+
+        # multi-step lr scheduler options
+        "milestones": cfg.SOLVER.STEPS,
+        "gamma": cfg.SOLVER.GAMMA,
+
+        # cosine annealing lr scheduler options
+        "max_iters": cfg.SOLVER.MAX_ITER,
+        "delay_iters": cfg.SOLVER.DELAY_ITERS,
+        "eta_min_lr": cfg.SOLVER.ETA_MIN_LR,
+
+    }
+    return getattr(lr_scheduler, cfg.SOLVER.SCHED)(**scheduler_args)
