@@ -17,7 +17,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train_net.py --config-file='configs/sbs_mark
 
 ## Experimental Results
 
-stronger baseline: 
+stronger baseline tricks: 
 1. Non-local block
 2. GeM pooling
 3. Circle loss 
@@ -31,21 +31,18 @@ stronger baseline:
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
 | stronger baseline(ResNet50-ibn) | ImageNet | 95.5 | 88.4 | 65.8 |
-| stronger baseline(ResNeSt50) | ImageNet | - | - | - |
 | Robust-ReID | ImageNet | 96.2 | 89.7 | - |
 
 ### DukeMTMC dataset
 
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
-| stronger baseline(ResNet50-ibn) | ImageNet | 90.3 | 79.6 | 44.0 |
-| stronger baseline(ResNeSt50) | ImageNet | 91.7 | 81.0 | 45.2 |
+| stronger baseline(ResNet50-ibn) | ImageNet | 91.3 | 81.6 | 47.6 |
 | Robust-ReID | ImageNet | 89.8 | 80.3 | - |
 
 ### MSMT17 dataset
 
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
-| stronger baseline(ResNet50-ibn) | ImageNet | 84.9 | 62.9 | 16.0 |
-| stronger baseline(ResNeSt50) | ImageNet | 84.0 | 60.5 | 15.1 |
+| stronger baseline(ResNet50-ibn) | ImageNet | 84.2 | 61.5 | 15.7 |
 | ABD-Net | ImageNet | 82.3 | 60.8 | - |
