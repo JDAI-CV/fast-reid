@@ -1,0 +1,51 @@
+# Stronger Baseline in FastReID
+
+## Training
+
+To train a model, run
+
+```bash
+CUDA_VISIBLE_DEVICES=gpus python train_net.py --config-file <config.yaml>
+```
+
+For example, to launch a end-to-end baseline training on market1501 dataset with ibn-net on 4 GPUs, 
+one should excute:
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 python train_net.py --config-file='configs/sbs_market1501.yml'
+```
+
+## Experimental Results
+
+stronger baseline: 
+1. Non-local block
+2. GeM pooling
+3. Circle loss 
+4. Freeze backbone training 
+5. Cutout data augmentation & Auto Augmentation
+6. Cosine annealing learning rate decay
+7. Soft margin triplet loss
+
+### Market1501 dataset
+
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| stronger baseline(ResNet50-ibn) | ImageNet | 95.5 | 88.4 | 65.8 |
+| stronger baseline(ResNeSt50) | ImageNet | - | - | - |
+| Robust-ReID | ImageNet | 96.2 | 89.7 | - |
+
+### DukeMTMC dataset
+
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| stronger baseline(ResNet50-ibn) | ImageNet | 90.3 | 79.6 | 44.0 |
+| stronger baseline(ResNeSt50) | ImageNet | 91.7 | 81.0 | 45.2 |
+| Robust-ReID | ImageNet | 89.8 | 80.3 | - |
+
+### MSMT17 dataset
+
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| stronger baseline(ResNet50-ibn) | ImageNet | 84.9 | 62.9 | 16.0 |
+| stronger baseline(ResNeSt50) | ImageNet | 84.0 | 60.5 | 15.1 |
+| ABD-Net | ImageNet | 82.3 | 60.8 | - |
