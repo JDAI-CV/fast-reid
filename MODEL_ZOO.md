@@ -3,7 +3,7 @@
 ## Introduction
 
 
-## Market1501 Baselines
+### Market1501 Baselines
 
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
@@ -12,7 +12,7 @@
 | AGW(R50) | ImageNet | 94.9% | 87.4% | 63.1% |
 | stronger baseline(R50-ibn) | ImageNet | 95.5% | 88.4% | 65.8% |
 
-## DukeMTMC Baseline
+### DukeMTMC Baseline
 
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
