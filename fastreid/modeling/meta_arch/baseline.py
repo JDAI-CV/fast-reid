@@ -32,7 +32,8 @@ class Baseline(nn.Module):
             pool_layer = nn.Identity()
 
         in_feat = cfg.MODEL.HEADS.IN_FEAT
-        self.heads = build_reid_heads(cfg, in_feat, pool_layer)
+        num_classes = cfg.MODEL.HEADS.NUM_CLASSES
+        self.heads = build_reid_heads(cfg, in_feat, num_classes, pool_layer)
 
     def forward(self, inputs):
         images = inputs["images"]

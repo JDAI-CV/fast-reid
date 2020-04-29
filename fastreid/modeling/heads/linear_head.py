@@ -10,10 +10,8 @@ from ...layers import *
 
 @REID_HEADS_REGISTRY.register()
 class LinearHead(nn.Module):
-
-    def __init__(self, cfg, in_feat, pool_layer=nn.AdaptiveAvgPool2d(1)):
+    def __init__(self, cfg, in_feat, num_classes, pool_layer=nn.AdaptiveAvgPool2d(1)):
         super().__init__()
-        self._num_classes = cfg.MODEL.HEADS.NUM_CLASSES
 
         self.pool_layer = nn.Sequential(
             pool_layer,
@@ -22,13 +20,13 @@ class LinearHead(nn.Module):
 
         # identity classification layer
         if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
-            self.classifier = nn.Linear(in_feat, self._num_classes, bias=False)
+            self.classifier = nn.Linear(in_feat, num_classes, bias=False)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'arcface':
             self.classifier = Arcface(cfg, in_feat)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'circle':
             self.classifier = Circle(cfg, in_feat)
         else:
-            self.classifier = nn.Linear(in_feat, self._num_classes, bias=False)
+            self.classifier = nn.Linear(in_feat, num_classes, bias=False)
 
     def forward(self, features, targets=None):
         """

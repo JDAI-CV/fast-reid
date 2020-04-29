@@ -11,9 +11,8 @@ from ...layers import *
 
 @REID_HEADS_REGISTRY.register()
 class ReductionHead(nn.Module):
-    def __init__(self, cfg, in_feat, pool_layer=nn.AdaptiveAvgPool2d(1)):
+    def __init__(self, cfg, in_feat, num_classes, pool_layer=nn.AdaptiveAvgPool2d(1)):
         super().__init__()
-        self._num_classes = cfg.MODEL.HEADS.NUM_CLASSES
         reduction_dim = cfg.MODEL.HEADS.REDUCTION_DIM
 
         self.pool_layer = nn.Sequential(
@@ -34,13 +33,13 @@ class ReductionHead(nn.Module):
 
         # identity classification layer
         if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
-            self.classifier = nn.Linear(reduction_dim, self._num_classes, bias=False)
+            self.classifier = nn.Linear(reduction_dim, num_classes, bias=False)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'arcface':
             self.classifier = Arcface(cfg, reduction_dim)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'circle':
             self.classifier = Circle(cfg, reduction_dim)
         else:
-            self.classifier = nn.Linear(reduction_dim, self._num_classes, bias=False)
+            self.classifier = nn.Linear(reduction_dim, num_classes, bias=False)
 
     def forward(self, features, targets=None):
         """
