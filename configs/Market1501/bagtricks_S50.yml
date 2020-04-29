@@ -1,6 +1,9 @@
-_BASE_: "../Base-AGW.yml"
+_BASE_: "../Base-bagtricks.yml"
 
 MODEL:
+  BACKBONE:
+    NAME: "build_resnest_backbone"
+
   HEADS:
     NUM_CLASSES: 751
 
@@ -15,4 +18,4 @@ DATASETS:
   NAMES: ("Market1501",)
   TESTS: ("Market1501",)
 
-OUTPUT_DIR: "logs/market1501/agw"
+OUTPUT_DIR: "logs/market1501/bagtricks_S50"

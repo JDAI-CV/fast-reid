@@ -1,0 +1,24 @@
+_BASE_: "../Base-bagtricks.yml"
+
+MODEL:
+  BACKBONE:
+    WITH_IBN: True
+    PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
+
+  HEADS:
+    NUM_CLASSES: 1041
+
+SOLVER:
+  MAX_ITER: 42000
+
+  STEPS: [19000, 33000]
+
+  WARMUP_ITERS: 4700
+
+
+DATASETS:
+  NAMES: ("MSMT17",)
+  TESTS: ("MSMT17",)
+
+OUTPUT_DIR: "logs/msmt/bagtricks_R50-ibn"
+

@@ -1,4 +1,4 @@
-_BASE_: "../Base-AGW.yml"
+_BASE_: "../Base-AGW_R50.yml"
 
 MODEL:
   HEADS:

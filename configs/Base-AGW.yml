@@ -68,4 +68,3 @@ TEST:
 
 CUDNN_BENCHMARK: True
 
-OUTPUT_DIR: "logs"

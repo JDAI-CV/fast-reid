@@ -1,21 +1,23 @@
 _BASE_: "../Base-bagtricks.yml"
 
 MODEL:
+  BACKBONE:
+    NAME: "build_resnest_backbone"
+
   HEADS:
     NUM_CLASSES: 1041
+
+SOLVER:
+  MAX_ITER: 42000
+
+  STEPS: [19000, 33000]
+
+  WARMUP_ITERS: 4700
+
 
 DATASETS:
   NAMES: ("MSMT17",)
   TESTS: ("MSMT17",)
 
-SOLVER:
-  MAX_ITER: 42000
-  STEPS: [19000, 33000]
-  WARMUP_ITERS: 4700
+OUTPUT_DIR: "logs/msmt/bagtricks_S50"
 
-  CHECKPOINT_PERIOD: 5000
-
-TEST:
-  EVAL_PERIOD: 5000
-
-OUTPUT_DIR: "logs/msmt17/bagtricks"

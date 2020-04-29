@@ -3,9 +3,6 @@ _BASE_: "../Base-Strongerbaseline.yml"
 MODEL:
   BACKBONE:
     NAME: "build_resnest_backbone"
-    WITH_IBN: False
-    WITH_NL: True
-    PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
 
   HEADS:
     NUM_CLASSES: 751
@@ -21,6 +18,7 @@ DATASETS:
   TESTS: ("Market1501",)
 
 TEST:
-  EVAL_PERIOD: 2000
+  PRECISE_BN:
+    DATASET: 'Market1501'
 
-OUTPUT_DIR: "logs/market1501/resnest-nl-gem-circle_s64m0.35_loss-cos_delay-autoaug"
+OUTPUT_DIR: "logs/market1501/sbs_S50"

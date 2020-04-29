@@ -5,14 +5,14 @@ MODEL:
     NUM_CLASSES: 702
 
 SOLVER:
-  MAX_ITER: 12500
+  MAX_ITER: 18000
 
-  STEPS: [5000, 9000]
+  STEPS: [8000, 14000]
 
-  WARMUP_ITERS: 1250
+  WARMUP_ITERS: 2000
 
 DATASETS:
   NAMES: ("DukeMTMC",)
   TESTS: ("DukeMTMC",)
 
-OUTPUT_DIR: "logs/dukemtmc/resnet50_baseline"
+OUTPUT_DIR: "logs/dukemtmc/bagtricks_R50"

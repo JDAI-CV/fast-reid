@@ -22,8 +22,8 @@ MODEL:
       SCALE: 1.0
 
     TRI:
-      MARGIN: 0.0
-      HARD_MINING: False
+      MARGIN: 0.3
+      HARD_MINING: True
       USE_COSINE_DIST: False
       SCALE: 1.0
 
@@ -32,8 +32,8 @@ DATASETS:
   TESTS: ("DukeMTMC",)
 
 INPUT:
-  SIZE_TRAIN: [384, 128]
-  SIZE_TEST: [384, 128]
+  SIZE_TRAIN: [256, 128]
+  SIZE_TEST: [256, 128]
   REA:
     ENABLED: True
     PROB: 0.5
@@ -53,7 +53,7 @@ SOLVER:
   BIAS_LR_FACTOR: 2.
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.
-  IMS_PER_BATCH: 128
+  IMS_PER_BATCH: 64
 
   STEPS: [8000, 14000]
   GAMMA: 0.1
@@ -70,4 +70,3 @@ TEST:
 
 CUDNN_BENCHMARK: True
 
-OUTPUT_DIR: "logs/dukemtmc/softmax"

@@ -20,4 +20,4 @@ DATASETS:
   NAMES: ("DukeMTMC",)
   TESTS: ("DukeMTMC",)
 
-OUTPUT_DIR: "logs/dukemtmc/test_prebn"
+OUTPUT_DIR: "logs/dukemtmc/sbs"

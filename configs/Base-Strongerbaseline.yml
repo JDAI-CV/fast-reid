@@ -8,15 +8,15 @@ MODEL:
     DEPTH: 50
     LAST_STRIDE: 1
     WITH_IBN: False
-    WITH_NL: False
+    WITH_NL: True
     PRETRAIN: True
 
   HEADS:
     NAME: "BNneckHead"
     CLS_LAYER: "circle"
     POOL_LAYER: "gempool"
-    SCALE: 64
-    MARGIN: 0.35
+    SCALE: 128
+    MARGIN: 0.25
 
   LOSSES:
     NAME: ("CrossEntropyLoss", "TripletLoss",)
@@ -78,7 +78,9 @@ SOLVER:
 TEST:
   EVAL_PERIOD: 2000
   IMS_PER_BATCH: 512
+  PRECISE_BN:
+    ENABLED: True
+    DATASET: 'DukeMTMC'
 
 CUDNN_BENCHMARK: True
 
-OUTPUT_DIR: "logs/dukemtmc/softmax"
