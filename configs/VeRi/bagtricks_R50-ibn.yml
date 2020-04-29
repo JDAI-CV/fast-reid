@@ -1,0 +1,32 @@
+_BASE_: "../Base-bagtricks.yml"
+
+INPUT:
+  SIZE_TRAIN: [256, 256]
+  SIZE_TEST: [256, 256]
+
+MODEL:
+  BACKBONE:
+    WITH_IBN: True
+    PRETRAIN_PATH: '/home/liuxinchen3/zhengjinkai/fast-reid/pretrain_model/resnet50_ibn_a.pth.tar'
+  HEADS:
+    NUM_CLASSES: 575
+
+SOLVER:
+  IMS_PER_BATCH: 512
+
+  MAX_ITER: 9000
+  STEPS: [3000, 6750]
+  WARMUP_ITERS: 750
+
+  LOG_PERIOD: 75
+  CHECKPOINT_PERIOD: 3000
+
+TEST:
+  EVAL_PERIOD: 750
+  IMS_PER_BATCH: 1024
+
+DATASETS:
+  NAMES: ("VeRi",)
+  TESTS: ("VeRi",)
+
+OUTPUT_DIR: "logs/veri/bagtricks_R50-ibn"

@@ -1,0 +1,32 @@
+_BASE_: "../Base-bagtricks.yml"
+
+INPUT:
+  SIZE_TRAIN: [256, 256]
+  SIZE_TEST: [256, 256]
+
+MODEL:
+  BACKBONE:
+    WITH_IBN: True
+    PRETRAIN_PATH: '/home/liuxinchen3/zhengjinkai/fast-reid/pretrain_model/resnet50_ibn_a.pth.tar'
+  HEADS:
+    NUM_CLASSES: 13164
+
+SOLVER:
+  IMS_PER_BATCH: 512
+
+  MAX_ITER: 26400
+  STEPS: [8800, 19800]
+  WARMUP_ITERS: 2200
+
+  LOG_PERIOD: 220
+  CHECKPOINT_PERIOD: 8800
+
+TEST:
+  EVAL_PERIOD: 2200
+  IMS_PER_BATCH: 1024
+
+DATASETS:
+  NAMES: ("VehicleID",)
+  TESTS: ("SmallVehicleID", "MediumVehicleID", "LargeVehicleID",)
+
+OUTPUT_DIR: "logs/vehicleid/bagtricks_R50-ibn"
