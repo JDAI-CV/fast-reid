@@ -5,7 +5,9 @@
 """
 
 import os
+import logging
 import sys
+
 sys.path.append('.')
 
 from torch import nn
@@ -40,6 +42,7 @@ def setup(args):
 def main(args):
     cfg = setup(args)
 
+    logger = logging.getLogger('fastreid.' + __name__)
     if args.eval_only:
         cfg.defrost()
         cfg.MODEL.BACKBONE.PRETRAIN = False
@@ -52,6 +55,7 @@ def main(args):
             prebn_cfg = cfg.clone()
             prebn_cfg.DATALOADER.NUM_WORKERS = 0  # save some memory and time for PreciseBN
             prebn_cfg.DATASETS.NAMES = tuple([cfg.TEST.PRECISE_BN.DATASET])  # set dataset name for PreciseBN
+            logger.info("prepare precise BN dataset")
             hooks.PreciseBN(
                 # Run at the same freq as (but before) evaluation.
                 model,

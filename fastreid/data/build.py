@@ -18,10 +18,8 @@ from .transforms import build_transforms
 def build_reid_train_loader(cfg):
     train_transforms = build_transforms(cfg, is_train=True)
 
-    logger = logging.getLogger(__name__)
     train_items = list()
     for d in cfg.DATASETS.NAMES:
-        logger.info('prepare training set {}'.format(d))
         dataset = DATASET_REGISTRY.get(d)()
         dataset.show_train()
         train_items.extend(dataset.train)
@@ -50,8 +48,6 @@ def build_reid_train_loader(cfg):
 def build_reid_test_loader(cfg, dataset_name):
     test_transforms = build_transforms(cfg, is_train=False)
 
-    logger = logging.getLogger(__name__)
-    logger.info('prepare test set {}'.format(dataset_name))
     dataset = DATASET_REGISTRY.get(dataset_name)()
     dataset.show_test()
     test_items = dataset.query + dataset.gallery
