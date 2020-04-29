@@ -6,11 +6,12 @@
 
 import torch
 import torch.nn.functional as F
-from torch.nn import Conv2d, Module, ReLU
+from torch import nn
+from torch.nn import Conv2d, ReLU
 from torch.nn.modules.utils import _pair
 
 
-class SplAtConv2d(Module):
+class SplAtConv2d(nn.Module):
     """Split-Attention Conv2d
     """
 
@@ -36,13 +37,15 @@ class SplAtConv2d(Module):
             self.conv = Conv2d(in_channels, channels * radix, kernel_size, stride, padding, dilation,
                                groups=groups * radix, bias=bias, **kwargs)
         self.use_bn = norm_layer is not None
-        self.bn0 = norm_layer(channels * radix)
+        if self.use_bn:
+            self.bn0 = norm_layer(channels * radix)
         self.relu = ReLU(inplace=True)
         self.fc1 = Conv2d(channels, inter_channels, 1, groups=self.cardinality)
-        self.bn1 = norm_layer(inter_channels)
+        if self.use_bn:
+            self.bn1 = norm_layer(inter_channels)
         self.fc2 = Conv2d(inter_channels, channels * radix, 1, groups=self.cardinality)
-        if dropblock_prob > 0.0:
-            self.dropblock = DropBlock2D(dropblock_prob, 3)
+
+        self.rsoftmax = rSoftMax(radix, groups)
 
     def forward(self, x):
         x = self.conv(x)
@@ -52,9 +55,9 @@ class SplAtConv2d(Module):
             x = self.dropblock(x)
         x = self.relu(x)
 
-        batch, channel = x.shape[:2]
+        batch, rchannel = x.shape[:2]
         if self.radix > 1:
-            splited = torch.split(x, channel // self.radix, dim=1)
+            splited = torch.split(x, rchannel // self.radix, dim=1)
             gap = sum(splited)
         else:
             gap = x
@@ -65,15 +68,29 @@ class SplAtConv2d(Module):
             gap = self.bn1(gap)
         gap = self.relu(gap)
 
-        atten = self.fc2(gap).view((batch, self.radix, self.channels))
-        if self.radix > 1:
-            atten = F.softmax(atten, dim=1).view(batch, -1, 1, 1)
-        else:
-            atten = F.sigmoid(atten, dim=1).view(batch, -1, 1, 1)
+        atten = self.fc2(gap)
+        atten = self.rsoftmax(atten).view(batch, -1, 1, 1)
 
         if self.radix > 1:
-            atten = torch.split(atten, channel // self.radix, dim=1)
-            out = sum([att * split for (att, split) in zip(atten, splited)])
+            attens = torch.split(atten, rchannel // self.radix, dim=1)
+            out = sum([att * split for (att, split) in zip(attens, splited)])
         else:
             out = atten * x
         return out.contiguous()
+
+
+class rSoftMax(nn.Module):
+    def __init__(self, radix, cardinality):
+        super().__init__()
+        self.radix = radix
+        self.cardinality = cardinality
+
+    def forward(self, x):
+        batch = x.size(0)
+        if self.radix > 1:
+            x = x.view(batch, self.cardinality, self.radix, -1).transpose(1, 2)
+            x = F.softmax(x, dim=1)
+            x = x.reshape(batch, -1)
+        else:
+            x = torch.sigmoid(x)
+        return x

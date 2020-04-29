@@ -11,13 +11,12 @@ The designed architecture follows this guide [PyTorch-Project-Template](https://
 3. Install dependencies:
     - [pytorch 1.0.0+](https://pytorch.org/)
     - torchvision
-    - tensorboard
     - [yacs](https://github.com/rbgirshick/yacs)
 4. Prepare dataset
     Create a directory to store reid datasets under projects, for example
 
     ```bash
-    cd fast-reid/projects/StrongBaseline
+    cd fast-reid
     mkdir datasets
     ```
 
@@ -34,7 +33,7 @@ The designed architecture follows this guide [PyTorch-Project-Template](https://
 5. Prepare pretrained model.
     If you use origin ResNet, you do not need to do anything. But if you want to use ResNet_ibn, you need to download pretrain model in [here](https://drive.google.com/open?id=1thS2B8UOSBi_cJX6zRy6YYRwz_nVFI_S). And then you can put it in `~/.cache/torch/checkpoints` or anywhere you like.
 
-    Then you should set the pretrain model path in `configs/baseline_market1501.yml`.
+    Then you should set the pretrain model path in `configs/Base-bagtricks.yml`.
 
 6. compile with cython to accelerate evalution
 
@@ -44,28 +43,4 @@ The designed architecture follows this guide [PyTorch-Project-Template](https://
 
 ## Model Zoo and Baselines
 
-### Market1501 dataset
-
-| Method | Pretrained | Rank@1 | mAP | mINP |
-| :---: | :---: | :---: |:---: | :---: |
-| BagTricks | ImageNet | 93.6% | 85.1% | 58.1% |
-| BagTricks + Ibn-a | ImageNet | 94.8% | 87.3% | 63.5% |
-| AGW |  ImageNet | 94.9% | 87.4% | 63.1% |
-
-
-### DukeMTMC dataset
-
-| Method | Pretrained | Rank@1 | mAP | mINP |
-| :---: | :---: | :---: |:---: | :---: |
-| BagTricks | ImageNet | 86.1% | 75.9% | 38.7% |
-| BagTricks + Ibn-a | ImageNet | 89.0% | 78.8% | 43.6% |
-| AGW |  ImageNet | 88.9% | 79.1% | 43.2% |
-
-
-### MSMT17 dataset
-
-| Method | Pretrained | Rank@1 | mAP | mINP |
-| :---: | :---: | :---: |:---: | :---: |
-| BagTricks | ImageNet | 70.4%  | 47.5% | 9.6% |
-| BagTricks + Ibn-a | ImageNet | 76.9% | 55.0% | 13.5% |
-| AGW | ImageNet | 75.6% | 52.6% | 11.9% |
+We provide a large set of baseline results and trained models available for download in the [Fastreid Model Zoo](https://github.com/JDAI-CV/fast-reid/blob/master/MODEL_ZOO.md).
