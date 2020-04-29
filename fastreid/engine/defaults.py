@@ -253,13 +253,13 @@ class DefaultTrainer(SimpleTrainer):
         cfg = self.cfg.clone()
         cfg.defrost()
         cfg.DATALOADER.NUM_WORKERS = 0  # save some memory and time for PreciseBN
+        cfg.DATASETS.NAMES = tuple([cfg.TEST.PRECISE_BN.DATASET])  # set dataset name for PreciseBN
 
         ret = [
             hooks.IterationTimer(),
             hooks.LRScheduler(self.optimizer, self.scheduler),
             hooks.PreciseBN(
                 # Run at the same freq as (but before) evaluation.
-                cfg.TEST.EVAL_PERIOD,
                 self.model,
                 # Build a new data loader to not affect training
                 self.build_train_loader(cfg),
@@ -365,7 +365,7 @@ class DefaultTrainer(SimpleTrainer):
         """
         Returns:
             iterable
-        It now calls :func:`detectron2.data.build_detection_train_loader`.
+        It now calls :func:`fastreid.data.build_detection_train_loader`.
         Overwrite it if you'd like a different data loader.
         """
         return build_reid_train_loader(cfg)
