@@ -1,10 +1,11 @@
 MODEL:
-  META_ARCHITECTURE: 'Baseline'
+  META_ARCHITECTURE: "Baseline"
 
   OPEN_LAYERS: ""
 
   BACKBONE:
     NAME: "build_resnet_backbone"
+    NORM: "BN"
     DEPTH: 50
     LAST_STRIDE: 1
     WITH_IBN: False
@@ -12,20 +13,22 @@ MODEL:
 
   HEADS:
     NAME: "BNneckHead"
+    NORM: "BN"
+    NECK_FEAT: "before"
     CLS_LAYER: "linear"
 
   LOSSES:
-    NAME: ("CrossEntropyLoss", "TripletLoss")
+    NAME: ("CrossEntropyLoss", "TripletLoss", )
 
     CE:
       EPSILON: 0.1
-      SCALE: 1.0
+      SCALE: 1.
 
     TRI:
       MARGIN: 0.3
       HARD_MINING: True
       USE_COSINE_DIST: False
-      SCALE: 1.0
+      SCALE: 1.
 
 DATASETS:
   NAMES: ("DukeMTMC",)
@@ -48,14 +51,14 @@ DATALOADER:
 
 SOLVER:
   OPT: "Adam"
-  MAX_ITER: 18000
+  MAX_ITER: 24000
   BASE_LR: 0.00035
   BIAS_LR_FACTOR: 2.
   WEIGHT_DECAY: 0.0005
-  WEIGHT_DECAY_BIAS: 0.
+  WEIGHT_DECAY_BIAS: 0.0005
   IMS_PER_BATCH: 64
 
-  STEPS: [8000, 14000]
+  STEPS: [8000, 18000]
   GAMMA: 0.1
 
   WARMUP_FACTOR: 0.01

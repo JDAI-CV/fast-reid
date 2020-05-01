@@ -8,14 +8,14 @@ MODEL:
     PRETRAIN_PATH: "/export/home/lxy/.cache/torch/checkpoints/resnet101_ibn_a.pth.tar"
 
   HEADS:
-    NUM_CLASSES: 751
+    NUM_CLASSES: 702
 
 DATASETS:
-  NAMES: ("Market1501",)
-  TESTS: ("Market1501",)
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
 
 TEST:
   PRECISE_BN:
-    DATASET: 'Market1501'
+    DATASET: 'DukeMTMC'
 
-OUTPUT_DIR: "logs/market1501/sbs-R101-ibn"
+OUTPUT_DIR: "logs/dukemtmc/sbs-R101-ibn"

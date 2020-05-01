@@ -7,11 +7,10 @@ MODEL:
     PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
 
   HEADS:
-    NUM_CLASSES: 751
-
+    NUM_CLASSES: 702
 
 DATASETS:
-  NAMES: ("Market1501",)
-  TESTS: ("Market1501",)
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
 
-OUTPUT_DIR: "logs/market1501/agw_R50-ibn"
+OUTPUT_DIR: "logs/dukemtmc/agw_R50-ibn"

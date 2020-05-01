@@ -1,6 +1,9 @@
-_BASE_: "../Base-AGW_R50.yml"
+_BASE_: "../Base-AGW.yml"
 
 MODEL:
+  BACKBONE:
+    NAME: "build_resnest_backbone"
+
   HEADS:
     NUM_CLASSES: 1041
 
@@ -18,5 +21,4 @@ SOLVER:
 TEST:
   EVAL_PERIOD: 5000
 
-OUTPUT_DIR: "logs/msmt17/agw"
-
+OUTPUT_DIR: "logs/msmt17/agw_S50"

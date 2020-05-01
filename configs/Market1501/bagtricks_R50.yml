@@ -4,15 +4,10 @@ MODEL:
   HEADS:
     NUM_CLASSES: 751
 
-SOLVER:
-  MAX_ITER: 18000
-
-  STEPS: [8000, 14000]
-
-  WARMUP_ITERS: 2000
 
 DATASETS:
   NAMES: ("Market1501",)
   TESTS: ("Market1501",)
+
 
 OUTPUT_DIR: "logs/market1501/bagtricks_R50"

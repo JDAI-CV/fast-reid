@@ -9,8 +9,8 @@
 
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
-| BoT(R50) | ImageNet | 93.6% | 85.1% | 58.1% |
-| BoT(R50-ibn) | ImageNet | 94.8% | 87.3% | 63.5% |
+| BoT(R50) | ImageNet | 94.1% | 85.9% | 59.3% |
+| BoT(R50-ibn) | ImageNet | - | - | - |
 | BoT(S50) | ImageNet | - | - | - |
 | BoT(R101-ibn) | ImageNet| - | - |
 
@@ -27,7 +27,7 @@
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
 | SBS(R50) | ImageNet | - | - | - |
-| SBS(R50-ibn) | ImageNet | 95.5% | 88.4% | 65.8% |
+| SBS(R50-ibn) | ImageNet | 95.5% | 88.7% | 66.4% |
 | SBS(S50) | ImageNet | - | - | - |
 | SBS(R101-ibn) | ImageNet | - | - | - |
 

@@ -1,0 +1,20 @@
+_BASE_: "../Base-Strongerbaseline.yml"
+
+MODEL:
+  BACKBONE:
+    WITH_IBN: True
+    PRETRAIN_PATH: "/export/home/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
+
+  HEADS:
+    NUM_CLASSES: 702
+
+DATASETS:
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
+
+TEST:
+  EVAL_PERIOD: 2000
+  PRECISE_BN:
+    DATASET: 'DukeMTMC'
+
+OUTPUT_DIR: "logs/dukemtmc/sbs_R50-ibn"
