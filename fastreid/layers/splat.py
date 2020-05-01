@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from torch import nn
 from torch.nn import Conv2d, ReLU
 from torch.nn.modules.utils import _pair
+from fastreid.layers import get_norm
 
 
 class SplAtConv2d(nn.Module):
@@ -18,7 +19,7 @@ class SplAtConv2d(nn.Module):
     def __init__(self, in_channels, channels, kernel_size, stride=(1, 1), padding=(0, 0),
                  dilation=(1, 1), groups=1, bias=True,
                  radix=2, reduction_factor=4,
-                 rectify=False, rectify_avg=False, norm_layer=None,
+                 rectify=False, rectify_avg=False, norm_layer=None, num_splits=1,
                  dropblock_prob=0.0, **kwargs):
         super(SplAtConv2d, self).__init__()
         padding = _pair(padding)
@@ -38,11 +39,11 @@ class SplAtConv2d(nn.Module):
                                groups=groups * radix, bias=bias, **kwargs)
         self.use_bn = norm_layer is not None
         if self.use_bn:
-            self.bn0 = norm_layer(channels * radix)
+            self.bn0 = get_norm(norm_layer, channels * radix, num_splits)
         self.relu = ReLU(inplace=True)
         self.fc1 = Conv2d(channels, inter_channels, 1, groups=self.cardinality)
         if self.use_bn:
-            self.bn1 = norm_layer(inter_channels)
+            self.bn1 = get_norm(norm_layer, inter_channels, num_splits)
         self.fc2 = Conv2d(inter_channels, channels * radix, 1, groups=self.cardinality)
 
         self.rsoftmax = rSoftMax(radix, groups)

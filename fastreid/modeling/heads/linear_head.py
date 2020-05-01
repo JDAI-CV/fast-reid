@@ -4,19 +4,15 @@
 @contact: sherlockliao01@gmail.com
 """
 
+from fastreid.layers import *
 from .build import REID_HEADS_REGISTRY
-from ...layers import *
 
 
 @REID_HEADS_REGISTRY.register()
 class LinearHead(nn.Module):
     def __init__(self, cfg, in_feat, num_classes, pool_layer=nn.AdaptiveAvgPool2d(1)):
         super().__init__()
-
-        self.pool_layer = nn.Sequential(
-            pool_layer,
-            Flatten()
-        )
+        self.pool_layer = pool_layer
 
         # identity classification layer
         if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
@@ -33,6 +29,7 @@ class LinearHead(nn.Module):
         See :class:`ReIDHeads.forward`.
         """
         global_feat = self.pool_layer(features)
+        global_feat = Flatten()(global_feat)
         if not self.training:
             return global_feat
         # training

@@ -8,8 +8,11 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+__all__ = [
+    "TripletLoss",
+    "CircleLoss",
+]
 
-__all__ = ["TripletLoss", "CircleLoss"]
 
 def normalize(x, axis=-1):
     """Normalizing to unit length along the specified dimension.

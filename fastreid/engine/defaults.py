@@ -343,8 +343,8 @@ class DefaultTrainer(SimpleTrainer):
         Overwrite it if you'd like a different model.
         """
         model = build_model(cfg)
-        # logger = logging.getLogger(__name__)
-        # logger.info("Model:\n{}".format(model))
+        logger = logging.getLogger(__name__)
+        logger.info("Model:\n{}".format(model))
         return model
 
     @classmethod
@@ -412,7 +412,7 @@ class DefaultTrainer(SimpleTrainer):
 
         results = OrderedDict()
         for idx, dataset_name in enumerate(cfg.DATASETS.TESTS):
-            logger.info(f'prepare test set {dataset_name}')
+            logger.info(f'prepare test set')
             data_loader, num_query = cls.build_test_loader(cfg, dataset_name)
             # When evaluators are passed in as arguments,
             # implicitly assume that evaluators can be created before data_loader.

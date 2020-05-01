@@ -8,7 +8,6 @@ import itertools
 
 import torch
 
-
 BN_MODULE_TYPES = (
     torch.nn.BatchNorm1d,
     torch.nn.BatchNorm2d,
@@ -42,7 +41,6 @@ def update_bn_stats(model, data_loader, num_iters: int = 200):
         num_iters (int): number of iterations to compute the stats.
     """
     bn_layers = get_bn_modules(model)
-
     if len(bn_layers) == 0:
         return
 
@@ -59,9 +57,11 @@ def update_bn_stats(model, data_loader, num_iters: int = 200):
     running_var = [torch.zeros_like(bn.running_var) for bn in bn_layers]
 
     for ind, inputs in enumerate(itertools.islice(data_loader, num_iters)):
+        # Change targets to zero to avoid error in
+        # circle(arcface) loss which will use targets in forward
+        inputs['targets'].zero_()
         with torch.no_grad():  # No need to backward
             model(inputs)
-
         for i, bn in enumerate(bn_layers):
             # Accumulates the bn stats.
             running_mean[i] += (bn.running_mean - running_mean[i]) / (ind + 1)
@@ -91,8 +91,6 @@ def get_bn_modules(model):
     """
     # Finds all the bn layers.
     bn_layers = [
-        m
-        for m in model.modules()
-        if m.training and isinstance(m, BN_MODULE_TYPES)
+        m for m in model.modules() if m.training and isinstance(m, BN_MODULE_TYPES)
     ]
     return bn_layers

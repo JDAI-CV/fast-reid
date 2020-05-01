@@ -1,11 +1,15 @@
 # encoding: utf-8
 """
-@author:  liaoxingyu
-@contact: sherlockliao01@gmail.com
+@author:  xingyu liao
+@contact: liaoxingyu5@jd.com
 """
+
 from torch import nn
 
-__all__ = ['weights_init_classifier', 'weights_init_kaiming', ]
+__all__ = [
+    'weights_init_classifier',
+    'weights_init_kaiming',
+]
 
 
 def weights_init_kaiming(m):

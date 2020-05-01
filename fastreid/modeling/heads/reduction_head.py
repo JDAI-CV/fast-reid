@@ -4,29 +4,27 @@
 @contact: sherlockliao01@gmail.com
 """
 
+from fastreid.layers import *
+from fastreid.utils.weight_init import weights_init_kaiming
 from .build import REID_HEADS_REGISTRY
-from ..model_utils import weights_init_kaiming
-from ...layers import *
 
 
 @REID_HEADS_REGISTRY.register()
 class ReductionHead(nn.Module):
     def __init__(self, cfg, in_feat, num_classes, pool_layer=nn.AdaptiveAvgPool2d(1)):
         super().__init__()
+
         reduction_dim = cfg.MODEL.HEADS.REDUCTION_DIM
 
-        self.pool_layer = nn.Sequential(
-            pool_layer,
-            Flatten()
-        )
+        self.pool_layer = pool_layer
 
         self.bottleneck = nn.Sequential(
-            nn.Linear(in_feat, reduction_dim, bias=False),
-            NoBiasBatchNorm1d(reduction_dim),
+            nn.Conv2d(in_feat, reduction_dim, 1, 1, bias=False),
+            BatchNorm(reduction_dim, bias_freeze=True),
             nn.LeakyReLU(0.1),
-            nn.Dropout(0.5),
+            nn.Dropout2d(0.5),
         )
-        self.bnneck = NoBiasBatchNorm1d(reduction_dim)
+        self.bnneck = BatchNorm(reduction_dim, bias_freeze=True)
 
         self.bottleneck.apply(weights_init_kaiming)
         self.bnneck.apply(weights_init_kaiming)
@@ -48,11 +46,20 @@ class ReductionHead(nn.Module):
         global_feat = self.pool_layer(features)
         global_feat = self.bottleneck(global_feat)
         bn_feat = self.bnneck(global_feat)
+        bn_feat = Flatten()(bn_feat)
+        # Evaluation
         if not self.training:
             return bn_feat
-        # training
+        # Training
         try:
             pred_class_logits = self.classifier(bn_feat)
         except TypeError:
             pred_class_logits = self.classifier(bn_feat, targets)
-        return pred_class_logits, bn_feat, targets
+
+        if self.neck_feat == "before":
+            feat = Flatten()(global_feat)
+        elif self.neck_feat == "after":
+            feat = bn_feat
+        else:
+            raise KeyError("MODEL.HEADS.NECK_FEAT value is invalid, must choose from ('after' & 'before')")
+        return pred_class_logits, feat, targets

@@ -11,8 +11,14 @@ import torch
 from torch import nn
 from torch.utils import model_zoo
 
+from fastreid.layers import (
+    IBN,
+    SELayer,
+    Non_local,
+    get_norm,
+)
+
 from .build import BACKBONE_REGISTRY
-from ...layers import IBN, SELayer, Non_local
 
 model_urls = {
     18: 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
@@ -28,18 +34,19 @@ __all__ = ['ResNet', 'Bottleneck']
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, with_ibn=False, with_se=False, stride=1, downsample=None, reduction=16):
+    def __init__(self, inplanes, planes, bn_norm, num_splits, with_ibn=False, with_se=False,
+                 stride=1, downsample=None, reduction=16):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         if with_ibn:
-            self.bn1 = IBN(planes)
+            self.bn1 = IBN(planes, bn_norm, num_splits)
         else:
-            self.bn1 = nn.BatchNorm2d(planes)
+            self.bn1 = get_norm(bn_norm, planes, num_splits)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
                                padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = get_norm(bn_norm, planes, num_splits)
         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(planes * 4)
+        self.bn3 = get_norm(bn_norm, planes * 4, num_splits)
         self.relu = nn.ReLU(inplace=True)
         if with_se:
             self.se = SELayer(planes * 4, reduction)
@@ -73,59 +80,58 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, last_stride, with_ibn, with_se, with_nl, block, layers, non_layers):
+    def __init__(self, last_stride, bn_norm, num_splits, with_ibn, with_se, with_nl, block, layers, non_layers):
         scale = 64
         self.inplanes = scale
         super().__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.bn1 = get_norm(bn_norm, 64, num_splits)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, scale, layers[0], with_ibn=with_ibn, with_se=with_se)
-        self.layer2 = self._make_layer(block, scale * 2, layers[1], stride=2, with_ibn=with_ibn, with_se=with_se)
-        self.layer3 = self._make_layer(block, scale * 4, layers[2], stride=2, with_ibn=with_ibn, with_se=with_se)
-        self.layer4 = self._make_layer(block, scale * 8, layers[3], stride=last_stride, with_se=with_se)
+        self.layer1 = self._make_layer(block, scale, layers[0], 1, bn_norm, num_splits, with_ibn, with_se)
+        self.layer2 = self._make_layer(block, scale * 2, layers[1], 2, bn_norm, num_splits, with_ibn, with_se)
+        self.layer3 = self._make_layer(block, scale * 4, layers[2], 2, bn_norm, num_splits, with_ibn, with_se)
+        self.layer4 = self._make_layer(block, scale * 8, layers[3], last_stride, bn_norm, num_splits, with_se=with_se)
 
         self.random_init()
 
         if with_nl:
-            self._build_nonlocal(layers, non_layers)
+            self._build_nonlocal(layers, non_layers, bn_norm, num_splits)
         else:
             self.NL_1_idx = self.NL_2_idx = self.NL_3_idx = self.NL_4_idx = []
 
-
-    def _make_layer(self, block, planes, blocks, stride=1, with_ibn=False, with_se=False):
+    def _make_layer(self, block, planes, blocks, stride=1, bn_norm="BN", num_splits=1, with_ibn=False, with_se=False):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
                 nn.Conv2d(self.inplanes, planes * block.expansion,
                           kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(planes * block.expansion),
+                get_norm(bn_norm, planes * block.expansion, num_splits),
             )
 
         layers = []
         if planes == 512:
             with_ibn = False
-        layers.append(block(self.inplanes, planes, with_ibn, with_se, stride, downsample))
+        layers.append(block(self.inplanes, planes, bn_norm, num_splits, with_ibn, with_se, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes, with_ibn, with_se))
+            layers.append(block(self.inplanes, planes, bn_norm, num_splits, with_ibn, with_se))
 
         return nn.Sequential(*layers)
 
-    def _build_nonlocal(self, layers, non_layers):
+    def _build_nonlocal(self, layers, non_layers, bn_norm, num_splits):
         self.NL_1 = nn.ModuleList(
-            [Non_local(256) for _ in range(non_layers[0])])
+            [Non_local(256, bn_norm, num_splits) for _ in range(non_layers[0])])
         self.NL_1_idx = sorted([layers[0] - (i + 1) for i in range(non_layers[0])])
         self.NL_2 = nn.ModuleList(
-            [Non_local(512) for _ in range(non_layers[1])])
+            [Non_local(512, bn_norm, num_splits) for _ in range(non_layers[1])])
         self.NL_2_idx = sorted([layers[1] - (i + 1) for i in range(non_layers[1])])
         self.NL_3 = nn.ModuleList(
-            [Non_local(1024) for _ in range(non_layers[2])])
+            [Non_local(1024, bn_norm, num_splits) for _ in range(non_layers[2])])
         self.NL_3_idx = sorted([layers[2] - (i + 1) for i in range(non_layers[2])])
         self.NL_4 = nn.ModuleList(
-            [Non_local(2048) for _ in range(non_layers[3])])
+            [Non_local(2048, bn_norm, num_splits) for _ in range(non_layers[3])])
         self.NL_4_idx = sorted([layers[3] - (i + 1) for i in range(non_layers[3])])
 
     def forward(self, x):
@@ -198,14 +204,17 @@ def build_resnet_backbone(cfg):
     pretrain = cfg.MODEL.BACKBONE.PRETRAIN
     pretrain_path = cfg.MODEL.BACKBONE.PRETRAIN_PATH
     last_stride = cfg.MODEL.BACKBONE.LAST_STRIDE
+    bn_norm = cfg.MODEL.BACKBONE.NORM
+    num_splits = cfg.MODEL.BACKBONE.NORM_SPLIT
     with_ibn = cfg.MODEL.BACKBONE.WITH_IBN
     with_se = cfg.MODEL.BACKBONE.WITH_SE
     with_nl = cfg.MODEL.BACKBONE.WITH_NL
     depth = cfg.MODEL.BACKBONE.DEPTH
 
     num_blocks_per_stage = {50: [3, 4, 6, 3], 101: [3, 4, 23, 3], 152: [3, 8, 36, 3], }[depth]
-    nl_layers_per_stage = {50: [0, 2, 3, 0], 101: [0, 2, 3, 0]}[depth]
-    model = ResNet(last_stride, with_ibn, with_se, with_nl, Bottleneck, num_blocks_per_stage, nl_layers_per_stage)
+    nl_layers_per_stage = {50: [0, 2, 3, 0], 101: [0, 2, 9, 0]}[depth]
+    model = ResNet(last_stride, bn_norm, num_splits, with_ibn, with_se, with_nl, Bottleneck,
+                   num_blocks_per_stage, nl_layers_per_stage)
     if pretrain:
         if not with_ibn:
             # original resnet

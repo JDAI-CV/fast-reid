@@ -30,7 +30,6 @@ __all__ = [
     "AutogradProfiler",
     "EvalHook",
     "PreciseBN",
-    "LRFinder",
     "FreezeLayer",
 ]
 

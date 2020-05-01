@@ -31,6 +31,10 @@ _C.MODEL.BACKBONE = CN()
 _C.MODEL.BACKBONE.NAME = "build_resnet_backbone"
 _C.MODEL.BACKBONE.DEPTH = 50
 _C.MODEL.BACKBONE.LAST_STRIDE = 1
+# Normalization method for the convolution layers.
+_C.MODEL.BACKBONE.NORM = "BN"
+# Mini-batch split of Ghost BN
+_C.MODEL.BACKBONE.NORM_SPLIT = 1
 # If use IBN block in backbone
 _C.MODEL.BACKBONE.WITH_IBN = False
 # If use SE block in backbone
@@ -48,17 +52,23 @@ _C.MODEL.BACKBONE.PRETRAIN_PATH = ''
 _C.MODEL.HEADS = CN()
 _C.MODEL.HEADS.NAME = "BNneckHead"
 
+# Normalization method for the convolution layers.
+_C.MODEL.HEADS.NORM = "BN"
+# Mini-batch split of Ghost BN
+_C.MODEL.HEADS.NORM_SPLIT = 1
 # Number of identity
 _C.MODEL.HEADS.NUM_CLASSES = 751
 # Input feature dimension
 _C.MODEL.HEADS.IN_FEAT = 2048
 # Reduction dimension in head
 _C.MODEL.HEADS.REDUCTION_DIM = 512
+# Triplet feature using feature before(after) bnneck
+_C.MODEL.HEADS.NECK_FEAT = "before"  # options: before, after
 # Pooling layer type
-_C.MODEL.HEADS.POOL_LAYER = 'avgpool'
+_C.MODEL.HEADS.POOL_LAYER = "avgpool"
 
 # Classification layer type
-_C.MODEL.HEADS.CLS_LAYER = 'linear'  # 'arcface' or 'circle'
+_C.MODEL.HEADS.CLS_LAYER = "linear"  # "arcface" or "circle"
 
 # Margin and Scale for margin-based classification layer
 _C.MODEL.HEADS.MARGIN = 0.15

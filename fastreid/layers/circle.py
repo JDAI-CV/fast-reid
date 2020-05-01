@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
 
-from ..modeling.losses.loss_utils import one_hot
+from fastreid.utils.one_hot import one_hot
 
 
 class Circle(nn.Module):

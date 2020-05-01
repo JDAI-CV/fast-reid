@@ -6,11 +6,11 @@
 
 from torch import nn
 
+from fastreid.layers import GeneralizedMeanPoolingP
+from fastreid.modeling.backbones import build_backbone
+from fastreid.modeling.heads import build_reid_heads
+from fastreid.modeling.losses import reid_losses
 from .build import META_ARCH_REGISTRY
-from ..backbones import build_backbone
-from ..heads import build_reid_heads
-from ..losses import reid_losses
-from ...layers import GeneralizedMeanPoolingP
 
 
 @META_ARCH_REGISTRY.register()

@@ -4,21 +4,19 @@
 @contact: sherlockliao01@gmail.com
 """
 
+from fastreid.layers import *
+from fastreid.utils.weight_init import weights_init_kaiming
 from .build import REID_HEADS_REGISTRY
-from ..model_utils import weights_init_kaiming
-from ...layers import *
 
 
 @REID_HEADS_REGISTRY.register()
 class BNneckHead(nn.Module):
     def __init__(self, cfg, in_feat, num_classes, pool_layer=nn.AdaptiveAvgPool2d(1)):
         super().__init__()
+        self.neck_feat = cfg.MODEL.HEADS.NECK_FEAT
+        self.pool_layer = pool_layer
 
-        self.pool_layer = nn.Sequential(
-            pool_layer,
-            Flatten()
-        )
-        self.bnneck = NoBiasBatchNorm1d(in_feat)
+        self.bnneck = get_norm(cfg.MODEL.HEADS.NORM, in_feat, cfg.MODEL.HEADS.NORM_SPLIT, bias_freeze=True)
         self.bnneck.apply(weights_init_kaiming)
 
         # identity classification layer
@@ -37,12 +35,20 @@ class BNneckHead(nn.Module):
         """
         global_feat = self.pool_layer(features)
         bn_feat = self.bnneck(global_feat)
-        # evaluation
+        bn_feat = Flatten()(bn_feat)
+        # Evaluation
         if not self.training:
             return bn_feat
-        # training
+        # Training
         try:
             pred_class_logits = self.classifier(bn_feat)
         except TypeError:
             pred_class_logits = self.classifier(bn_feat, targets)
-        return pred_class_logits, bn_feat, targets
+
+        if self.neck_feat == "before":
+            feat = Flatten()(global_feat)
+        elif self.neck_feat == "after":
+            feat = bn_feat
+        else:
+            raise KeyError("MODEL.HEADS.NECK_FEAT value is invalid, must choose from ('after' & 'before')")
+        return pred_class_logits, feat, targets

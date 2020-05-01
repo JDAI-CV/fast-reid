@@ -7,7 +7,7 @@
 import torch
 import torch.nn.functional as F
 
-from .loss_utils import one_hot
+from fastreid.utils.one_hot import one_hot
 
 
 # based on:

@@ -104,11 +104,8 @@ class Checkpointer(object):
             assert os.path.isfile(path), "Checkpoint {} not found!".format(path)
 
         checkpoint = self._load_file(path)
-        if self.dataset is None:
-            self.logger.info(
-                "No need to load dataset pid dictionary"
-            )
-        else:
+        if self.dataset is not None:
+            self.logger.info("Loading dataset pid dictionary from {}".format(path))
             self._load_dataset_pid_dict(checkpoint)
         self._load_model(checkpoint)
         for key, obj in self.checkpointables.items():

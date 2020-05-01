@@ -3,10 +3,11 @@
 
 import torch
 from torch import nn
+from .norm import get_norm
 
 
 class Non_local(nn.Module):
-    def __init__(self, in_channels, reduc_ratio=2):
+    def __init__(self, in_channels, bn_norm, num_splits, reduc_ratio=2):
         super(Non_local, self).__init__()
 
         self.in_channels = in_channels
@@ -18,7 +19,7 @@ class Non_local(nn.Module):
         self.W = nn.Sequential(
             nn.Conv2d(in_channels=self.inter_channels, out_channels=self.in_channels,
                       kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(self.in_channels),
+            get_norm(bn_norm, self.in_channels, num_splits),
         )
         nn.init.constant_(self.W[1].weight, 0.0)
         nn.init.constant_(self.W[1].bias, 0.0)

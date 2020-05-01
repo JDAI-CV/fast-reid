@@ -8,14 +8,15 @@ from typing import Optional
 
 import torch
 
+
 # based on:
 # https://github.com/kornia/kornia/blob/master/kornia/utils/one_hot.py
 
 
 def one_hot(labels: torch.Tensor,
             num_classes: int,
-            dtype: Optional[torch.dtype] = None,) -> torch.Tensor:
-            # eps: Optional[float] = 1e-6) -> torch.Tensor:
+            dtype: Optional[torch.dtype] = None, ) -> torch.Tensor:
+    # eps: Optional[float] = 1e-6) -> torch.Tensor:
     r"""Converts an integer label x-D tensor to a one-hot (x+1)-D tensor.
     Args:
         labels (torch.Tensor) : tensor with labels of shape :math:`(N, *)`,
@@ -45,7 +46,7 @@ def one_hot(labels: torch.Tensor,
                         .format(type(labels)))
     if not labels.dtype == torch.int64:
         raise ValueError(
-            "labels must be of the same dtype torch.int64. Got: {}" .format(
+            "labels must be of the same dtype torch.int64. Got: {}".format(
                 labels.dtype))
     if num_classes < 1:
         raise ValueError("The number of classes must be bigger than one."
