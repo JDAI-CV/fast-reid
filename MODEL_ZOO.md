@@ -2,6 +2,25 @@
 
 ## Introduction
 
+**BoT**:
+
+Bag of Tricks and A Strong Baseline for Deep Person Re-identification. CVPRW2019, Oral.
+
+**AGW**:
+
+This is a re-implementation of [ReID-Survey with a Powerful AGW Baseline](https://github.com/mangye16/ReID-Survey)
+
+**SBS**:
+
+stronger baseline on top of BoT with tricks: 
+1. Non-local block
+2. GeM pooling
+3. Circle loss 
+4. Freeze backbone training 
+5. Cutout data augmentation & Auto Augmentation
+6. Cosine annealing learning rate decay
+7. Soft margin triplet loss
+
 
 ### Market1501 Baselines
 
@@ -122,3 +141,6 @@ Method: BoT(R50-ibn)
 | Small(3000) | ImageNet | 96.4%  | 87.7% | 69.2% |
 | Medium(5000) | ImageNet | 95.1%  | 83.5% | 61.2% |
 | Large(10000) | ImageNet | 92.5%  | 77.3% | 49.8% |
+
+
+
