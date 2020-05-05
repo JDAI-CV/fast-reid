@@ -47,7 +47,8 @@ class CommDataset(Dataset):
             'img_path': img_path
         }
 
-    def get_pids(self, file_path, pid):
+    @staticmethod
+    def get_pids(file_path, pid):
         """ Suitable for muilti-dataset training """
         if 'cuhk03' in file_path:
             prefix = 'cuhk'

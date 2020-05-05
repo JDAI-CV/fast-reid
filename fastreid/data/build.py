@@ -3,7 +3,6 @@
 @author:  l1aoxingyu
 @contact: sherlockliao01@gmail.com
 """
-import logging
 
 import torch
 from torch._six import container_abcs, string_classes, int_classes
@@ -42,7 +41,7 @@ def build_reid_train_loader(cfg):
         batch_sampler=batch_sampler,
         collate_fn=fast_batch_collator,
     )
-    return data_prefetcher(cfg, train_loader)
+    return train_loader
 
 
 def build_reid_test_loader(cfg, dataset_name):
