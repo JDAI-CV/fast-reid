@@ -283,7 +283,7 @@ class DefaultTrainer(SimpleTrainer):
                 # Run at the same freq as (but before) evaluation.
                 self.model,
                 # Build a new data loader to not affect training
-                self.build_train_loader(cfg),
+                data_prefetcher(cfg, self.build_train_loader(cfg)),
                 cfg.TEST.PRECISE_BN.NUM_ITER,
             ))
 
