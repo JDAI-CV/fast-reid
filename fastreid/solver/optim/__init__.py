@@ -5,5 +5,6 @@ from .over9000 import Over9000, RangerLars
 from .radam import RAdam, PlainRAdam, AdamW
 from .ralamb import Ralamb
 from .ranger import Ranger
+from .swa import SWA
 
 from torch.optim import *

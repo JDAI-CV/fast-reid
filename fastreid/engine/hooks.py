@@ -4,6 +4,7 @@
 import datetime
 import itertools
 import logging
+import warnings
 import os
 import tempfile
 import time
@@ -12,14 +13,15 @@ from collections import Counter
 import torch
 from torch import nn
 
-from ..evaluation.testing import flatten_results_dict
-from ..utils import comm
-from ..utils.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
-from ..utils.events import EventStorage, EventWriter
-from ..utils.file_io import PathManager
-from ..utils.precision_bn import update_bn_stats, get_bn_modules
-from ..utils.timer import Timer
 from .train_loop import HookBase
+from fastreid.solver import optim
+from fastreid.evaluation.testing import flatten_results_dict
+from fastreid.utils import comm
+from fastreid.utils.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
+from fastreid.utils.events import EventStorage, EventWriter
+from fastreid.utils.file_io import PathManager
+from fastreid.utils.precision_bn import update_bn_stats, get_bn_modules
+from fastreid.utils.timer import Timer
 
 __all__ = [
     "CallbackHook",
@@ -468,3 +470,37 @@ class FreezeLayer(HookBase):
         self.model.train()
         for name, param in self.model.named_parameters():
             param.requires_grad = self.param_grad[name]
+
+
+class SWA(HookBase):
+    def __init__(self, swa_start=None, swa_freq=None, swa_lr=None, cyclic_lr=False,):
+        self.swa_start = swa_start
+        self.swa_freq = swa_freq
+        self.swa_lr = swa_lr
+        self.cyclic_lr = cyclic_lr
+
+    def after_step(self):
+        # next_iter = self.trainer.iter + 1
+        next_iter = self.trainer.iter
+        is_swa = next_iter == self.swa_start
+        if is_swa:
+            # Wrapper optimizer with SWA
+            self.trainer.optimizer = optim.SWA(self.trainer.optimizer, self.swa_freq,
+                                               None if self.cyclic_lr else self.swa_lr)
+            if self.cyclic_lr:
+                self.scheduler = torch.optim.lr_scheduler.CyclicLR(
+                    self.trainer.optimizer,
+                    base_lr=self.swa_lr,
+                    max_lr=10*self.swa_lr,
+                    step_size_up=1,
+                    step_size_down=self.swa_freq-1,
+                    cycle_momentum=False,
+                )
+
+        # Use Cyclic learning rate scheduler
+        if next_iter > self.swa_start and self.cyclic_lr:
+            self.scheduler.step()
+
+        is_final = next_iter == self.trainer.max_iter
+        if is_final:
+            self.trainer.optimizer.swap_swa_sgd()
