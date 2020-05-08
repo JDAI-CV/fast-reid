@@ -473,34 +473,34 @@ class FreezeLayer(HookBase):
 
 
 class SWA(HookBase):
-    def __init__(self, swa_start=None, swa_freq=None, swa_lr=None, cyclic_lr=False,):
+    def __init__(self, swa_start: int, swa_freq: int, swa_lr_factor: float, eta_min: float, lr_sched=False,):
         self.swa_start = swa_start
         self.swa_freq = swa_freq
-        self.swa_lr = swa_lr
-        self.cyclic_lr = cyclic_lr
+        self.swa_lr_factor = swa_lr_factor
+        self.eta_min = eta_min
+        self.lr_sched = lr_sched
 
-    def after_step(self):
-        # next_iter = self.trainer.iter + 1
-        next_iter = self.trainer.iter
-        is_swa = next_iter == self.swa_start
+    def before_step(self):
+        is_swa = self.trainer.iter == self.swa_start
         if is_swa:
             # Wrapper optimizer with SWA
-            self.trainer.optimizer = optim.SWA(self.trainer.optimizer, self.swa_freq,
-                                               None if self.cyclic_lr else self.swa_lr)
-            if self.cyclic_lr:
-                self.scheduler = torch.optim.lr_scheduler.CyclicLR(
-                    self.trainer.optimizer,
-                    base_lr=self.swa_lr,
-                    max_lr=10*self.swa_lr,
-                    step_size_up=1,
-                    step_size_down=self.swa_freq-1,
-                    cycle_momentum=False,
+            self.trainer.optimizer = optim.SWA(self.trainer.optimizer, self.swa_freq, self.swa_lr_factor)
+            self.trainer.optimizer.reset_lr_to_swa()
+
+            if self.lr_sched:
+                self.scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+                    optimizer=self.trainer.optimizer,
+                    T_0=self.swa_freq,
+                    eta_min=self.eta_min,
                 )
 
+    def after_step(self):
+        next_iter = self.trainer.iter + 1
+
         # Use Cyclic learning rate scheduler
-        if next_iter > self.swa_start and self.cyclic_lr:
+        if next_iter > self.swa_start and self.lr_sched:
             self.scheduler.step()
 
         is_final = next_iter == self.trainer.max_iter
         if is_final:
-            self.trainer.optimizer.swap_swa_sgd()
+            self.trainer.optimizer.swap_swa_param()

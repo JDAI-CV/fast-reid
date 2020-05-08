@@ -241,13 +241,16 @@ class DefaultTrainer(SimpleTrainer):
         """
         # The checkpoint stores the training iteration that just finished, thus we start
         # at the next iteration (or iter zero if there's no checkpoint).
-        self.start_iter = (
-                self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume).get(
-                    "iteration", -1
-                )
-                + 1
-        )
-        self.data_loader = data_prefetcher(self.cfg, self.train_loader)
+        checkpoint = self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume)
+        self.start_iter = checkpoint.get("iteration", -1) if resume else -1
+        # The checkpoint stores the training iteration that just finished, thus we start
+        # at the next iteration (or iter zero if there's no checkpoint).
+        self.start_iter += 1
+
+        if resume:
+            # data prefetcher will preload a batch data, thus we need to reload data loader
+            # because we have updated dataset pid dictionary.
+            self.data_loader = data_prefetcher(self.cfg, self.train_loader)
 
     def build_hooks(self):
         """
@@ -272,8 +275,9 @@ class DefaultTrainer(SimpleTrainer):
                 hooks.SWA(
                     cfg.SOLVER.MAX_ITER,
                     cfg.SOLVER.SWA.PERIOD,
-                    cfg.SOLVER.SWA.LR,
-                    cfg.SOLVER.SWA.CYCLIC_LR,
+                    cfg.SOLVER.SWA.LR_FACTOR,
+                    cfg.SOLVER.SWA.ETA_MIN_LR,
+                    cfg.SOLVER.SWA.LR_SCHED,
                 )
             )
 

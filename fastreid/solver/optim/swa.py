@@ -6,14 +6,15 @@
 # based on:
 # https://github.com/pytorch/contrib/blob/master/torchcontrib/optim/swa.py
 
+import warnings
 from collections import defaultdict
+
 import torch
 from torch.optim.optimizer import Optimizer
-import warnings
 
 
 class SWA(Optimizer):
-    def __init__(self, optimizer, swa_freq=None, swa_lr=None):
+    def __init__(self, optimizer, swa_freq=None, swa_lr_factor=None):
         r"""Implements Stochastic Weight Averaging (SWA).
         Stochastic Weight Averaging was proposed in `Averaging Weights Leads to
         Wider Optima and Better Generalization`_ by Pavel Izmailov, Dmitrii
@@ -47,7 +48,7 @@ class SWA(Optimizer):
             >>>     opt.zero_grad()
             >>>     loss_fn(model(input), target).backward()
             >>>     opt.step()
-            >>> opt.swap_swa_sgd()
+            >>> opt.swap_swa_param()
             >>> # manual mode
             >>> opt = SWA(base_opt)
             >>> for i in range(100):
@@ -56,7 +57,7 @@ class SWA(Optimizer):
             >>>     opt.step()
             >>>     if i > 10 and i % 5 == 0:
             >>>         opt.update_swa()
-            >>> opt.swap_swa_sgd()
+            >>> opt.swap_swa_param()
         .. note::
             SWA does not support parameter-specific values of :attr:`swa_start`,
             :attr:`swa_freq` or :attr:`swa_lr`. In automatic mode SWA uses the
@@ -87,21 +88,21 @@ class SWA(Optimizer):
             https://arxiv.org/abs/1806.05594
         """
         self._auto_mode, (self.swa_freq,) = self._check_params(swa_freq)
-        self.swa_lr = swa_lr
+        self.swa_lr_factor = swa_lr_factor
 
         if self._auto_mode:
             if swa_freq < 1:
                 raise ValueError("Invalid swa_freq: {}".format(swa_freq))
         else:
-            if self.swa_lr is not None:
+            if self.swa_lr_factor is not None:
                 warnings.warn(
                     "Swa_freq is None, ignoring swa_lr")
             # If not in auto mode make all swa parameters None
-            self.swa_lr = None
+            self.swa_lr_factor = None
             self.swa_freq = None
 
-        if self.swa_lr is not None and self.swa_lr < 0:
-            raise ValueError("Invalid SWA learning rate: {}".format(swa_lr))
+        if self.swa_lr_factor is not None and self.swa_lr_factor < 0:
+            raise ValueError("Invalid SWA learning rate factor: {}".format(swa_lr_factor))
 
         self.optimizer = optimizer
 
@@ -126,11 +127,9 @@ class SWA(Optimizer):
                 warnings.warn("Casting swa_start, swa_freq to int")
         return not any(params_none), params
 
-    def _reset_lr_to_swa(self):
-        if self.swa_lr is None:
-            return
+    def reset_lr_to_swa(self):
         for param_group in self.param_groups:
-            param_group['lr'] = self.swa_lr
+            param_group['initial_lr'] = self.swa_lr_factor * param_group['lr']
 
     def update_swa_group(self, group):
         r"""Updates the SWA running averages for the given parameter group.
@@ -149,7 +148,7 @@ class SWA(Optimizer):
             >>>     if i > 10 and i % 5 == 0:
             >>>         # Update SWA for the second parameter group
             >>>         opt.update_swa_group(opt.param_groups[1])
-            >>> opt.swap_swa_sgd()
+            >>> opt.swap_swa_param()
         """
         for p in group['params']:
             param_state = self.state[p]
@@ -167,7 +166,7 @@ class SWA(Optimizer):
         for group in self.param_groups:
             self.update_swa_group(group)
 
-    def swap_swa_sgd(self):
+    def swap_swa_param(self):
         r"""Swaps the values of the optimized variables and swa buffers.
         It's meant to be called in the end of training to use the collected
         swa running averages. It can also be used to evaluate the running
@@ -192,7 +191,6 @@ class SWA(Optimizer):
         r"""Performs a single optimization step.
         In automatic mode also updates SWA running averages.
         """
-        self._reset_lr_to_swa()
         loss = self.optimizer.step(closure)
         for group in self.param_groups:
             group["step_counter"] += 1
