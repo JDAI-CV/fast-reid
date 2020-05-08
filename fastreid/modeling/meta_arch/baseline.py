@@ -37,12 +37,15 @@ class Baseline(nn.Module):
 
     def forward(self, inputs):
         images = inputs["images"]
-        targets = inputs["targets"]
 
         if not self.training:
             pred_feat = self.inference(images)
-            return pred_feat, targets, inputs["camid"]
+            try:
+                return pred_feat, inputs["targets"], inputs["camid"]
+            except KeyError:
+                return pred_feat
 
+        targets = inputs["targets"]
         # training
         features = self.backbone(images)  # (bs, 2048, 16, 8)
         return self.heads(features, targets)

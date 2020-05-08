@@ -10,11 +10,10 @@ import math
 import random
 from collections import deque
 
-import cv2
-from PIL import Image
 import numpy as np
+from PIL import Image
 
-from .functional import to_tensor, augmentations_reid, augmentations_all
+from .functional import to_tensor, augmentations_all
 
 
 class ToTensor(object):
@@ -203,7 +202,6 @@ class AugMix(object):
 
         mixed = (1 - m) * image + m * mix
         return mixed
-
 
 # class ColorJitter(object):
 #     """docstring for do_color"""

@@ -16,10 +16,13 @@ from collections import OrderedDict
 import numpy as np
 import torch
 from torch.nn import DataParallel
+import torch.nn.functional as F
+import cv2
 
 from . import hooks
 from .train_loop import SimpleTrainer
 from fastreid.data import build_reid_test_loader, build_reid_train_loader, data_prefetcher
+from fastreid.data import transforms as T
 from fastreid.evaluation import (DatasetEvaluator, ReidEvaluator,
                           inference_on_dataset, print_csv_format)
 from fastreid.modeling.meta_arch import build_model
@@ -131,32 +134,39 @@ class DefaultPredictor:
 
     def __init__(self, cfg):
         self.cfg = cfg.clone()  # cfg can be modified by model
-        self.model = build_model(self.cfg)
+        model = build_model(self.cfg)
+        self.model = DataParallel(model)
+        self.model.cuda()
         self.model.eval()
-        # self.metadata = MetadataCatalog.get(cfg.DATASETS.TEST[0])
 
         checkpointer = Checkpointer(self.model)
         checkpointer.load(cfg.MODEL.WEIGHTS)
+
+        num_channels = len(cfg.MODEL.PIXEL_MEAN)
+        self.mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(1, num_channels, 1, 1)
+        self.std = torch.tensor(cfg.MODEL.PIXEL_STD).view(1, num_channels, 1, 1)
 
     def __call__(self, original_image):
         """
         Args:
             original_image (np.ndarray): an image of shape (H, W, C) (in BGR order).
         Returns:
-            predictions (dict): the output of the model
+            predictions (np.ndarray): the output of the model
         """
         with torch.no_grad():  # https://github.com/sphinx-doc/sphinx/issues/4258
             # Apply pre-processing to image.
-            if self.input_format == "RGB":
-                # whether the model expects BGR inputs or RGB
-                original_image = original_image[:, :, ::-1]
-            height, width = original_image.shape[:2]
-            image = self.transform_gen.get_transform(original_image).apply_image(original_image)
-            image = torch.as_tensor(image.astype("float32").transpose(2, 0, 1))
+            # the model expects RGB inputs
+            original_image = original_image[:, :, ::-1]
+            image = cv2.resize(original_image, tuple(self.cfg.INPUT.SIZE_TEST[::-1]), interpolation=cv2.INTER_CUBIC)
+            image = T.ToTensor()(image)[None]
+            image.sub_(self.mean).div_(self.std)
 
-            inputs = {"image": image, "height": height, "width": width}
-            predictions = self.model([inputs])[0]
-            return predictions
+            inputs = {"images": image, }
+            pred_feat = self.model(inputs)
+            # Normalize feature to compute cosine distance
+            pred_feat = F.normalize(pred_feat)
+            pred_feat = pred_feat.cpu().data.numpy()
+            return pred_feat
 
 
 class DefaultTrainer(SimpleTrainer):
