@@ -17,5 +17,5 @@ from .dukemtmcreid import DukeMTMC
 from .market1501 import Market1501
 from .msmt17 import MSMT17
 from .veri import VeRi
-from .vehicleid import VehicleID
-from .veriwild import VeRiWild
+from .vehicleid import VehicleID, SmallVehicleID, MediumVehicleID, LargeVehicleID
+from .veriwild import VeRiWild, SamllVeRiWild, MediumVeRiWild, LargeVeRiWild
