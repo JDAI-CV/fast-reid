@@ -13,8 +13,6 @@ import logging
 import os
 from collections import OrderedDict
 
-import cv2
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.nn import DataParallel
@@ -131,40 +129,32 @@ class DefaultPredictor:
         outputs = pred(inputs)
     """
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, device='cpu'):
         self.cfg = cfg.clone()  # cfg can be modified by model
-        model = build_model(self.cfg)
-        self.model = DataParallel(model)
-        self.model.cuda()
+        self.cfg.defrost()
+        self.cfg.MODEL.BACKBONE.PRETRAIN = False
+        self.device = device
+        self.model = build_model(self.cfg)
+        self.model.to(device)
         self.model.eval()
 
         checkpointer = Checkpointer(self.model)
         checkpointer.load(cfg.MODEL.WEIGHTS)
 
-        num_channels = len(cfg.MODEL.PIXEL_MEAN)
-        self.mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(1, num_channels, 1, 1)
-        self.std = torch.tensor(cfg.MODEL.PIXEL_STD).view(1, num_channels, 1, 1)
-
-    def __call__(self, original_image):
+    def __call__(self, image):
         """
         Args:
-            original_image (np.ndarray): an image of shape (H, W, C) (in BGR order).
+            image (torch.tensor): an image tensor of shape (B, C, H, W).
         Returns:
-            predictions (np.ndarray): the output of the model
+            predictions (torch.tensor): the output features of the model
         """
         with torch.no_grad():  # https://github.com/sphinx-doc/sphinx/issues/4258
-            # Apply pre-processing to image.
-            # the model expects RGB inputs
-            original_image = original_image[:, :, ::-1]
-            image = cv2.resize(original_image, tuple(self.cfg.INPUT.SIZE_TEST[::-1]), interpolation=cv2.INTER_CUBIC)
-            image = torch.as_tensor(image.astype("float32").transpose(2, 0, 1))[None]
-            image.sub_(self.mean).div_(self.std)
-
+            image = image.to(self.device)
             inputs = {"images": image}
-            pred_feat = self.model(inputs)
+            predictions = self.model(inputs)
             # Normalize feature to compute cosine distance
-            pred_feat = F.normalize(pred_feat)
-            pred_feat = pred_feat.cpu().data.numpy()
+            pred_feat = F.normalize(predictions)
+            pred_feat = pred_feat.cpu().data
             return pred_feat
 
 
