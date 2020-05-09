@@ -55,7 +55,7 @@ def main(args):
             prebn_cfg = cfg.clone()
             prebn_cfg.DATALOADER.NUM_WORKERS = 0  # save some memory and time for PreciseBN
             prebn_cfg.DATASETS.NAMES = tuple([cfg.TEST.PRECISE_BN.DATASET])  # set dataset name for PreciseBN
-            logger.info("prepare precise BN dataset")
+            logger.info("Prepare precise BN dataset")
             hooks.PreciseBN(
                 # Run at the same freq as (but before) evaluation.
                 model,

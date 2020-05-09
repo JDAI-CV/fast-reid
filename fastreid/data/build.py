@@ -41,7 +41,7 @@ def build_reid_train_loader(cfg):
         batch_sampler=batch_sampler,
         collate_fn=fast_batch_collator,
     )
-    return train_loader
+    return data_prefetcher(cfg, train_loader)
 
 
 def build_reid_test_loader(cfg, dataset_name):
