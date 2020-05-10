@@ -242,15 +242,7 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
             avg_cmc[rank_idx] += all_cmc[q_idx, rank_idx]
         avg_cmc[rank_idx] /= num_valid_q
 
-    cdef float mAP = 0
-    cdef float mINP = 0
-    for q_idx in range(num_q):
-        mAP += all_AP[q_idx]
-        mINP += all_INP[q_idx]
-    mAP /= num_valid_q
-    mINP /= num_valid_q
-
-    return np.asarray(avg_cmc).astype(np.float32), mAP, mINP
+    return np.asarray(avg_cmc).astype(np.float32), all_AP, all_INP
 
 
 # Compute the cumulative sum
