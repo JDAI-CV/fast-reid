@@ -27,7 +27,7 @@ class VeRi(ImageDataset):
     """
     dataset_dir = 'veri'
 
-    def __init__(self, root='/home/liuxinchen3/notespace/data', **kwargs):
+    def __init__(self, root='datasets', **kwargs):
         self.dataset_dir = osp.join(root, self.dataset_dir)
 
         self.train_dir = osp.join(self.dataset_dir, 'image_train')
