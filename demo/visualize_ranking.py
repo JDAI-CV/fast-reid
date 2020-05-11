@@ -23,7 +23,7 @@ from predictor import FeatureExtractionDemo
 from fastreid.utils.visualizer import Visualizer
 
 cudnn.benchmark = True
-logger = logging.getLogger('fastreid.visualize.ranking')
+logger = logging.getLogger('fastreid')
 
 
 def setup_cfg(args):
@@ -66,7 +66,11 @@ def get_parser():
         "--num-vis",
         default=100,
         help="number of query images to be visualized",
-
+    )
+    parser.add_argument(
+        "--rank-sort",
+        default="ascending",
+        help="rank order of visualization images by AP metric",
     )
     parser.add_argument(
         "--max-rank",
@@ -116,5 +120,5 @@ if __name__ == '__main__':
     visualizer = Visualizer(test_loader.loader.dataset)
     visualizer.get_model_output(all_ap, distmat, q_pids, g_pids, q_camids, g_camids)
     logger.info("Saving ranking list result ...")
-    visualizer.vis_ranking_list(args.output, args.num_vis, max_rank=args.max_rank)
+    visualizer.vis_ranking_list(args.output, args.num_vis, rank_sort=args.rank_sort, max_rank=args.max_rank)
 

@@ -47,8 +47,8 @@ class Visualizer:
         return cmc, sort_idx
 
     def save_rank_result(self, query_indices, output, max_rank=5, actmap=False):
-        fig, axes = plt.subplots(1, max_rank + 1, figsize=(3 * max_rank, 5))
-        fig.suptitle('query/AP/camid  sim/true(false)/camid')
+        fig, axes = plt.subplots(1, max_rank + 1, figsize=(3 * max_rank, 6))
+        # fig.suptitle('query/AP/camid  sim/true(false)/camid')
         for cnt, q_idx in enumerate(tqdm.tqdm(query_indices)):
             all_imgs = []
             cmc, sort_idx = self.get_matched_result(q_idx)
@@ -59,7 +59,8 @@ class Visualizer:
             all_imgs.append(query_img)
             query_img = np.rollaxis(np.asarray(query_img.numpy(), dtype=np.uint8), 0, 3)
             axes.flat[0].imshow(query_img)
-            axes.flat[0].set_title('{}/AP:{:.2f}/cam{}'.format(query_name, self.all_ap[q_idx], cam_id))
+            axes.flat[0].set_title('{}/{:.2f}/cam{}'.format(query_name, self.all_ap[q_idx], cam_id))
+            axes.flat[0].axis("off")
             # print('query' + query_info['img_path'].split('/')[-1])
             for i in range(max_rank):
                 g_idx = self.num_query + sort_idx[i]
@@ -81,6 +82,7 @@ class Visualizer:
                 axes.flat[i + 1].imshow(gallery_img)
                 # print('/'.join(gallery_info['img_path'].split('/')[-2:]))
                 axes.flat[i + 1].set_title(f'{self.sim[q_idx, sort_idx[i]]:.3f}/{label}/cam{cam_id}')
+                axes.flat[i + 1].axis("off")
             # if actmap:
             #     act_outputs = []
             #
@@ -99,6 +101,7 @@ class Visualizer:
             #     acts = self.get_actmap(act_outputs[0], sz)
             #     for i in range(top + 1):
             #         axes.flat[i].imshow(acts[i], alpha=0.3, cmap='jet')
+            plt.tight_layout()
             filepath = os.path.join(output, "{}.jpg".format(cnt))
             fig.savefig(filepath)
             plt.cla()
