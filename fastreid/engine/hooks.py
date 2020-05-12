@@ -4,24 +4,23 @@
 import datetime
 import itertools
 import logging
-import warnings
 import os
 import tempfile
 import time
+import numpy as np
 from collections import Counter
 
 import torch
 from torch import nn
 
+from ..evaluation.testing import flatten_results_dict
+from ..utils import comm
+from ..utils.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
+from ..utils.events import EventStorage, EventWriter
+from ..utils.file_io import PathManager
+from ..utils.precision_bn import update_bn_stats, get_bn_modules
+from ..utils.timer import Timer
 from .train_loop import HookBase
-from fastreid.solver import optim
-from fastreid.evaluation.testing import flatten_results_dict
-from fastreid.utils import comm
-from fastreid.utils.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
-from fastreid.utils.events import EventStorage, EventWriter
-from fastreid.utils.file_io import PathManager
-from fastreid.utils.precision_bn import update_bn_stats, get_bn_modules
-from fastreid.utils.timer import Timer
 
 __all__ = [
     "CallbackHook",
@@ -32,6 +31,7 @@ __all__ = [
     "AutogradProfiler",
     "EvalHook",
     "PreciseBN",
+    "LRFinder",
     "FreezeLayer",
 ]
 
@@ -39,6 +39,8 @@ __all__ = [
 Implement some common hooks.
 """
 
+global is_best
+is_best = {}
 
 class CallbackHook(HookBase):
     """
@@ -186,7 +188,10 @@ class PeriodicCheckpointer(_PeriodicCheckpointer, HookBase):
 
     def after_step(self):
         # No way to use **kwargs
-        self.step(self.trainer.iter)
+        global is_best
+        self.step(self.trainer.iter, is_best)
+        for key in is_best.keys():
+            is_best[key] = False
 
 
 class LRScheduler(HookBase):
@@ -295,7 +300,7 @@ class EvalHook(HookBase):
     It is executed every ``eval_period`` iterations and after the last iteration.
     """
 
-    def __init__(self, eval_period, eval_function):
+    def __init__(self, eval_period, eval_function, testset):
         """
         Args:
             eval_period (int): the period to run `eval_function`.
@@ -309,9 +314,35 @@ class EvalHook(HookBase):
         self._period = eval_period
         self._func = eval_function
         self._done_eval_at_last = False
+        self._test_set = testset
+        self._test_len = len(testset)
+        if self._test_len > 1:
+            self.best_mAP = [-np.inf] * self._test_len
+        else:
+            self.best_mAP = [-np.inf]
 
     def _do_eval(self):
+        global is_best
         results = self._func()
+
+        def is_or_not_best(acc, dataset, num):
+            if acc['mAP'] > self.best_mAP[num]:
+                is_best[dataset] = True
+                self.best_mAP[num] = acc['mAP']
+            else:
+                is_best[dataset] = False
+
+        if self._test_len > 1:
+            # have more than one test dataset
+            # store in the "is_best" dictionary with the format of
+            # is_best = {'dataset': True or False}
+            i = 0
+            for dataset, acc in results.items():
+                is_or_not_best(acc, dataset, i)
+                i += 1
+        else:
+            # have only one test dataset
+            is_or_not_best(results, self._test_set[0], 0)
 
         if results:
             assert isinstance(
@@ -470,37 +501,3 @@ class FreezeLayer(HookBase):
         self.model.train()
         for name, param in self.model.named_parameters():
             param.requires_grad = self.param_grad[name]
-
-
-class SWA(HookBase):
-    def __init__(self, swa_start: int, swa_freq: int, swa_lr_factor: float, eta_min: float, lr_sched=False,):
-        self.swa_start = swa_start
-        self.swa_freq = swa_freq
-        self.swa_lr_factor = swa_lr_factor
-        self.eta_min = eta_min
-        self.lr_sched = lr_sched
-
-    def before_step(self):
-        is_swa = self.trainer.iter == self.swa_start
-        if is_swa:
-            # Wrapper optimizer with SWA
-            self.trainer.optimizer = optim.SWA(self.trainer.optimizer, self.swa_freq, self.swa_lr_factor)
-            self.trainer.optimizer.reset_lr_to_swa()
-
-            if self.lr_sched:
-                self.scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-                    optimizer=self.trainer.optimizer,
-                    T_0=self.swa_freq,
-                    eta_min=self.eta_min,
-                )
-
-    def after_step(self):
-        next_iter = self.trainer.iter + 1
-
-        # Use Cyclic learning rate scheduler
-        if next_iter > self.swa_start and self.lr_sched:
-            self.scheduler.step()
-
-        is_final = next_iter == self.trainer.max_iter
-        if is_final:
-            self.trainer.optimizer.swap_swa_param()

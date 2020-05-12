@@ -13,22 +13,22 @@ import logging
 import os
 from collections import OrderedDict
 
+import numpy as np
 import torch
-import torch.nn.functional as F
 from torch.nn import DataParallel
 
-from fastreid.data import build_reid_test_loader, build_reid_train_loader
-from fastreid.evaluation import (DatasetEvaluator, ReidEvaluator,
-                                 inference_on_dataset, print_csv_format)
-from fastreid.modeling.meta_arch import build_model
-from fastreid.solver import build_lr_scheduler, build_optimizer
-from fastreid.utils import comm
-from fastreid.utils.checkpoint import Checkpointer
-from fastreid.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
-from fastreid.utils.file_io import PathManager
-from fastreid.utils.logger import setup_logger
 from . import hooks
 from .train_loop import SimpleTrainer
+from ..data import build_reid_test_loader, build_reid_train_loader
+from ..evaluation import (DatasetEvaluator, ReidEvaluator,
+                          inference_on_dataset, print_csv_format)
+from ..modeling.meta_arch import build_model
+from ..solver import build_lr_scheduler, build_optimizer
+from ..utils import comm
+from ..utils.checkpoint import Checkpointer
+from ..utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
+from ..utils.file_io import PathManager
+from ..utils.logger import setup_logger
 
 __all__ = ["default_argument_parser", "default_setup", "DefaultPredictor", "DefaultTrainer"]
 
@@ -129,33 +129,34 @@ class DefaultPredictor:
         outputs = pred(inputs)
     """
 
-    def __init__(self, cfg, device='cpu'):
+    def __init__(self, cfg):
         self.cfg = cfg.clone()  # cfg can be modified by model
-        self.cfg.defrost()
-        self.cfg.MODEL.BACKBONE.PRETRAIN = False
-        self.device = device
         self.model = build_model(self.cfg)
-        self.model.to(device)
         self.model.eval()
+        # self.metadata = MetadataCatalog.get(cfg.DATASETS.TEST[0])
 
         checkpointer = Checkpointer(self.model)
         checkpointer.load(cfg.MODEL.WEIGHTS)
 
-    def __call__(self, image):
+    def __call__(self, original_image):
         """
         Args:
-            image (torch.tensor): an image tensor of shape (B, C, H, W).
+            original_image (np.ndarray): an image of shape (H, W, C) (in BGR order).
         Returns:
-            predictions (torch.tensor): the output features of the model
+            predictions (dict): the output of the model
         """
         with torch.no_grad():  # https://github.com/sphinx-doc/sphinx/issues/4258
-            image = image.to(self.device)
-            inputs = {"images": image}
-            predictions = self.model(inputs)
-            # Normalize feature to compute cosine distance
-            pred_feat = F.normalize(predictions)
-            pred_feat = pred_feat.cpu().data
-            return pred_feat
+            # Apply pre-processing to image.
+            if self.input_format == "RGB":
+                # whether the model expects BGR inputs or RGB
+                original_image = original_image[:, :, ::-1]
+            height, width = original_image.shape[:2]
+            image = self.transform_gen.get_transform(original_image).apply_image(original_image)
+            image = torch.as_tensor(image.astype("float32").transpose(2, 0, 1))
+
+            inputs = {"image": image, "height": height, "width": width}
+            predictions = self.model([inputs])[0]
+            return predictions
 
 
 class DefaultTrainer(SimpleTrainer):
@@ -196,15 +197,15 @@ class DefaultTrainer(SimpleTrainer):
         Args:
             cfg (CfgNode):
         """
-        self.cfg = cfg
         logger = logging.getLogger(__name__)
-        if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for fastreid
+        if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for d2
             setup_logger()
         # Assume these objects must be constructed in this order.
         model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)
-        logger.info('Prepare training set')
+        logger.info('prepare training set')
         data_loader = self.build_train_loader(cfg)
+
         # For training, wrap with DP. But don't need this for inference.
         model = DataParallel(model)
         model = model.cuda()
@@ -216,16 +217,13 @@ class DefaultTrainer(SimpleTrainer):
         self.checkpointer = Checkpointer(
             # Assume you want to save checkpoints together with logs/statistics
             model,
-            self.data_loader.loader.dataset,
+            data_loader.loader.dataset,
             cfg.OUTPUT_DIR,
             optimizer=optimizer,
             scheduler=self.scheduler,
         )
         self.start_iter = 0
-        if cfg.SOLVER.SWA.ENABLED:
-            self.max_iter = cfg.SOLVER.MAX_ITER + cfg.SOLVER.SWA.ITER
-        else:
-            self.max_iter = cfg.SOLVER.MAX_ITER
+        self.max_iter = cfg.SOLVER.MAX_ITER
         self.cfg = cfg
 
         self.register_hooks(self.build_hooks())
@@ -239,15 +237,12 @@ class DefaultTrainer(SimpleTrainer):
         """
         # The checkpoint stores the training iteration that just finished, thus we start
         # at the next iteration (or iter zero if there's no checkpoint).
-        checkpoint = self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume)
-        self.start_iter = checkpoint.get("iteration", -1) if resume else -1
-        # The checkpoint stores the training iteration that just finished, thus we start
-        # at the next iteration (or iter zero if there's no checkpoint).
-        self.start_iter += 1
-
-        # Prefetcher need to reset because it will preload a batch data, but we have updated
-        # dataset person identity dictionary.
-        self.data_loader.reset()
+        self.start_iter = (
+                self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume).get(
+                    "iteration", -1
+                )
+                + 1
+        )
 
     def build_hooks(self):
         """
@@ -267,19 +262,8 @@ class DefaultTrainer(SimpleTrainer):
             hooks.LRScheduler(self.optimizer, self.scheduler),
         ]
 
-        if cfg.SOLVER.SWA.ENABLED:
-            ret.append(
-                hooks.SWA(
-                    cfg.SOLVER.MAX_ITER,
-                    cfg.SOLVER.SWA.PERIOD,
-                    cfg.SOLVER.SWA.LR_FACTOR,
-                    cfg.SOLVER.SWA.ETA_MIN_LR,
-                    cfg.SOLVER.SWA.LR_SCHED,
-                )
-            )
-
         if cfg.TEST.PRECISE_BN.ENABLED and hooks.get_bn_modules(self.model):
-            logger.info("Prepare precise BN dataset")
+            logger.info("prepare precise BN dataset")
             ret.append(hooks.PreciseBN(
                 # Run at the same freq as (but before) evaluation.
                 self.model,
@@ -289,18 +273,12 @@ class DefaultTrainer(SimpleTrainer):
             ))
 
         if cfg.MODEL.OPEN_LAYERS != '' and cfg.SOLVER.FREEZE_ITERS > 0:
-            logger.info(f"Freeze backbone training for {cfg.SOLVER.FREEZE_ITERS:d} iters")
+            logger.info(f"freeze backbone training for {cfg.SOLVER.FREEZE_ITERS:d} iters")
             ret.append(hooks.FreezeLayer(
                 self.model,
                 cfg.MODEL.OPEN_LAYERS,
                 cfg.SOLVER.FREEZE_ITERS,
             ))
-        # Do PreciseBN before checkpointer, because it updates the model and need to
-        # be saved by checkpointer.
-        # This is not always the best: if checkpointing has a different frequency,
-        # some checkpoints may have more precise statistics than others.
-        # if comm.is_main_process():
-        ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
 
         def test_and_save_results():
             self._last_eval_results = self.test(self.cfg, self.model)
@@ -308,7 +286,14 @@ class DefaultTrainer(SimpleTrainer):
 
         # Do evaluation after checkpointer, because then if it fails,
         # we can use the saved checkpoint to debug.
-        ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results))
+        ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results, cfg.DATASETS.TESTS))
+
+        # Do PreciseBN before checkpointer, because it updates the model and need to
+        # be saved by checkpointer.
+        # This is not always the best: if checkpointing has a different frequency,
+        # some checkpoints may have more precise statistics than others.
+        # if comm.is_main_process():
+        ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
 
         # run writers in the end, so that evaluation metrics are written
         ret.append(hooks.PeriodicWriter(self.build_writers(), cfg.SOLVER.LOG_PERIOD))
@@ -359,8 +344,8 @@ class DefaultTrainer(SimpleTrainer):
         Overwrite it if you'd like a different model.
         """
         model = build_model(cfg)
-        logger = logging.getLogger(__name__)
-        logger.info("Model:\n{}".format(model))
+        # logger = logging.getLogger(__name__)
+        # logger.info("Model:\n{}".format(model))
         return model
 
     @classmethod
@@ -428,7 +413,7 @@ class DefaultTrainer(SimpleTrainer):
 
         results = OrderedDict()
         for idx, dataset_name in enumerate(cfg.DATASETS.TESTS):
-            logger.info(f'prepare test set')
+            logger.info(f'prepare test set {dataset_name}')
             data_loader, num_query = cls.build_test_loader(cfg, dataset_name)
             # When evaluators are passed in as arguments,
             # implicitly assume that evaluators can be created before data_loader.
