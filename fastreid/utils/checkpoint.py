@@ -104,8 +104,11 @@ class Checkpointer(object):
             assert os.path.isfile(path), "Checkpoint {} not found!".format(path)
 
         checkpoint = self._load_file(path)
-        if self.dataset is not None:
-            self.logger.info("Loading dataset pid dictionary from {}".format(path))
+        if self.dataset is None:
+            self.logger.info(
+                "No need to load dataset pid dictionary"
+            )
+        else:
             self._load_dataset_pid_dict(checkpoint)
         self._load_model(checkpoint)
         for key, obj in self.checkpointables.items():
@@ -279,7 +282,7 @@ class PeriodicCheckpointer:
         self.period = int(period)
         self.max_iter = max_iter
 
-    def step(self, iteration: int, **kwargs: Any):
+    def step(self, iteration: int, is_best: dict, **kwargs: Any):
         """
         Perform the appropriate action at the given iteration.
         Args:
@@ -296,6 +299,9 @@ class PeriodicCheckpointer:
             )
         if iteration >= self.max_iter - 1:
             self.checkpointer.save("model_final", **additional_state)
+        for dataset, value in is_best.items():
+            if value:
+                self.checkpointer.save("model_best_on_" + dataset, **additional_state)
 
     def save(self, name: str, **kwargs: Any):
         """
