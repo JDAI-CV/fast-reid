@@ -8,6 +8,7 @@ import argparse
 import logging
 import tqdm
 import sys
+import os
 
 import numpy as np
 import torch
@@ -63,6 +64,11 @@ def get_parser():
 
     )
     parser.add_argument(
+        "--vis-label",
+        action='store_true',
+        help="if visualize label of query instance"
+    )
+    parser.add_argument(
         "--num-vis",
         default=100,
         help="number of query images to be visualized",
@@ -71,6 +77,11 @@ def get_parser():
         "--rank-sort",
         default="ascending",
         help="rank order of visualization images by AP metric",
+    )
+    parser.add_argument(
+        "--label-sort",
+        default="ascending",
+        help="label order of visualization images by cosine similarity metric",
     )
     parser.add_argument(
         "--max-rank",
@@ -115,10 +126,10 @@ if __name__ == '__main__':
     distmat = distmat.numpy()
 
     logger.info("Computing APs for all query images ...")
-    cmc, all_ap, all_inp = evaluate_rank(1-distmat, q_pids, g_pids, q_camids, g_camids)
+    cmc, all_ap, all_inp = evaluate_rank(1 - distmat, q_pids, g_pids, q_camids, g_camids)
 
     visualizer = Visualizer(test_loader.loader.dataset)
     visualizer.get_model_output(all_ap, distmat, q_pids, g_pids, q_camids, g_camids)
-    logger.info("Saving ranking list result ...")
-    visualizer.vis_ranking_list(args.output, args.num_vis, rank_sort=args.rank_sort, max_rank=args.max_rank)
-
+    logger.info("Saving rank list result ...")
+    query_indices = visualizer.vis_rank_list(args.output, args.vis_label, args.num_vis,
+                                             args.rank_sort, args.label_sort, args.max_rank)
