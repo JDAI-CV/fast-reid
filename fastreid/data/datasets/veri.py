@@ -26,9 +26,8 @@ class VeRi(ImageDataset):
         - images: 37778 (train) + 1678 (query) + 11579 (gallery).
     """
     dataset_dir = 'veri'
-    dataset_url = None
 
-    def __init__(self, root='/home/liuxinchen3/notespace/data', **kwargs):
+    def __init__(self, root='datasets', **kwargs):
         self.dataset_dir = osp.join(root, self.dataset_dir)
 
         self.train_dir = osp.join(self.dataset_dir, 'image_train')

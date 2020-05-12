@@ -20,19 +20,21 @@ class VehicleID(ImageDataset):
 
     URL: `<https://pkuml.org/resources/pku-vehicleid.html>`_
 
-    Dataset statistics:
-        - identities: 26267.
-        - images: 221763.
+    Train dataset statistics:
+        - identities: 13164.
+        - images: 113346.
     """
     dataset_dir = 'vehicleid'
-    dataset_url = None
 
-    def __init__(self, root='/home/liuxinchen3/notespace/data', **kwargs):
+    def __init__(self, root='datasets', test_list='', **kwargs):
         self.dataset_dir = osp.join(root, self.dataset_dir)
 
         self.image_dir = osp.join(self.dataset_dir, 'image')
         self.train_list = osp.join(self.dataset_dir, 'train_test_split/train_list.txt')
-        self.test_list = osp.join(self.dataset_dir, 'train_test_split/test_list_2400.txt')
+        if test_list:
+            self.test_list = test_list
+        else:
+            self.test_list = osp.join(self.dataset_dir, 'train_test_split/test_list_13164.txt')
 
         required_files = [
             self.dataset_dir,
@@ -64,9 +66,57 @@ class VehicleID(ImageDataset):
             return dataset
         else:
             query = []
+            gallery = []
             for sample in dataset:
                 if sample[1] not in vid_container:
                     vid_container.add(sample[1])
+                    gallery.append(sample)
+                else:
                     query.append(sample)
 
-            return query, dataset
+            return query, gallery
+
+
+@DATASET_REGISTRY.register()
+class SmallVehicleID(VehicleID):
+    """VehicleID.
+    Small test dataset statistics:
+        - identities: 800.
+        - images: 6493.
+    """
+
+    def __init__(self, root='datasets', **kwargs):
+        self.dataset_dir = osp.join(root, self.dataset_dir)
+        self.test_list = osp.join(self.dataset_dir, 'train_test_split/test_list_800.txt')
+
+        super(SmallVehicleID, self).__init__(root, self.test_list, **kwargs)
+
+
+@DATASET_REGISTRY.register()
+class MediumVehicleID(VehicleID):
+    """VehicleID.
+    Medium test dataset statistics:
+        - identities: 1600.
+        - images: 13377.
+    """
+
+    def __init__(self, root='datasets', **kwargs):
+        self.dataset_dir = osp.join(root, self.dataset_dir)
+        self.test_list = osp.join(self.dataset_dir, 'train_test_split/test_list_1600.txt')
+
+        super(MediumVehicleID, self).__init__(root, self.test_list, **kwargs)
+
+
+@DATASET_REGISTRY.register()
+class LargeVehicleID(VehicleID):
+    """VehicleID.
+    Large test dataset statistics:
+        - identities: 2400.
+        - images: 19777.
+    """
+
+    def __init__(self, root='datasets', **kwargs):
+        self.dataset_dir = osp.join(root, self.dataset_dir)
+        self.test_list = osp.join(self.dataset_dir, 'train_test_split/test_list_2400.txt')
+
+        super(LargeVehicleID, self).__init__(root, self.test_list, **kwargs)

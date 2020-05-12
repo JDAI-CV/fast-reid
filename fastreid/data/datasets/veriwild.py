@@ -19,21 +19,24 @@ class VeRiWild(ImageDataset):
 
     URL: `<https://github.com/PKU-IMRE/VERI-Wild>`_
 
-    Dataset statistics:
-        - identities: 40671.
-        - images: 416314.
+    Train dataset statistics:
+        - identities: 30671.
+        - images: 277797.
     """
     dataset_dir = 'VERI-Wild'
-    dataset_url = None
 
-    def __init__(self, root='/home/liuxinchen3/notespace/data', **kwargs):
+    def __init__(self, root='datasets', query_list='', gallery_list='', **kwargs):
         self.dataset_dir = osp.join(root, self.dataset_dir)
 
         self.image_dir = osp.join(self.dataset_dir, 'images')
         self.train_list = osp.join(self.dataset_dir, 'train_test_split/train_list.txt')
-        self.query_list = osp.join(self.dataset_dir, 'train_test_split/test_10000_query.txt')
-        self.gallery_list = osp.join(self.dataset_dir, 'train_test_split/test_10000.txt')
         self.vehicle_info = osp.join(self.dataset_dir, 'train_test_split/vehicle_info.txt')
+        if query_list and gallery_list:
+            self.query_list = query_list
+            self.gallery_list = gallery_list
+        else:
+            self.query_list = osp.join(self.dataset_dir, 'train_test_split/test_10000_query.txt')
+            self.gallery_list = osp.join(self.dataset_dir, 'train_test_split/test_10000.txt')
 
         required_files = [
             self.image_dir,
@@ -82,3 +85,51 @@ class VeRiWild(ImageDataset):
 
         assert len(imgid2vid) == len(vehicle_info_lines) - 1
         return imgid2vid, imgid2camid, imgid2imgpath
+
+
+@DATASET_REGISTRY.register()
+class SmallVeRiWild(VeRiWild):
+    """VeRi-Wild.
+    Small test dataset statistics:
+        - identities: 3000.
+        - images: 41861.
+    """
+
+    def __init__(self, root='datasets', **kwargs):
+        self.dataset_dir = osp.join(root, self.dataset_dir)
+        self.query_list = osp.join(self.dataset_dir, 'train_test_split/test_3000_query.txt')
+        self.gallery_list = osp.join(self.dataset_dir, 'train_test_split/test_3000.txt')
+
+        super(SmallVeRiWild, self).__init__(root, self.query_list, self.gallery_list, **kwargs)
+
+
+@DATASET_REGISTRY.register()
+class MediumVeRiWild(VeRiWild):
+    """VeRi-Wild.
+    Medium test dataset statistics:
+        - identities: 5000.
+        - images: 69389.
+    """
+
+    def __init__(self, root='datasets', **kwargs):
+        self.dataset_dir = osp.join(root, self.dataset_dir)
+        self.query_list = osp.join(self.dataset_dir, 'train_test_split/test_5000_query.txt')
+        self.gallery_list = osp.join(self.dataset_dir, 'train_test_split/test_5000.txt')
+
+        super(MediumVeRiWild, self).__init__(root, self.query_list, self.gallery_list, **kwargs)
+
+
+@DATASET_REGISTRY.register()
+class LargeVeRiWild(VeRiWild):
+    """VeRi-Wild.
+    Large test dataset statistics:
+        - identities: 10000.
+        - images: 138517.
+    """
+
+    def __init__(self, root='datasets', **kwargs):
+        self.dataset_dir = osp.join(root, self.dataset_dir)
+        self.query_list = osp.join(self.dataset_dir, 'train_test_split/test_10000_query.txt')
+        self.gallery_list = osp.join(self.dataset_dir, 'train_test_split/test_10000.txt')
+
+        super(LargeVeRiWild, self).__init__(root, self.query_list, self.gallery_list, **kwargs)
