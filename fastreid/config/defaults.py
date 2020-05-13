@@ -221,6 +221,14 @@ _C.TEST = CN()
 
 _C.TEST.EVAL_PERIOD = 50
 _C.TEST.IMS_PER_BATCH = 128
+_C.TEST.METRIC = "cosine"
+
+# Average query expansion
+_C.TEST.AQE = CN()
+_C.TEST.AQE.ENABLED = False
+_C.TEST.AQE.ALPHA = 3.0
+_C.TEST.AQE.QE_TIME = 1
+_C.TEST.AQE.QE_K = 5
 
 # Re-rank
 _C.TEST.RERANK = CN()
@@ -229,15 +237,12 @@ _C.TEST.RERANK.K1 = 20
 _C.TEST.RERANK.K2 = 6
 _C.TEST.RERANK.LAMBDA = 0.3
 
-# Average query expansion
-_C.TEST.AQE = CN()
-_C.TEST.AQE.ENABLED = True
-
 # Precise batchnorm
 _C.TEST.PRECISE_BN = CN()
 _C.TEST.PRECISE_BN.ENABLED = False
 _C.TEST.PRECISE_BN.DATASET = 'Market1501'
 _C.TEST.PRECISE_BN.NUM_ITER = 300
+
 # ---------------------------------------------------------------------------- #
 # Misc options
 # ---------------------------------------------------------------------------- #

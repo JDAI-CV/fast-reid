@@ -6,6 +6,7 @@
 import logging
 import copy
 from collections import OrderedDict
+from functools import partial
 
 import numpy as np
 import torch
@@ -14,6 +15,7 @@ import torch.nn.functional as F
 from .evaluator import DatasetEvaluator
 from .rank import evaluate_rank
 from .rerank import re_ranking
+from .query_expansion import aqe
 
 logger = logging.getLogger(__name__)
 
@@ -34,16 +36,25 @@ class ReidEvaluator(DatasetEvaluator):
         self.camids = []
 
     def process(self, outputs):
-        self.features.append(outputs[0])
+        self.features.append(outputs[0].cpu())
         self.pids.extend(outputs[1].cpu().numpy())
         self.camids.extend(outputs[2].cpu().numpy())
 
     @staticmethod
-    def cal_dist(query_feat: torch.tensor, gallery_feat: torch.tensor):
-        query_feat = F.normalize(query_feat, dim=1)
-        gallery_feat = F.normalize(gallery_feat, dim=1)
-        cos_dist = 1 - torch.mm(query_feat, gallery_feat.t()).cpu().numpy()
-        return cos_dist
+    def cal_dist(metric: str, query_feat: torch.tensor, gallery_feat: torch.tensor):
+        assert metric in ["cosine", "euclidean"], "must choose from [cosine, euclidean], but got {}".format(metric)
+        if metric == "cosine":
+            query_feat = F.normalize(query_feat, dim=1)
+            gallery_feat = F.normalize(gallery_feat, dim=1)
+            dist = 1 - torch.mm(query_feat, gallery_feat.t())
+        else:
+            m, n = query_feat.size(0), gallery_feat.size(0)
+            xx = torch.pow(query_feat, 2).sum(1, keepdim=True).expand(m, n)
+            yy = torch.pow(gallery_feat, 2).sum(1, keepdim=True).expand(n, m).t()
+            dist = xx + yy
+            dist.addmm_(1, -2, query_feat, gallery_feat.t())
+            dist = dist.clamp(min=1e-12).sqrt()  # for numerical stability
+        return dist.cpu().numpy()
 
     def evaluate(self):
         features = torch.cat(self.features, dim=0)
@@ -60,19 +71,23 @@ class ReidEvaluator(DatasetEvaluator):
 
         self._results = OrderedDict()
 
-        dist = self.cal_dist(query_features, gallery_features)
+        if self.cfg.TEST.AQE.ENABLED:
+            logger.info("Test with AQE setting")
+            qe_time = self.cfg.TEST.AQE.QE_TIME
+            qe_k = self.cfg.TEST.AQE.QE_K
+            alpha = self.cfg.TEST.AQE.ALPHA
+            query_features, gallery_features = aqe(query_features, gallery_features, qe_time, qe_k, alpha)
+
+        dist = self.cal_dist(self.cfg.TEST.METRIC, query_features, gallery_features)
 
         if self.cfg.TEST.RERANK.ENABLED:
             logger.info("Test with rerank setting")
             k1 = self.cfg.TEST.RERANK.K1
             k2 = self.cfg.TEST.RERANK.K1
             lambda_value = self.cfg.TEST.RERANK.LAMBDA
-            q_q_dist = self.cal_dist(query_features, query_features)
-            g_g_dist = self.cal_dist(gallery_features, gallery_features)
+            q_q_dist = self.cal_dist(self.cfg.TEST.METRIC, query_features, query_features)
+            g_g_dist = self.cal_dist(self.cfg.TEST.METRIC, gallery_features, gallery_features)
             dist = re_ranking(dist, q_q_dist, g_g_dist, k1, k2, lambda_value)
-
-        if self.cfg.TEST.AQE.ENABLED:
-            pass
 
         cmc, all_AP, all_INP = evaluate_rank(dist, query_pids, gallery_pids, query_camids, gallery_camids)
         mAP = np.mean(all_AP)
