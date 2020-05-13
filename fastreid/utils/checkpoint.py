@@ -279,7 +279,7 @@ class PeriodicCheckpointer:
         self.period = int(period)
         self.max_iter = max_iter
 
-    def step(self, iteration: int, **kwargs: Any):
+    def step(self, iteration: int, is_best: dict, **kwargs: Any):
         """
         Perform the appropriate action at the given iteration.
         Args:
@@ -296,6 +296,9 @@ class PeriodicCheckpointer:
             )
         if iteration >= self.max_iter - 1:
             self.checkpointer.save("model_final", **additional_state)
+        for dataset, value in is_best.items():
+            if value:
+                self.checkpointer.save("model_best_on_" + dataset, **additional_state)
 
     def save(self, name: str, **kwargs: Any):
         """

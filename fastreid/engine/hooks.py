@@ -8,6 +8,7 @@ import warnings
 import os
 import tempfile
 import time
+import numpy as np
 from collections import Counter
 
 import torch
@@ -39,6 +40,8 @@ __all__ = [
 Implement some common hooks.
 """
 
+global is_best
+is_best = {}
 
 class CallbackHook(HookBase):
     """
@@ -186,7 +189,10 @@ class PeriodicCheckpointer(_PeriodicCheckpointer, HookBase):
 
     def after_step(self):
         # No way to use **kwargs
-        self.step(self.trainer.iter)
+        global is_best
+        self.step(self.trainer.iter, is_best)
+        for key in is_best.keys():
+            is_best[key] = False
 
 
 class LRScheduler(HookBase):
@@ -295,7 +301,7 @@ class EvalHook(HookBase):
     It is executed every ``eval_period`` iterations and after the last iteration.
     """
 
-    def __init__(self, eval_period, eval_function):
+    def __init__(self, eval_period, eval_function, testset):
         """
         Args:
             eval_period (int): the period to run `eval_function`.
@@ -309,9 +315,35 @@ class EvalHook(HookBase):
         self._period = eval_period
         self._func = eval_function
         self._done_eval_at_last = False
+        self._test_set = testset
+        self._test_len = len(testset)
+        if self._test_len > 1:
+            self.best_mAP = [-np.inf] * self._test_len
+        else:
+            self.best_mAP = [-np.inf]
 
     def _do_eval(self):
+        global is_best
         results = self._func()
+
+        def is_or_not_best(dataset, acc, num):
+            if acc['mAP'] > self.best_mAP[num]:
+                is_best[dataset] = True
+                self.best_mAP[num] = acc['mAP']
+            else:
+                is_best[dataset] = False
+
+        if self._test_len > 1:
+            # have more than one test dataset
+            # store in the "is_best" dictionary with the format of
+            # is_best = {'dataset': True or False}
+            i = 0
+            for dataset, acc in results.items():
+                is_or_not_best(dataset, acc, i)
+                i += 1
+        else:
+            # have only one test dataset
+            is_or_not_best(self._test_set[0], results, 0)
 
         if results:
             assert isinstance(

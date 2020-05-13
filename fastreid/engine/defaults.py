@@ -295,12 +295,6 @@ class DefaultTrainer(SimpleTrainer):
                 cfg.MODEL.OPEN_LAYERS,
                 cfg.SOLVER.FREEZE_ITERS,
             ))
-        # Do PreciseBN before checkpointer, because it updates the model and need to
-        # be saved by checkpointer.
-        # This is not always the best: if checkpointing has a different frequency,
-        # some checkpoints may have more precise statistics than others.
-        # if comm.is_main_process():
-        ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
 
         def test_and_save_results():
             self._last_eval_results = self.test(self.cfg, self.model)
@@ -308,7 +302,14 @@ class DefaultTrainer(SimpleTrainer):
 
         # Do evaluation after checkpointer, because then if it fails,
         # we can use the saved checkpoint to debug.
-        ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results))
+        ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results, cfg.DATASETS.TESTS))
+
+        # Do PreciseBN before checkpointer, because it updates the model and need to
+        # be saved by checkpointer.
+        # This is not always the best: if checkpointing has a different frequency,
+        # some checkpoints may have more precise statistics than others.
+        # if comm.is_main_process():
+        ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
 
         # run writers in the end, so that evaluation metrics are written
         ret.append(hooks.PeriodicWriter(self.build_writers(), cfg.SOLVER.LOG_PERIOD))
