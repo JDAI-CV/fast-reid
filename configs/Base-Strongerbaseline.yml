@@ -1,7 +1,7 @@
 MODEL:
   META_ARCHITECTURE: 'Baseline'
 
-  OPEN_LAYERS: "heads"
+  OPEN_LAYERS: ["heads"]
 
   BACKBONE:
     NAME: "build_resnet_backbone"
@@ -77,7 +77,7 @@ SOLVER:
 
 TEST:
   EVAL_PERIOD: 2000
-  IMS_PER_BATCH: 512
+  IMS_PER_BATCH: 256
   PRECISE_BN:
     ENABLED: False
     DATASET: 'DukeMTMC'
