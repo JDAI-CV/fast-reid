@@ -8,6 +8,7 @@ import torch
 import logging
 import torch.nn.functional as F
 from torch import nn
+from .sync_bn import SynchronizedBatchNorm2d
 
 __all__ = [
     "BatchNorm",
@@ -28,7 +29,7 @@ class BatchNorm(nn.BatchNorm2d):
         self.bias.requires_grad_(not bias_freeze)
 
 
-class SyncBatchNorm(nn.SyncBatchNorm):
+class SyncBatchNorm(SynchronizedBatchNorm2d):
     def __init__(self, num_features, eps=1e-05, momentum=0.1, weight_freeze=False, bias_freeze=False, weight_init=1.0,
                  bias_init=0.0):
         super().__init__(num_features, eps=eps, momentum=momentum)
@@ -201,6 +202,6 @@ def get_norm(norm, out_channels, num_splits=1, **kwargs):
             "GhostBN": GhostBatchNorm(out_channels, num_splits, **kwargs),
             "FrozenBN": FrozenBatchNorm(out_channels),
             "GN": nn.GroupNorm(32, out_channels),
-            "syncBN": SyncBatchNorm(out_channels, **kwargs),  # it is unavailable now
+            "syncBN": SyncBatchNorm(out_channels, **kwargs),
         }[norm]
     return norm
