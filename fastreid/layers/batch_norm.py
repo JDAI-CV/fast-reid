@@ -100,13 +100,9 @@ class FrozenBatchNorm(BatchNorm):
     _version = 3
 
     def __init__(self, num_features, eps=1e-5):
-        super().__init__()
+        super().__init__(num_features, weight_freeze=True, bias_freeze=True)
         self.num_features = num_features
         self.eps = eps
-        self.register_buffer("weight", torch.ones(num_features))
-        self.register_buffer("bias", torch.zeros(num_features))
-        self.register_buffer("running_mean", torch.zeros(num_features))
-        self.register_buffer("running_var", torch.ones(num_features) - eps)
 
     def forward(self, x):
         if x.requires_grad:

@@ -431,8 +431,6 @@ class FreezeLayer(HookBase):
         self.model = model
 
         self.freeze_iters = freeze_iters
-        if isinstance(open_layer_names, str):
-            open_layer_names = [open_layer_names]
 
         self.open_layer_names = open_layer_names
 
