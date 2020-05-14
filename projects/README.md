@@ -1,4 +1,4 @@
-# Towards Person ReID in similar clothings with head-shoulder information
+# Towards Person ReID in Similar Clothings with Head-shoulder Information
 
 
 ## Training
