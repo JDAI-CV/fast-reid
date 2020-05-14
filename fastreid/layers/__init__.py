@@ -7,7 +7,7 @@ from torch import nn
 
 from .batch_drop import BatchDrop
 from .attention import *
-from .norm import *
+from .batch_norm import *
 from .context_block import ContextBlock
 from .non_local import Non_local
 from .se_layer import SELayer

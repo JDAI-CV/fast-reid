@@ -3,7 +3,7 @@
 
 import torch
 from torch import nn
-from .norm import get_norm
+from .batch_norm import get_norm
 
 
 class Non_local(nn.Module):
