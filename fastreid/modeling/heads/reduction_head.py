@@ -20,11 +20,11 @@ class ReductionHead(nn.Module):
 
         self.bottleneck = nn.Sequential(
             nn.Conv2d(in_feat, reduction_dim, 1, 1, bias=False),
-            BatchNorm(reduction_dim, bias_freeze=True),
+            get_norm(cfg.MODEL.HEADS.NORM, reduction_dim, cfg.MODEL.HEADS.NORM_SPLIT, bias_freeze=True),
             nn.LeakyReLU(0.1),
             nn.Dropout2d(0.5),
         )
-        self.bnneck = BatchNorm(reduction_dim, bias_freeze=True)
+        self.bnneck = get_norm(cfg.MODEL.HEADS.NORM, reduction_dim, cfg.MODEL.HEADS.NORM_SPLIT, bias_freeze=True)
 
         self.bottleneck.apply(weights_init_kaiming)
         self.bnneck.apply(weights_init_kaiming)
