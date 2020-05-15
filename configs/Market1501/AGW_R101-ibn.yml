@@ -1,0 +1,17 @@
+_BASE_: "../Base-AGW.yml"
+
+MODEL:
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+    DEPTH: 101
+    WITH_IBN: True
+    PRETRAIN_PATH: "/export/home/lxy/.cache/torch/checkpoints/resnet101_ibn_a.pth.tar"
+
+  HEADS:
+    NUM_CLASSES: 751
+
+DATASETS:
+  NAMES: ("Market1501",)
+  TESTS: ("Market1501",)
+
+OUTPUT_DIR: "logs/market1501/agw_R101-ibn"

@@ -2,14 +2,12 @@ _BASE_: "../Base-AGW.yml"
 
 MODEL:
   BACKBONE:
-    NAME: "build_resnest_backbone"
+    DEPTH: 101
+    WITH_IBN: True
+    PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet101_ibn_a.pth.tar"
 
   HEADS:
     NUM_CLASSES: 1041
-
-  LOSSES:
-    TRI:
-      MARGIN: 0.3
 
 DATASETS:
   NAMES: ("MSMT17",)
@@ -25,4 +23,4 @@ SOLVER:
 TEST:
   EVAL_PERIOD: 5000
 
-OUTPUT_DIR: "logs/msmt17/agw_S50"
+OUTPUT_DIR: "logs/msmt17/agw_R101-ibn"

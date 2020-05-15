@@ -1,0 +1,14 @@
+_BASE_: "../Base-MGN.yml"
+
+MODEL:
+  BACKBONE:
+    PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
+  HEADS:
+    NUM_CLASSES: 751
+
+DATASETS:
+  NAMES: ("Market1501",)
+  TESTS: ("Market1501",)
+
+
+OUTPUT_DIR: "logs/market/mgn_R50-ibn"
