@@ -208,8 +208,9 @@ class DefaultTrainer(SimpleTrainer):
         data_loader = self.build_train_loader(cfg)
         # For training, wrap with DP. But don't need this for inference.
         model = DataParallel(model)
-        # Monkey-patching with syncBN
-        patch_replication_callback(model)
+        if cfg.MODEL.BACKBONE.NORM == "syncBN":
+            # Monkey-patching with syncBN
+            patch_replication_callback(model)
         model = model.cuda()
         super().__init__(model, data_loader, optimizer)
 
