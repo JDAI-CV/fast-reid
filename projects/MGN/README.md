@@ -50,7 +50,7 @@ sh scripts/train_msmt.sh
 
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
-| BagTricks | ImageNet | 72.2%  | 48.4% | 9.6% |
+| BagTricks | ImageNet | 78.6%  | 56.8% | 12.9% |
 
 
 ```
