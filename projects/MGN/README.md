@@ -1,15 +1,6 @@
 # Learning Discriminative Features with Multiple Granularitiesfor Person Re-Identification
 
-Bag of Tricks and A Strong Baseline for Deep Person Re-identification. CVPRW2019, Oral.
-
-[Hao Luo\*](https://github.com/michuanhaohao) [Youzhi Gu\*](https://github.com/shaoniangu) [Xingyu Liao\*](https://github.com/L1aoXingyu) [Shenqi Lai](https://github.com/xiaolai-sqlai)
-
-A Strong Baseline and Batch Normalization Neck for Deep Person Re-identification. IEEE Transactions on Multimedia (Accepted).
-
-[[Journal Version(TMM)]](https://ieeexplore.ieee.org/document/8930088)
-[[PDF]](http://openaccess.thecvf.com/content_CVPRW_2019/papers/TRMTMCT/Luo_Bag_of_Tricks_and_a_Strong_Baseline_for_Deep_Person_CVPRW_2019_paper.pdf)
-[[Slides]](https://drive.google.com/open?id=1h9SgdJenvfoNp9PTUxPiz5_K5HFCho-V)
-[[Poster]](https://drive.google.com/open?id=1izZYAwylBsrldxSMqHCH432P6hnyh1vR)
+Reproduction of paper:[Learning Discriminative Features with Multiple Granularities for Person Re-Identification](https://arxiv.org/abs/1804.01438v1)
 
 ## Training
 
@@ -23,7 +14,7 @@ For example, to launch a end-to-end baseline training on market1501 dataset on G
 one should excute:
 
 ```bash
-CUDA_VISIBLE_DEVICES=1 python train_net.py --config-file='configs/bagtricks_market1501.yml'
+CUDA_VISIBLE_DEVICES=1 python train_net.py --config-file='configs/mgn_market1501.yml'
 ```
 
 ## Evaluation
@@ -47,13 +38,13 @@ sh scripts/train_msmt.sh
 
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
-| BagTricks | ImageNet | 93.9% | 84.9% | 57.1% |
+| BagTricks | ImageNet | 95.2% | 88.8% | 63.6% |
 
 ### DukeMTMC dataset
 
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
-| BagTricks | ImageNet | 87.1% | 76.4% | 39.2% |
+| BagTricks | ImageNet | 89.0% | 80.8% | 44.9% |
 
 ### MSMT17 dataset
 
