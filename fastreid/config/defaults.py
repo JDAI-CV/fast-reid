@@ -153,6 +153,8 @@ _C.DATASETS = CN()
 _C.DATASETS.NAMES = ("Market1501",)
 # List of the dataset names for testing
 _C.DATASETS.TESTS = ("Market1501",)
+# Combine trainset and testset joint training
+_C.DATASETS.COMBINEALL = False
 
 # -----------------------------------------------------------------------------
 # DataLoader

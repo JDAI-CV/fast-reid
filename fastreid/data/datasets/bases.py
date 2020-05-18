@@ -131,19 +131,10 @@ class Dataset(object):
         """Combines train, query and gallery in a dataset for training."""
         combined = copy.deepcopy(self.train)
 
-        # relabel pids in gallery (query shares the same scope)
-        g_pids = set()
-        for _, pid, _ in self.gallery:
-            if pid in self._junk_pids:
-                continue
-            g_pids.add(pid)
-        pid2label = {pid: i for i, pid in enumerate(g_pids)}
-
         def _combine_data(data):
             for img_path, pid, camid in data:
                 if pid in self._junk_pids:
                     continue
-                pid = pid2label[pid] + self.num_train_pids
                 combined.append((img_path, pid, camid))
 
         _combine_data(self.query)

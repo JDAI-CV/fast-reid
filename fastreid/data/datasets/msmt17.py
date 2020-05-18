@@ -45,7 +45,6 @@ class MSMT17(ImageDataset):
     dataset_url = None
 
     def __init__(self, root='datasets', **kwargs):
-        # self.root = osp.abspath(osp.expanduser(root))
         self.root = root
         self.dataset_dir = self.root
 
@@ -76,6 +75,19 @@ class MSMT17(ImageDataset):
         val = self.process_dir(self.train_dir, self.list_val_path)
         query = self.process_dir(self.test_dir, self.list_query_path)
         gallery = self.process_dir(self.test_dir, self.list_gallery_path)
+
+        num_train_pids = self.get_num_pids(train)
+        query_tmp = []
+        for img_path, pid, camid in query:
+            query_tmp.append((img_path, pid+num_train_pids, camid))
+        del query
+        query = query_tmp
+
+        gallery_temp = []
+        for img_path, pid, camid in gallery:
+            gallery_temp.append((img_path, pid+num_train_pids, camid))
+        del gallery
+        gallery = gallery_temp
 
         # Note: to fairly compare with published methods on the conventional ReID setting,
         #       do not add val images to the training set.
