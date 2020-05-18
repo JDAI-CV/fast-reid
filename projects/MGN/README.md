@@ -54,21 +54,10 @@ sh scripts/train_msmt.sh
 
 
 ```
-@InProceedings{Luo_2019_CVPR_Workshops,
-author = {Luo, Hao and Gu, Youzhi and Liao, Xingyu and Lai, Shenqi and Jiang, Wei},
-title = {Bag of Tricks and a Strong Baseline for Deep Person Re-Identification},
-booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
-month = {June},
-year = {2019}
-}
-
-@ARTICLE{Luo_2019_Strong_TMM, 
-author={H. {Luo} and W. {Jiang} and Y. {Gu} and F. {Liu} and X. {Liao} and S. {Lai} and J. {Gu}}, 
-journal={IEEE Transactions on Multimedia}, 
-title={A Strong Baseline and Batch Normalization Neck for Deep Person Re-identification}, 
-year={2019}, 
-pages={1-1}, 
-doi={10.1109/TMM.2019.2958756}, 
-ISSN={1941-0077}, 
+@article{Wang2018LearningDF,
+  title={Learning Discriminative Features with Multiple Granularities for Person Re-Identification},
+  author={Guanshuo Wang and Yufeng Yuan and Xiong Chen and Jiwei Li and Xi Zhou},
+  journal={Proceedings of the 26th ACM international conference on Multimedia},
+  year={2018}
 }
 ```
