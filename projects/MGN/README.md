@@ -1,4 +1,4 @@
-# Bag of Tricks and A Strong ReID Baseline in FastReID
+# Learning Discriminative Features with Multiple Granularitiesfor Person Re-Identification
 
 Bag of Tricks and A Strong Baseline for Deep Person Re-identification. CVPRW2019, Oral.
 
