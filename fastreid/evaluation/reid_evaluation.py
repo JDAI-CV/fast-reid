@@ -83,7 +83,7 @@ class ReidEvaluator(DatasetEvaluator):
         if self.cfg.TEST.RERANK.ENABLED:
             logger.info("Test with rerank setting")
             k1 = self.cfg.TEST.RERANK.K1
-            k2 = self.cfg.TEST.RERANK.K1
+            k2 = self.cfg.TEST.RERANK.K2
             lambda_value = self.cfg.TEST.RERANK.LAMBDA
             q_q_dist = self.cal_dist(self.cfg.TEST.METRIC, query_features, query_features)
             g_g_dist = self.cal_dist(self.cfg.TEST.METRIC, gallery_features, gallery_features)
