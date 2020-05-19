@@ -3,19 +3,19 @@
 @author:  liaoxingyu
 @contact: sherlockliao01@gmail.com
 """
-import logging
 import copy
+import logging
 from collections import OrderedDict
-from functools import partial
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 
 from .evaluator import DatasetEvaluator
-from .rank import evaluate_rank
-from .rerank import re_ranking
 from .query_expansion import aqe
+from .rank import evaluate_rank
+from .roc import evaluate_roc
+from .rerank import re_ranking
 
 logger = logging.getLogger(__name__)
 
@@ -97,4 +97,6 @@ class ReidEvaluator(DatasetEvaluator):
         self._results['mAP'] = mAP
         self._results['mINP'] = mINP
 
+        auc = evaluate_roc(1 - dist, query_pids, gallery_pids, query_camids, gallery_camids)
+        self._results["AUC"] = auc
         return copy.deepcopy(self._results)

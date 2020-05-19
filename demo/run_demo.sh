@@ -1,4 +1,3 @@
-python demo/visualize_ranking.py --config-file 'logs/market1501/sbs_R50/config.yaml' \
---parallel --vis-label --dataset-name 'Market1501' --output 'logs/test_ranking' \
---opts MODEL.WEIGHTS 'logs/market1501/sbs_R50/model_final.pth'
-
+python demo/visualize_result.py --config-file ''configs/DukeMTMC/sbs_R50.yml'' \
+--parallel --vis-label --dataset-name 'DukeMTMC' --output 'logs/duke_vis' \
+--opts MODEL.WEIGHTS "logs/dukemtmc/sbs_R50_60epoch/model_final.pth"

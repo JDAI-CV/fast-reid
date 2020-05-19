@@ -6,11 +6,11 @@
 
 import os
 
-import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
-from torch import nn
+from scipy.stats import norm
+from sklearn import metrics
 
 from .file_io import PathManager
 
@@ -146,7 +146,6 @@ class Visualizer:
             actmap (bool):
         """
         assert rank_sort in ['ascending', 'descending'], "{} not match [ascending, descending]".format(rank_sort)
-        PathManager.mkdirs(output)
 
         query_indices = np.argsort(self.all_ap)
         if rank_sort == 'descending':   query_indices = query_indices[::-1]
@@ -154,58 +153,85 @@ class Visualizer:
         query_indices = query_indices[:num_vis]
         self.save_rank_result(query_indices, output, max_rank, vis_label, label_sort, actmap)
 
-    def plot_roc_curve(self):
+    def vis_roc_curve(self, output):
+        PathManager.mkdirs(output)
         pos_sim, neg_sim = [], []
         for i, q in enumerate(self.q_pids):
             cmc, sort_idx = self.get_matched_result(i)  # remove same id in same camera
-            for j in range(len(cmc)):
-                if cmc[j] == 1:
-                    pos_sim.append(self.sim[i, sort_idx[j]])
-                else:
-                    neg_sim.append(self.sim[i, sort_idx[j]])
-        fig = plt.figure(figsize=(10, 5))
-        plt.hist(pos_sim, bins=80, alpha=0.7, density=True, color='red', label='positive')
-        plt.hist(neg_sim, bins=80, alpha=0.5, density=True, color='blue', label='negative')
-        plt.xticks(np.arange(-0.3, 0.8, 0.1))
-        plt.title('positive and negative pair distribution')
-        return pos_sim, neg_sim
+            ind_pos = np.where(cmc == 1)[0]
+            q_dist = self.sim[i]
+            pos_sim.extend(q_dist[sort_idx[ind_pos]])
 
-    def plot_camera_dist(self):
-        same_cam, diff_cam = [], []
-        for i, q in enumerate(self.q_pids):
-            q_camid = self.q_camids[i]
+            ind_neg = np.where(cmc == 0)[0]
+            neg_sim.extend(q_dist[sort_idx[ind_neg]])
 
-            order = self.indices[i]
-            same = (self.g_pids[order] == q) & (self.g_camids[order] == q_camid)
-            diff = (self.g_pids[order] == q) & (self.g_camids[order] != q_camid)
-            sameCam_idx = order[same]
-            diffCam_idx = order[diff]
+        pos = 1 - np.array(pos_sim)
+        neg = 1 - np.array(neg_sim)
+        scores = np.hstack((pos, neg))
 
-            same_cam.extend(self.sim[i, sameCam_idx])
-            diff_cam.extend(self.sim[i, diffCam_idx])
+        labels = np.hstack((np.zeros(len(pos)), np.ones(len(neg))))
 
-        fig = plt.figure(figsize=(10, 5))
-        plt.hist(same_cam, bins=80, alpha=0.7, density=True, color='red', label='same camera')
-        plt.hist(diff_cam, bins=80, alpha=0.5, density=True, color='blue', label='diff camera')
-        plt.xticks(np.arange(0.1, 1.0, 0.1))
-        plt.title('positive and negative pair distribution')
-        return fig
+        fpr, tpr, thresholds = metrics.roc_curve(labels, scores)
+        plt.figure()
+        plt.semilogx(fpr, tpr, 'b')
+        filepath = os.path.join(output, "roc.jpg")
+        plt.savefig(filepath)
 
-    def get_actmap(self, features, sz):
-        """
-        :param features: (1, 2048, 16, 8) activation map
-        :return:
-        """
-        features = (features ** 2).sum(1)  # (1, 16, 8)
-        b, h, w = features.size()
-        features = features.view(b, h * w)
-        features = nn.functional.normalize(features, p=2, dim=1)
-        acts = features.view(b, h, w)
-        all_acts = []
-        for i in range(b):
-            act = acts[i].numpy()
-            act = cv2.resize(act, (sz[1], sz[0]))
-            act = 255 * (act - act.max()) / (act.max() - act.min() + 1e-12)
-            act = np.uint8(np.floor(act))
-            all_acts.append(act)
-        return all_acts
+        plt.figure(figsize=(10, 5))
+        n, bins, _ = plt.hist(pos, bins=80, alpha=0.7, density=True, color='red', label='positive')
+        mu = np.mean(pos)
+        sigma = np.std(pos)
+        y = norm.pdf(bins, mu, sigma)  # fitting curve
+        plt.plot(bins, y, 'r--')  # plot y curve
+
+        n, bins, _ = plt.hist(neg, bins=80, alpha=0.5, density=True, color='blue', label='negative')
+        mu = np.mean(neg)
+        sigma = np.std(neg)
+        y = norm.pdf(bins, mu, sigma)  # fitting curve
+        plt.plot(bins, y, 'b--')  # plot y curve
+
+        plt.xticks(np.arange(0, 1.5, 0.1))
+        plt.title('positive and negative pairs distribution')
+        plt.legend(loc='best')
+        filepath = os.path.join(output, "pos_neg_dist.jpg")
+        plt.savefig(filepath)
+
+    # def plot_camera_dist(self):
+    #     same_cam, diff_cam = [], []
+    #     for i, q in enumerate(self.q_pids):
+    #         q_camid = self.q_camids[i]
+    #
+    #         order = self.indices[i]
+    #         same = (self.g_pids[order] == q) & (self.g_camids[order] == q_camid)
+    #         diff = (self.g_pids[order] == q) & (self.g_camids[order] != q_camid)
+    #         sameCam_idx = order[same]
+    #         diffCam_idx = order[diff]
+    #
+    #         same_cam.extend(self.sim[i, sameCam_idx])
+    #         diff_cam.extend(self.sim[i, diffCam_idx])
+    #
+    #     fig = plt.figure(figsize=(10, 5))
+    #     plt.hist(same_cam, bins=80, alpha=0.7, density=True, color='red', label='same camera')
+    #     plt.hist(diff_cam, bins=80, alpha=0.5, density=True, color='blue', label='diff camera')
+    #     plt.xticks(np.arange(0.1, 1.0, 0.1))
+    #     plt.title('positive and negative pair distribution')
+    #     return fig
+
+    # def get_actmap(self, features, sz):
+    #     """
+    #     :param features: (1, 2048, 16, 8) activation map
+    #     :return:
+    #     """
+    #     features = (features ** 2).sum(1)  # (1, 16, 8)
+    #     b, h, w = features.size()
+    #     features = features.view(b, h * w)
+    #     features = nn.functional.normalize(features, p=2, dim=1)
+    #     acts = features.view(b, h, w)
+    #     all_acts = []
+    #     for i in range(b):
+    #         act = acts[i].numpy()
+    #         act = cv2.resize(act, (sz[1], sz[0]))
+    #         act = 255 * (act - act.max()) / (act.max() - act.min() + 1e-12)
+    #         act = np.uint8(np.floor(act))
+    #         all_acts.append(act)
+    #     return all_acts

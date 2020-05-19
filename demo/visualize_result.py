@@ -6,12 +6,11 @@
 
 import argparse
 import logging
-import tqdm
 import sys
-import os
 
 import numpy as np
 import torch
+import tqdm
 from torch.backends import cudnn
 
 sys.path.append('.')
@@ -130,6 +129,10 @@ if __name__ == '__main__':
 
     visualizer = Visualizer(test_loader.loader.dataset)
     visualizer.get_model_output(all_ap, distmat, q_pids, g_pids, q_camids, g_camids)
+
+    logger.info("Saving ROC curve ...")
+    visualizer.vis_roc_curve(args.output)
+
     logger.info("Saving rank list result ...")
     query_indices = visualizer.vis_rank_list(args.output, args.vis_label, args.num_vis,
                                              args.rank_sort, args.label_sort, args.max_rank)
