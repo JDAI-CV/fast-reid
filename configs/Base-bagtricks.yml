@@ -1,8 +1,6 @@
 MODEL:
   META_ARCHITECTURE: "Baseline"
 
-  OPEN_LAYERS: ""
-
   BACKBONE:
     NAME: "build_resnet_backbone"
     NORM: "BN"
