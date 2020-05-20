@@ -19,7 +19,7 @@ def build_reid_train_loader(cfg):
 
     train_items = list()
     for d in cfg.DATASETS.NAMES:
-        dataset = DATASET_REGISTRY.get(d)()
+        dataset = DATASET_REGISTRY.get(d)(combineall=cfg.DATASETS.COMBINEALL)
         dataset.show_train()
         train_items.extend(dataset.train)
 
@@ -76,7 +76,6 @@ def fast_batch_collator(batched_inputs):
     """
     A simple batch collator for most common reid tasks
     """
-
     elem = batched_inputs[0]
     if isinstance(elem, torch.Tensor):
         out = torch.zeros((len(batched_inputs), *elem.size()), dtype=elem.dtype)

@@ -1,0 +1,17 @@
+_BASE_: "../Base-AGW.yml"
+
+MODEL:
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+    DEPTH: 101
+    WITH_IBN: True
+    PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet101_ibn_a.pth.tar"
+
+  HEADS:
+    NUM_CLASSES: 702
+
+DATASETS:
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
+
+OUTPUT_DIR: "logs/dukemtmc/agw_R101-ibn"

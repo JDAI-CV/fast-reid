@@ -21,6 +21,7 @@ from fastreid.data import build_reid_test_loader, build_reid_train_loader
 from fastreid.evaluation import (DatasetEvaluator, ReidEvaluator,
                                  inference_on_dataset, print_csv_format)
 from fastreid.modeling.meta_arch import build_model
+from fastreid.layers.sync_bn import patch_replication_callback
 from fastreid.solver import build_lr_scheduler, build_optimizer
 from fastreid.utils import comm
 from fastreid.utils.checkpoint import Checkpointer
@@ -207,6 +208,9 @@ class DefaultTrainer(SimpleTrainer):
         data_loader = self.build_train_loader(cfg)
         # For training, wrap with DP. But don't need this for inference.
         model = DataParallel(model)
+        if cfg.MODEL.BACKBONE.NORM == "syncBN":
+            # Monkey-patching with syncBN
+            patch_replication_callback(model)
         model = model.cuda()
         super().__init__(model, data_loader, optimizer)
 
