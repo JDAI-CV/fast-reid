@@ -13,7 +13,7 @@ def evaluate_roc(distmat, q_pids, g_pids, q_camids, g_camids):
     Key: for each query identity, its gallery images from the same camera view are discarded.
 
     Args:
-        distmat (np.ndarray): similarity matrix
+        distmat (np.ndarray): cosine distance matrix
     """
     num_q, num_g = distmat.shape
 
@@ -41,10 +41,12 @@ def evaluate_roc(distmat, q_pids, g_pids, q_camids, g_camids):
         ind_neg = np.where(cmc == 0)[0]
         neg.extend(q_dist[sort_idx[ind_neg]])
 
-    pos = 1 - np.array(pos)
-    neg = 1 - np.array(neg)
     scores = np.hstack((pos, neg))
 
     labels = np.hstack((np.zeros(len(pos)), np.ones(len(neg))))
     fpr, tpr, thresholds = metrics.roc_curve(labels, scores)
-    return metrics.auc(fpr, tpr)
+    tprs = []
+    for i in [1e-4, 1e-3, 1e-2]:
+        ind = np.argmin(np.abs(fpr-i))
+        tprs.append(tpr[ind])
+    return tprs
