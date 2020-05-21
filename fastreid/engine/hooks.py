@@ -441,18 +441,18 @@ class FreezeLayer(HookBase):
         self.param_grad = param_grad
 
     def before_step(self):
-        # freeze specific layers
+        # Freeze specific layers
         if self.trainer.iter < self.freeze_iters:
             self.freeze_specific_layer()
 
-        # recover original layers status
+        # Recover original layers status
         elif self.trainer.iter == self.freeze_iters:
             self.open_all_layer()
 
     def freeze_specific_layer(self):
         for layer in self.open_layer_names:
             if not hasattr(self.model, layer):
-                self._logger.info('"{}" is not an attribute of the model, will skip this layer'.format(layer))
+                self._logger.info(f'"{layer}" is not an attribute of the model, will skip this layer')
 
         for name, module in self.model.named_children():
             if name in self.open_layer_names:

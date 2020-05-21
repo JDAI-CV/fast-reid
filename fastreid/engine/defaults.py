@@ -292,8 +292,9 @@ class DefaultTrainer(SimpleTrainer):
                 cfg.TEST.PRECISE_BN.NUM_ITER,
             ))
 
-        if cfg.MODEL.OPEN_LAYERS[0] != '' and cfg.SOLVER.FREEZE_ITERS > 0:
-            logger.info(f"Freeze backbone training for {cfg.SOLVER.FREEZE_ITERS:d} iters")
+        if cfg.MODEL.OPEN_LAYERS != [''] and cfg.SOLVER.FREEZE_ITERS > 0:
+            open_layers = ",".join(cfg.MODEL.OPEN_LAYERS)
+            logger.info(f'Open "{open_layers}" training for {cfg.SOLVER.FREEZE_ITERS:d} iters')
             ret.append(hooks.FreezeLayer(
                 self.model,
                 cfg.MODEL.OPEN_LAYERS,

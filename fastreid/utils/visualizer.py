@@ -5,8 +5,9 @@
 """
 
 import os
-
 import pickle
+import random
+
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
@@ -14,7 +15,6 @@ from scipy.stats import norm
 from sklearn import metrics
 
 from .file_io import PathManager
-import random
 
 
 class Visualizer:
@@ -236,6 +236,7 @@ class Visualizer:
     def load_roc_info(path):
         with open(path, 'rb') as handle: res = pickle.load(handle)
         return res
+
     # def plot_camera_dist(self):
     #     same_cam, diff_cam = [], []
     #     for i, q in enumerate(self.q_pids):
