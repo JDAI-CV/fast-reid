@@ -111,27 +111,27 @@ stronger baseline on top of BoT with tricks:
 
 ### VeRi Baseline
 
-**BoT**:
+**SBS**:
 
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
-| BoT(R50-ibn) | ImageNet | 96.1%  | 78.8% | 43.8% |
+| BoT(R50-ibn) | ImageNet | 97.0%  | 81.3% | 44.9% |
 
 ### VehicleID Baseline
 
 **BoT**: 
-Method: BoT(R50-ibn)
+Method: BoT(R50-ibn+gem pooling+weighted triplet+soft margin)
 
-| Testset size | Pretrained | Rank@1 | mAP | mINP |
+| Testset size | Pretrained | Rank@1 | Rank@5 | mAP |
 | :---: | :---: | :---: |:---: | :---: |
-| Small(800) | ImageNet | 95.5%  | 89.5% | 77.0% |
-| Medium(1600) | ImageNet | 93.8%  | 85.6% | 69.4% |
-| Large(2400) | ImageNet | 93.3%  | 84.1% | 67.4% |
+| Small(800) | ImageNet | 88.0%  | 98.2% | 92.4% |
+| Medium(1600) | ImageNet | 83.0%  | 96.2% | 88.5% |
+| Large(2400) | ImageNet | 80.7%  | 94.4% | 86.4% |
 
 ### VERI-Wild Baseline
 
 **BoT**:
-Method: BoT(R50-ibn)
+Method: BoT(R50-ibn+gem pooling+weighted triplet+soft margin)
 
 | Testset size | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
