@@ -13,15 +13,14 @@ from .build import REID_HEADS_REGISTRY
 class ReductionHead(nn.Module):
     def __init__(self, cfg, in_feat, num_classes, pool_layer=nn.AdaptiveAvgPool2d(1)):
         super().__init__()
-
         reduction_dim = cfg.MODEL.HEADS.REDUCTION_DIM
+        self.neck_feat = cfg.MODEL.HEADS.NECK_FEAT
 
         self.pool_layer = pool_layer
-
         self.bottleneck = nn.Sequential(
             nn.Conv2d(in_feat, reduction_dim, 1, 1, bias=False),
             get_norm(cfg.MODEL.HEADS.NORM, reduction_dim, cfg.MODEL.HEADS.NORM_SPLIT, bias_freeze=True),
-            nn.LeakyReLU(0.1),
+            nn.LeakyReLU(0.1, inplace=True),
             nn.Dropout2d(0.5),
         )
         self.bnneck = get_norm(cfg.MODEL.HEADS.NORM, reduction_dim, cfg.MODEL.HEADS.NORM_SPLIT, bias_freeze=True)
