@@ -10,17 +10,24 @@ Bag of Tricks and A Strong Baseline for Deep Person Re-identification. CVPRW2019
 
 This is a re-implementation of [ReID-Survey with a Powerful AGW Baseline](https://github.com/mangye16/ReID-Survey)
 
+**MGN**:
+
 **SBS**:
 
-stronger baseline on top of BoT with tricks:
+stronger baseline on top of BoT:
+
+Bag of Freebies(BoF):
+
+1. Circle loss
+2. Freeze backbone training
+3. Cutout data augmentation & Auto Augmentation
+4. Cosine annealing learning rate decay
+5. Soft margin triplet loss
+
+Bag of Specials(BoS):
 
 1. Non-local block
 2. GeM pooling
-3. Circle loss
-4. Freeze backbone training
-5. Cutout data augmentation & Auto Augmentation
-6. Cosine annealing learning rate decay
-7. Soft margin triplet loss
 
 ### Market1501 Baselines
 
@@ -51,6 +58,12 @@ stronger baseline on top of BoT with tricks:
 | SBS(S50) | ImageNet | 95.0% | 87.0% | 60.6% |
 | SBS(R101-ibn) | ImageNet | 96.3% | 90.3% | 70.0% |
 
+**MGN**:
+
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| SBS(R50-ibn) | ImageNet | 95.8% | 89.7% | 67.0% |
+
 ### DukeMTMC Baseline
 
 **BoT**:
@@ -80,6 +93,12 @@ stronger baseline on top of BoT with tricks:
 | SBS(S50) | ImageNet | 90.5% | 79.1% | 42.7% |
 | SBS(R101-ibn) | ImageNet | 92.4% | 83.2% | 49.7% |
 
+**MGN**:
+
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| SBS(R50-ibn) | ImageNet | 91.6% | 82.1% | 46.7% |
+
 ### MSMT17 Baseline
 
 **BoT**:
@@ -108,6 +127,14 @@ stronger baseline on top of BoT with tricks:
 | SBS(R50-ibn) | ImageNet | 84.0% | 61.2% | 15.5% |
 | SBS(S50) | ImageNet | 82.6% | 58.2% | 13.2% |
 | SBS(R101-ibn) | ImageNet | 85.1% | 63.3% | 16.6% |
+
+**MGN**:
+
+| Method | Pretrained | Rank@1 | mAP | mINP |
+| :---: | :---: | :---: |:---: | :---: |
+| SBS(R50) | ImageNet | 82.9% | 61.2% | 14.9% |
+| SBS(R50-ibn) | ImageNet | 85.1% | 65.4% | 18.4% |
+| SBS(R101-ibn) | ImageNet | 96.3% | 90.3% | 70.0% |
 
 ### VeRi Baseline
 
