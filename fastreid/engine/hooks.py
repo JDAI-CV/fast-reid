@@ -399,7 +399,7 @@ class PreciseBN(HookBase):
             return
 
         if self._data_iter is None:
-            self._data_iter = self._data_loader
+            self._data_iter = iter(self._data_loader)
 
         def data_loader():
             for num_iter in itertools.count(1):
@@ -408,7 +408,7 @@ class PreciseBN(HookBase):
                         "Running precise-BN ... {}/{} iterations.".format(num_iter, self._num_iter)
                     )
                 # This way we can reuse the same iterator
-                yield self._data_iter.next()
+                yield next(self._data_iter)
 
         with EventStorage():  # capture events in a new storage to discard them
             self._logger.info(

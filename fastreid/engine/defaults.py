@@ -121,8 +121,6 @@ class DefaultPredictor:
     If you'd like to do anything more fancy, please refer to its source code
     as examples to build and use the model manually.
     Attributes:
-        metadata (Metadata): the metadata of the underlying dataset, obtained from
-            cfg.DATASETS.TEST.
     Examples:
     .. code-block:: python
         pred = DefaultPredictor(cfg)
@@ -220,7 +218,7 @@ class DefaultTrainer(SimpleTrainer):
         self.checkpointer = Checkpointer(
             # Assume you want to save checkpoints together with logs/statistics
             model,
-            self.data_loader.loader.dataset,
+            self.data_loader.dataset,
             cfg.OUTPUT_DIR,
             optimizer=optimizer,
             scheduler=self.scheduler,
@@ -248,10 +246,6 @@ class DefaultTrainer(SimpleTrainer):
         # The checkpoint stores the training iteration that just finished, thus we start
         # at the next iteration (or iter zero if there's no checkpoint).
         self.start_iter += 1
-
-        # Prefetcher need to reset because it will preload a batch data, but we have updated
-        # dataset person identity dictionary.
-        self.data_loader.reset()
 
     def build_hooks(self):
         """

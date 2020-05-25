@@ -58,35 +58,3 @@ class CommDataset(Dataset):
 
     def update_pid_dict(self, pid_dict):
         self.pid_dict = pid_dict
-
-
-class data_prefetcher():
-    def __init__(self, cfg, loader):
-        self.loader = loader
-        self.loader_iter = iter(loader)
-
-        # normalize
-        assert len(cfg.MODEL.PIXEL_MEAN) == len(cfg.MODEL.PIXEL_STD)
-        num_channels = len(cfg.MODEL.PIXEL_MEAN)
-        self.mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(1, num_channels, 1, 1)
-        self.std = torch.tensor(cfg.MODEL.PIXEL_STD).view(1, num_channels, 1, 1)
-
-        self.preload()
-
-    def reset(self):
-        self.loader_iter = iter(self.loader)
-        self.preload()
-
-    def preload(self):
-        try:
-            self.next_inputs = next(self.loader_iter)
-        except StopIteration:
-            self.next_inputs = None
-            return
-
-        self.next_inputs["images"].sub_(self.mean).div_(self.std)
-
-    def next(self):
-        inputs = self.next_inputs
-        self.preload()
-        return inputs

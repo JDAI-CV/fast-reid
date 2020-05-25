@@ -107,7 +107,7 @@ if __name__ == '__main__':
     feats = []
     pids = []
     camids = []
-    for (feat, pid, camid) in tqdm.tqdm(demo.run_on_loader(test_loader), total=len(test_loader.loader)):
+    for (feat, pid, camid) in tqdm.tqdm(demo.run_on_loader(test_loader), total=len(test_loader)):
         feats.append(feat)
         pids.extend(pid)
         camids.extend(camid)
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     logger.info("Computing APs for all query images ...")
     cmc, all_ap, all_inp = evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids)
 
-    visualizer = Visualizer(test_loader.loader.dataset)
+    visualizer = Visualizer(test_loader.dataset)
     visualizer.get_model_output(all_ap, distmat, q_pids, g_pids, q_camids, g_camids)
 
     logger.info("Saving ROC curve ...")

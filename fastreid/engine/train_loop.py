@@ -180,6 +180,7 @@ class SimpleTrainer(TrainerBase):
 
         self.model = model
         self.data_loader = data_loader
+        self._data_loader_iter = iter(data_loader)
         self.optimizer = optimizer
 
     def run_step(self):
@@ -191,7 +192,7 @@ class SimpleTrainer(TrainerBase):
         """
         If your want to do something with the data, you can wrap the dataloader.
         """
-        data = self.data_loader.next()
+        data = next(self._data_loader_iter)
         data_time = time.perf_counter() - start
         """
         If your want to do something with the heads, you can wrap the model.

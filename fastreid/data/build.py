@@ -9,7 +9,7 @@ from torch._six import container_abcs, string_classes, int_classes
 from torch.utils.data import DataLoader
 
 from . import samplers
-from .common import CommDataset, data_prefetcher
+from .common import CommDataset
 from .datasets import DATASET_REGISTRY
 from .transforms import build_transforms
 
@@ -41,7 +41,7 @@ def build_reid_train_loader(cfg):
         batch_sampler=batch_sampler,
         collate_fn=fast_batch_collator,
     )
-    return data_prefetcher(cfg, train_loader)
+    return train_loader
 
 
 def build_reid_test_loader(cfg, dataset_name):
@@ -62,7 +62,7 @@ def build_reid_test_loader(cfg, dataset_name):
         batch_sampler=batch_sampler,
         num_workers=num_workers,
         collate_fn=fast_batch_collator)
-    return data_prefetcher(cfg, test_loader), len(dataset.query)
+    return test_loader, len(dataset.query)
 
 
 def trivial_batch_collator(batch):
