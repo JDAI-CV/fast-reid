@@ -148,12 +148,13 @@ Bag of Specials(BoS):
 
 **BoT**: 
 Method: BoT(R50-ibn+gem pooling+weighted triplet+soft margin)
+Test protocol: 10-fold cross-validation
 
 | Testset size | Pretrained | Rank@1 | Rank@5 |
 | :---: | :---: | :---: |:---: |
-| Small(800) | ImageNet | 88.0%  | 98.2% |
-| Medium(1600) | ImageNet | 83.0%  | 96.2% |
-| Large(2400) | ImageNet | 80.7%  | 94.4% |
+| Small(800) | ImageNet | 86.6%  | 97.9% |
+| Medium(1600) | ImageNet | 82.9%  | 96.0% |
+| Large(2400) | ImageNet | 80.6%  | 93.9% |
 
 ### VERI-Wild Baseline
 
