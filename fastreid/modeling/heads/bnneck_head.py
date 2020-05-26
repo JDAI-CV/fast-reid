@@ -37,7 +37,7 @@ class BNneckHead(nn.Module):
         """
         global_feat = self.pool_layer(features)
         bn_feat = self.bnneck(global_feat)
-        bn_feat = Flatten()(bn_feat)
+        bn_feat = bn_feat[..., 0, 0]
         # Evaluation
         if not self.training:
             return bn_feat
@@ -48,7 +48,7 @@ class BNneckHead(nn.Module):
             pred_class_logits = self.classifier(bn_feat, targets)
 
         if self.neck_feat == "before":
-            feat = Flatten()(global_feat)
+            feat = global_feat[..., 0, 0]
         elif self.neck_feat == "after":
             feat = bn_feat
         else:
