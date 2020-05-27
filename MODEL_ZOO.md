@@ -142,12 +142,12 @@ Bag of Specials(BoS):
 
 | Method | Pretrained | Rank@1 | mAP | mINP |
 | :---: | :---: | :---: |:---: | :---: |
-| BoT(R50-ibn) | ImageNet | 97.0%  | 81.3% | 44.9% |
+| BoT(R50-ibn) | ImageNet | 97.0%  | 81.9% | 46.3% |
 
 ### VehicleID Baseline
 
-**BoT**: 
-Method: BoT(R50-ibn+gem pooling+weighted triplet+soft margin)
+**BoT**:   
+Method: BoT(R50-ibn+gem pooling+weighted triplet+soft margin)  
 Test protocol: 10-fold cross-validation
 
 | Testset size | Pretrained | Rank@1 | Rank@5 |
@@ -158,7 +158,7 @@ Test protocol: 10-fold cross-validation
 
 ### VERI-Wild Baseline
 
-**BoT**:
+**BoT**:  
 Method: BoT(R50-ibn+gem pooling+weighted triplet+soft margin)
 
 | Testset size | Pretrained | Rank@1 | mAP | mINP |
