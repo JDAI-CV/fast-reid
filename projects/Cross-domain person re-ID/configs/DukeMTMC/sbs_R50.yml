@@ -1,0 +1,26 @@
+_BASE_: "../Base-Strongerbaseline.yml"
+
+MODEL:
+  WEIGHTS: "logs/dukemtmc/sbs_R50_woREA384//model_final.pth"
+  HEADS:
+    NUM_CLASSES: 702
+
+DATASETS:
+  NAMES: ("DukeMTMC",)
+  TESTS: ("MSMT17",)
+
+INPUT:
+  SIZE_TRAIN: [384, 128]
+  SIZE_TEST: [384, 128]
+  DO_AUTOAUG: True
+  REA:
+    ENABLED: False
+    PROB: 0.5
+    MEAN: [123.675, 116.28, 103.53]
+
+TEST:
+  PRECISE_BN:
+    ENABLED: True
+    DATASET: 'MSMT17'
+
+OUTPUT_DIR: "logs/dukemtmc/sbs_R50_woREA384"
