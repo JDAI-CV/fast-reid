@@ -37,10 +37,6 @@ class FeatureExtractionDemo(object):
         else:
             self.predictor = DefaultPredictor(cfg, device)
 
-        num_channels = len(cfg.MODEL.PIXEL_MEAN)
-        self.mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(1, num_channels, 1, 1)
-        self.std = torch.tensor(cfg.MODEL.PIXEL_STD).view(1, num_channels, 1, 1)
-
     def run_on_image(self, original_image):
         """
 
@@ -56,21 +52,18 @@ class FeatureExtractionDemo(object):
         # Apply pre-processing to image.
         image = cv2.resize(original_image, tuple(self.cfg.INPUT.SIZE_TEST[::-1]), interpolation=cv2.INTER_CUBIC)
         image = torch.as_tensor(image.astype("float32").transpose(2, 0, 1))[None]
-        image.sub_(self.mean).div_(self.std)
         predictions = self.predictor(image)
         return predictions
 
     def run_on_loader(self, data_loader):
-
-        image_gen = self._image_from_loader(data_loader)
         if self.parallel:
             buffer_size = self.predictor.default_buffer_size
 
             batch_data = deque()
 
-            for cnt, batch in enumerate(image_gen):
+            for cnt, batch in enumerate(data_loader):
                 batch_data.append(batch)
-                self.predictor.put(batch['images'])
+                self.predictor.put(batch["images"])
 
                 if cnt >= buffer_size:
                     batch = batch_data.popleft()
@@ -82,16 +75,9 @@ class FeatureExtractionDemo(object):
                 predictions = self.predictor.get()
                 yield predictions, batch['targets'].numpy(), batch['camid'].numpy()
         else:
-            for batch in image_gen:
-                predictions = self.predictor(batch['images'])
+            for batch in data_loader:
+                predictions = self.predictor(batch["images"])
                 yield predictions, batch['targets'].numpy(), batch['camid'].numpy()
-
-    def _image_from_loader(self, data_loader):
-        data_loader.reset()
-        data = data_loader.next()
-        while data is not None:
-            yield data
-            data = data_loader.next()
 
 
 class AsyncPredictor:

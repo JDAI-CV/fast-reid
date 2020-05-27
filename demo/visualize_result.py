@@ -107,7 +107,7 @@ if __name__ == '__main__':
     feats = []
     pids = []
     camids = []
-    for (feat, pid, camid) in tqdm.tqdm(demo.run_on_loader(test_loader), total=len(test_loader.loader)):
+    for (feat, pid, camid) in tqdm.tqdm(demo.run_on_loader(test_loader), total=len(test_loader)):
         feats.append(feat)
         pids.extend(pid)
         camids.extend(camid)
@@ -121,17 +121,18 @@ if __name__ == '__main__':
     g_camids = np.asarray(camids[num_query:])
 
     # compute cosine distance
-    distmat = torch.mm(q_feat, g_feat.t())
+    distmat = 1 - torch.mm(q_feat, g_feat.t())
     distmat = distmat.numpy()
 
     logger.info("Computing APs for all query images ...")
-    cmc, all_ap, all_inp = evaluate_rank(1 - distmat, q_pids, g_pids, q_camids, g_camids)
+    cmc, all_ap, all_inp = evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids)
 
-    visualizer = Visualizer(test_loader.loader.dataset)
+    visualizer = Visualizer(test_loader.dataset)
     visualizer.get_model_output(all_ap, distmat, q_pids, g_pids, q_camids, g_camids)
 
     logger.info("Saving ROC curve ...")
-    visualizer.vis_roc_curve(args.output)
+    fpr, tpr, pos, neg = visualizer.vis_roc_curve(args.output)
+    visualizer.save_roc_info(args.output, fpr, tpr, pos, neg)
 
     logger.info("Saving rank list result ...")
     query_indices = visualizer.vis_rank_list(args.output, args.vis_label, args.num_vis,

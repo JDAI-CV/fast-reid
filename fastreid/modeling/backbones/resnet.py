@@ -17,11 +17,10 @@ from fastreid.layers import (
     Non_local,
     get_norm,
 )
-
 from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
-
 from .build import BACKBONE_REGISTRY
 
+logger = logging.getLogger(__name__)
 model_urls = {
     18: 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
     34: 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
@@ -30,7 +29,44 @@ model_urls = {
     152: 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
 }
 
-__all__ = ['ResNet', 'Bottleneck']
+__all__ = ['ResNet', 'BasicBlock', 'Bottleneck']
+
+
+class BasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, inplanes, planes, bn_norm, num_splits, with_ibn=False, with_se=False,
+                 stride=1, downsample=None, reduction=16):
+        super(BasicBlock, self).__init__()
+        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = get_norm(bn_norm, planes, num_splits)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = get_norm(bn_norm, planes, num_splits)
+        self.relu = nn.ReLU(inplace=True)
+        if with_se:
+            self.se = SELayer(planes, reduction)
+        else:
+            self.se = nn.Identity()
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        identity = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.relu(out)
+
+        return out
 
 
 class Bottleneck(nn.Module):
@@ -83,18 +119,17 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
     def __init__(self, last_stride, bn_norm, num_splits, with_ibn, with_se, with_nl, block, layers, non_layers):
-        scale = 64
-        self.inplanes = scale
+        self.inplanes = 64
         super().__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = get_norm(bn_norm, 64, num_splits)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, scale, layers[0], 1, bn_norm, num_splits, with_ibn, with_se)
-        self.layer2 = self._make_layer(block, scale * 2, layers[1], 2, bn_norm, num_splits, with_ibn, with_se)
-        self.layer3 = self._make_layer(block, scale * 4, layers[2], 2, bn_norm, num_splits, with_ibn, with_se)
-        self.layer4 = self._make_layer(block, scale * 8, layers[3], last_stride, bn_norm, num_splits, with_se=with_se)
+        self.layer1 = self._make_layer(block, 64, layers[0], 1, bn_norm, num_splits, with_ibn, with_se)
+        self.layer2 = self._make_layer(block, 128, layers[1], 2, bn_norm, num_splits, with_ibn, with_se)
+        self.layer3 = self._make_layer(block, 256, layers[2], 2, bn_norm, num_splits, with_ibn, with_se)
+        self.layer4 = self._make_layer(block, 512, layers[3], last_stride, bn_norm, num_splits, with_se=with_se)
 
         self.random_init()
 
@@ -213,27 +248,38 @@ def build_resnet_backbone(cfg):
     with_nl = cfg.MODEL.BACKBONE.WITH_NL
     depth = cfg.MODEL.BACKBONE.DEPTH
 
-    num_blocks_per_stage = {50: [3, 4, 6, 3], 101: [3, 4, 23, 3], 152: [3, 8, 36, 3], }[depth]
-    nl_layers_per_stage = {50: [0, 2, 3, 0], 101: [0, 2, 9, 0]}[depth]
-    model = ResNet(last_stride, bn_norm, num_splits, with_ibn, with_se, with_nl, Bottleneck,
+    num_blocks_per_stage = {34: [3, 4, 6, 3], 50: [3, 4, 6, 3], 101: [3, 4, 23, 3], 152: [3, 8, 36, 3], }[depth]
+    nl_layers_per_stage = {34: [3, 4, 6, 3], 50: [0, 2, 3, 0], 101: [0, 2, 9, 0]}[depth]
+    block = {34: BasicBlock, 50: Bottleneck, 101: Bottleneck}[depth]
+    model = ResNet(last_stride, bn_norm, num_splits, with_ibn, with_se, with_nl, block,
                    num_blocks_per_stage, nl_layers_per_stage)
     if pretrain:
         if not with_ibn:
-            # original resnet
-            state_dict = model_zoo.load_url(model_urls[depth])
+            try:
+                state_dict = torch.load(pretrain_path)['model']
+                # Remove module.encoder in name
+                new_state_dict = {}
+                for k in state_dict:
+                    new_k = '.'.join(k.split('.')[2:])
+                    if new_k in model.state_dict() and (model.state_dict()[new_k].shape == state_dict[k].shape):
+                        new_state_dict[new_k] = state_dict[k]
+                state_dict = new_state_dict
+                logger.info(f"Loading pretrained model from {pretrain_path}")
+            except FileNotFoundError or KeyError:
+                # original resnet
+                state_dict = model_zoo.load_url(model_urls[depth])
+                logger.info("Loading pretrained model from torchvision")
         else:
-            # ibn resnet
-            state_dict = torch.load(pretrain_path)['state_dict']
-            # remove module in name
+            state_dict = torch.load(pretrain_path)['state_dict']  # ibn-net
+            # Remove module in name
             new_state_dict = {}
             for k in state_dict:
                 new_k = '.'.join(k.split('.')[1:])
                 if new_k in model.state_dict() and (model.state_dict()[new_k].shape == state_dict[k].shape):
                     new_state_dict[new_k] = state_dict[k]
             state_dict = new_state_dict
-
+            logger.info(f"Loading pretrained model from {pretrain_path}")
         incompatible = model.load_state_dict(state_dict, strict=False)
-        logger = logging.getLogger(__name__)
         if incompatible.missing_keys:
             logger.info(
                 get_missing_parameters_message(incompatible.missing_keys)

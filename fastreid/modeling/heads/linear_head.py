@@ -29,7 +29,7 @@ class LinearHead(nn.Module):
         See :class:`ReIDHeads.forward`.
         """
         global_feat = self.pool_layer(features)
-        global_feat = Flatten()(global_feat)
+        global_feat = global_feat[..., 0, 0]
         if not self.training:
             return global_feat
         # training

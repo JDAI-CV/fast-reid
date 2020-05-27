@@ -5,4 +5,3 @@
 """
 
 from .build import build_reid_train_loader, build_reid_test_loader
-from .build import data_prefetcher

@@ -21,6 +21,8 @@ from .build import META_ARCH_REGISTRY
 class MGN(nn.Module):
     def __init__(self, cfg):
         super().__init__()
+        self.register_buffer("pixel_mean", torch.Tensor(cfg.MODEL.PIXEL_MEAN).view(1, -1, 1, 1))
+        self.register_buffer("pixel_std", torch.Tensor(cfg.MODEL.PIXEL_STD).view(1, -1, 1, 1))
         self._cfg = cfg
 
         # backbone
@@ -108,17 +110,21 @@ class MGN(nn.Module):
         pool_reduce.apply(weights_init_kaiming)
         return pool_reduce
 
-    def forward(self, inputs):
-        images = inputs["images"]
+    @property
+    def device(self):
+        return self.pixel_mean.device
 
+    def forward(self, batched_inputs):
         if not self.training:
-            pred_feat = self.inference(images)
+            pred_feat = self.inference(batched_inputs)
             try:
-                return pred_feat, inputs["targets"], inputs["camid"]
+                return pred_feat, batched_inputs["targets"], batched_inputs["camid"]
             except KeyError:
                 return pred_feat
 
-        targets = inputs["targets"]
+        images = self.preprocess_image(batched_inputs)
+        targets = batched_inputs["targets"].long()
+
         # Training
         features = self.backbone(images)  # (bs, 2048, 16, 8)
 
@@ -164,8 +170,9 @@ class MGN(nn.Module):
                 torch.cat((b31_pool_feat, b32_pool_feat, b33_pool_feat), dim=1)), \
                targets
 
-    def inference(self, images):
+    def inference(self, batched_inputs):
         assert not self.training
+        images = self.preprocess_image(batched_inputs)
         features = self.backbone(images)  # (bs, 2048, 16, 8)
 
         # branch1
@@ -207,6 +214,15 @@ class MGN(nn.Module):
         pred_feat = torch.cat([b1_pool_feat, b2_pool_feat, b3_pool_feat, b21_pool_feat,
                                b22_pool_feat, b31_pool_feat, b32_pool_feat, b33_pool_feat], dim=1)
         return pred_feat
+
+    def preprocess_image(self, batched_inputs):
+        """
+        Normalize and batch the input images.
+        """
+        # images = [x["images"] for x in batched_inputs]
+        images = batched_inputs["images"]
+        images.sub_(self.pixel_mean).div_(self.pixel_std)
+        return images
 
     def losses(self, outputs):
         logits, feats, targets = outputs

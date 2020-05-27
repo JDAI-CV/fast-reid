@@ -5,7 +5,7 @@
 """
 
 from fastreid.layers import *
-from fastreid.utils.weight_init import weights_init_kaiming
+from fastreid.utils.weight_init import weights_init_kaiming, weights_init_classifier
 from .build import REID_HEADS_REGISTRY
 
 
@@ -22,12 +22,14 @@ class BNneckHead(nn.Module):
         # identity classification layer
         if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
             self.classifier = nn.Linear(in_feat, num_classes, bias=False)
+            self.classifier.apply(weights_init_classifier)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'arcface':
             self.classifier = Arcface(cfg, in_feat)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'circle':
             self.classifier = Circle(cfg, in_feat)
         else:
             self.classifier = nn.Linear(in_feat, num_classes, bias=False)
+            self.classifier.apply(weights_init_classifier)
 
     def forward(self, features, targets=None):
         """
@@ -35,7 +37,7 @@ class BNneckHead(nn.Module):
         """
         global_feat = self.pool_layer(features)
         bn_feat = self.bnneck(global_feat)
-        bn_feat = Flatten()(bn_feat)
+        bn_feat = bn_feat[..., 0, 0]
         # Evaluation
         if not self.training:
             return bn_feat
@@ -46,7 +48,7 @@ class BNneckHead(nn.Module):
             pred_class_logits = self.classifier(bn_feat, targets)
 
         if self.neck_feat == "before":
-            feat = Flatten()(global_feat)
+            feat = global_feat[..., 0, 0]
         elif self.neck_feat == "after":
             feat = bn_feat
         else:

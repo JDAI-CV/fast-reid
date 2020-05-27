@@ -97,19 +97,16 @@ def inference_on_dataset(model, data_loader, evaluator):
     """
     # num_devices = torch.distributed.get_world_size() if torch.distributed.is_initialized() else 1
     logger = logging.getLogger(__name__)
-    logger.info("Start inference on {} images".format(len(data_loader.loader.dataset)))
+    logger.info("Start inference on {} images".format(len(data_loader.dataset)))
 
-    total = len(data_loader.loader)  # inference data loader must have a fixed length
-    data_loader.reset()
+    total = len(data_loader)  # inference data loader must have a fixed length
     evaluator.reset()
 
     num_warmup = min(5, total - 1)
     start_time = time.perf_counter()
     total_compute_time = 0
     with inference_context(model), torch.no_grad():
-        idx = 0
-        inputs = data_loader.next()
-        while inputs is not None:
+        for idx, inputs in enumerate(data_loader):
             if idx == num_warmup:
                 start_time = time.perf_counter()
                 total_compute_time = 0
@@ -122,19 +119,18 @@ def inference_on_dataset(model, data_loader, evaluator):
             evaluator.process(outputs)
 
             idx += 1
-            inputs = data_loader.next()
-            # iters_after_start = idx + 1 - num_warmup * int(idx >= num_warmup)
-            # seconds_per_img = total_compute_time / iters_after_start
-            # if idx >= num_warmup * 2 or seconds_per_img > 30:
-            #     total_seconds_per_img = (time.perf_counter() - start_time) / iters_after_start
-            #     eta = datetime.timedelta(seconds=int(total_seconds_per_img * (total - idx - 1)))
-            #     log_every_n_seconds(
-            #         logging.INFO,
-            #         "Inference done {}/{}. {:.4f} s / img. ETA={}".format(
-            #             idx + 1, total, seconds_per_img, str(eta)
-            #         ),
-            #         n=30,
-            #     )
+            iters_after_start = idx + 1 - num_warmup * int(idx >= num_warmup)
+            seconds_per_img = total_compute_time / iters_after_start
+            if idx >= num_warmup * 2 or seconds_per_img > 30:
+                total_seconds_per_img = (time.perf_counter() - start_time) / iters_after_start
+                eta = datetime.timedelta(seconds=int(total_seconds_per_img * (total - idx - 1)))
+                log_every_n_seconds(
+                    logging.INFO,
+                    "Inference done {}/{}. {:.4f} s / img. ETA={}".format(
+                        idx + 1, total, seconds_per_img, str(eta)
+                    ),
+                    n=30,
+                )
 
     # Measure the time only for this worker (before the synchronization barrier)
     total_time = time.perf_counter() - start_time
