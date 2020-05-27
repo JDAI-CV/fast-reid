@@ -8,12 +8,14 @@ Lingxiao He, Xingyu Liao
 **Foreground-aware Pyramid Reconstruction for Alignment-free Occluded Person Re-identification**
 
 Lingxiao He, Xingyu Liao
+
 [[`ICCV2019`](http://openaccess.thecvf.com/content_ICCV_2019/papers/He_Foreground-Aware_Pyramid_Reconstruction_for_Alignment-Free_Occluded_Person_Re-Identification_ICCV_2019_paper.pdf)] [[`BibTeX`](#CitingFPR)]
 
 ## Installation
+
 First install FastReID following the .. and then put Partial Datasets in directory datasets. The whole framework of FastReID-DSR is
 <div align="center">
-  < img src="https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSherlockWorkspace%2F1nVTE3Sn5c.jpg?alt=media&token=e7e9fcfc-4fc1-49c8-bcf4-c007028fdd25" width="700px" />
+<img src="https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSherlockWorkspace%2F1nVTE3Sn5c.jpg?alt=media&token=e7e9fcfc-4fc1-49c8-bcf4-c007028fdd25" width="700px" />
 </div>
 
 and the detail you can refer to
