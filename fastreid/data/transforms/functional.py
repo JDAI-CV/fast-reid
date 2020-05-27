@@ -178,6 +178,7 @@ augmentations_reid = [
     autocontrast, equalize, posterize, shear_x, shear_y,
     color, contrast, brightness, sharpness
 ]
+
 augmentations = [
     autocontrast, equalize, posterize, rotate, solarize, shear_x, shear_y,
     translate_x, translate_y

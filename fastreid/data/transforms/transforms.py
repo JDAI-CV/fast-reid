@@ -13,7 +13,7 @@ from collections import deque
 import numpy as np
 from PIL import Image
 
-from .functional import to_tensor, augmentations_all
+from .functional import to_tensor, augmentations_reid
 
 
 class ToTensor(object):
@@ -178,7 +178,7 @@ class AugMix(object):
         self.mixture_width = mixture_width
         self.mixture_depth = mixture_depth
         self.severity = severity
-        self.aug_list = augmentations_all
+        self.aug_list = augmentations_reid
 
     def __call__(self, image):
         """Perform AugMix augmentations and compute mixture.
