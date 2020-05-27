@@ -1,4 +1,4 @@
-# Towards Person ReID in Similar Clothings with Head-shoulder Information
+# Black Re-ID: A Head-shoulder Descriptor for the Challenging Problem of Person Re-Identification
 
 
 ## Training
@@ -23,24 +23,36 @@ CUDA_VISIBLE_DEVICES=gpus python train_net.py --config-file <configs.yaml> --eva
 
 | Method | Pretrained | Rank@1 | mAP |
 | :---: | :---: | :---: |:---: | 
-| HSE | ImageNet | 95.8% | 89.5% | 
+| ResNet50 | ImageNet | 93.3% | 84.6% | 
+| MGN | ImageNet | 95.7% | 86.9% | 
+| HAA (ResNet50) | ImageNet | 95% | 87.1% | 
+| HAA (MGN) | ImageNet | 95.8% | 89.5% | 
 
 ### DukeMTMC dataset
 
 | Method | Pretrained | Rank@1 | mAP | 
 | :---: | :---: | :---: |:---: | 
-| HSE | ImageNet | 89% | 80.4% | 
+| ResNet50 | ImageNet | 86.2% | 75.3% | 
+| MGN | ImageNet | 88.7% | 78.4% | 
+| HAA (ResNet50) | ImageNet | 87.7% | 75.7% | 
+| HAA (MGN) | ImageNet | 89% | 80.4% | 
 
-### Black_reid dataset
-
-| Method | Pretrained | Rank@1 | mAP | 
-| :---: | :---: | :---: |:---: | 
-| HSE | ImageNet | 90.9%  | 83.8% | 
-
-### White_reid dataset
+### Black-reid black group
 
 | Method | Pretrained | Rank@1 | mAP | 
 | :---: | :---: | :---: |:---: | 
-| HSE | ImageNet | 95.3%  | 88.1% | 
+| ResNet50 | ImageNet | 80.9% | 70.8% | 
+| MGN | ImageNet | 86.7% | 79.1% | 
+| HAA (ResNet50) | ImageNet | 86.7% | 79% | 
+| HAA (MGN) | ImageNet | 91.0%  | 83.8% | 
+
+### White_reid whilte group
+
+| Method | Pretrained | Rank@1 | mAP | 
+| :---: | :---: | :---: |:---: | 
+| ResNet50 | ImageNet | 89.5% | 75.8% | 
+| MGN | ImageNet | 94.3% | 85.8% | 
+| HAA (ResNet50) | ImageNet | 93.5% | 84.4% | 
+| HSE (MGN) | ImageNet | 95.3%  | 88.1% | 
 
 
