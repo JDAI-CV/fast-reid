@@ -23,7 +23,7 @@ from predictor import FeatureExtractionDemo
 from fastreid.utils.visualizer import Visualizer
 
 cudnn.benchmark = True
-logger = logging.getLogger('fastreid')
+logger = logging.getLogger('fastreid.visualize_result')
 
 
 def setup_cfg(args):
