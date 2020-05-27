@@ -1,6 +1,5 @@
 # Black Re-ID: A Head-shoulder Descriptor for the Challenging Problem of Person Re-Identification
 
-
 ## Training
 
 To train a model, run
@@ -46,7 +45,7 @@ CUDA_VISIBLE_DEVICES=gpus python train_net.py --config-file <configs.yaml> --eva
 | HAA (ResNet50) | ImageNet | 86.7% | 79% | 
 | HAA (MGN) | ImageNet | 91.0%  | 83.8% | 
 
-### White_reid whilte group
+### White-reid white group
 
 | Method | Pretrained | Rank@1 | mAP | 
 | :---: | :---: | :---: |:---: | 
