@@ -14,6 +14,6 @@ class PartialBaseline(Baseline):
     def losses(self, outputs):
         pred_logits, global_feat, fore_pred_logits, fore_feat, targets = outputs
         loss_dict = {}
-        loss_dict.update(reid_losses(self._cfg, pred_logits, global_feat, targets, 'avg_branch'))
-        loss_dict.update(reid_losses(self._cfg, fore_pred_logits, fore_feat, targets, 'fore_branch'))
+        loss_dict.update(reid_losses(self._cfg, pred_logits, global_feat, targets, 'avg_branch_'))
+        loss_dict.update(reid_losses(self._cfg, fore_pred_logits, fore_feat, targets, 'fore_branch_'))
         return loss_dict

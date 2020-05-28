@@ -14,9 +14,9 @@ import torch.nn.functional as F
 from fastreid.evaluation.evaluator import DatasetEvaluator
 from fastreid.evaluation.rank import evaluate_rank
 from fastreid.evaluation.roc import evaluate_roc
-from .dsr_distance import get_dsr_dist
+from .dsr_distance import compute_dsr_dist
 
-logger = logging.getLogger('fastreid.' + __name__)
+logger = logging.getLogger('fastreid.partialreid.dsr_evaluation')
 
 
 class DsrEvaluator(DatasetEvaluator):
@@ -39,7 +39,7 @@ class DsrEvaluator(DatasetEvaluator):
         self.camids = []
 
     def process(self, outputs):
-        self.features.append(outputs[0][0].cpu())
+        self.features.append(F.normalize(outputs[0][0]).cpu())
         outputs1 = F.normalize(outputs[0][1].data).cpu().numpy()
         self.spatial_features.append(outputs1)
         self.scores.append(outputs[0][2])
@@ -61,18 +61,14 @@ class DsrEvaluator(DatasetEvaluator):
         gallery_pids = np.asarray(self.pids[self._num_query:])
         gallery_camids = np.asarray(self.camids[self._num_query:])
 
-        self._results = OrderedDict()
-        query_features = F.normalize(query_features, dim=1)
-        gallery_features = F.normalize(gallery_features, dim=1)
         dist = 1 - torch.mm(query_features, gallery_features.t()).numpy()
-
+        logger.info("Testing without DSR setting")
+        self._results = OrderedDict()
         if self.cfg.TEST.DSR.ENABLED:
-            dsr_dist = get_dsr_dist(spatial_features[:self._num_query], spatial_features[self._num_query:], dist,
-                                    scores[:self._num_query])
-            logger.info("Test with DSR setting")
-            lamb = self.cfg.TEST.DSR.LAMB
-
-            dist = (1 - lamb) * dist + lamb * dsr_dist
+            topk = self.cfg.TEST.DSR.TOPK
+            dist = compute_dsr_dist(spatial_features[:self._num_query], spatial_features[self._num_query:], dist,
+                                    scores[:self._num_query], topk)
+            logger.info("Testing with DSR setting")
 
         cmc, all_AP, all_INP = evaluate_rank(dist, query_pids, gallery_pids, query_camids, gallery_camids)
         mAP = np.mean(all_AP)

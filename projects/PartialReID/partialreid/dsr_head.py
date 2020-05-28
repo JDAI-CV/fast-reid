@@ -6,9 +6,8 @@
 
 import torch
 import torch.nn.functional as F
-from torch import nn
 
-from fastreid.layers import get_norm, Arcface, Circle, Flatten
+from fastreid.layers import *
 from fastreid.modeling.heads.build import REID_HEADS_REGISTRY
 from fastreid.utils.weight_init import weights_init_classifier, weights_init_kaiming
 
@@ -35,15 +34,16 @@ class OcclusionUnit(nn.Module):
         SpatialFeatAll = torch.cat((Feat1, Feat2, Feat3, Feat4), 2)
         SpatialFeatAll = SpatialFeatAll.transpose(1, 2)  # shape: [n, c, m]
         y = self.mask_layer(SpatialFeatAll)
-        mask_weight = y[:, :, 0]
+        mask_weight = torch.sigmoid(y[:, :, 0])
+
         mask_score = F.normalize(mask_weight[:, :48], p=1, dim=1)
         mask_weight_norm = F.normalize(mask_weight, p=1, dim=1)
-
         mask_score = mask_score.unsqueeze(1)
 
         SpaFeat1 = SpaFeat1.transpose(1, 2)
         SpaFeat1 = SpaFeat1.transpose(2, 3)  # shape: [n, h, w, c]
         SpaFeat1 = SpaFeat1.view((SpaFeat1.size(0), SpaFeat1.size(1) * SpaFeat1.size(2), -1))  # shape: [n, h*w, c]
+
         global_feats = mask_score.matmul(SpaFeat1).view(SpaFeat1.shape[0], -1, 1, 1)
         return global_feats, mask_weight, mask_weight_norm
 
@@ -63,6 +63,7 @@ class DSRHead(nn.Module):
 
         self.bnneck = get_norm(cfg.MODEL.HEADS.NORM, in_feat, cfg.MODEL.HEADS.NORM_SPLIT, bias_freeze=True)
         self.bnneck.apply(weights_init_kaiming)
+
         self.bnneck_occ = get_norm(cfg.MODEL.HEADS.NORM, in_feat, cfg.MODEL.HEADS.NORM_SPLIT, bias_freeze=True)
         self.bnneck_occ.apply(weights_init_kaiming)
 
@@ -101,16 +102,15 @@ class DSRHead(nn.Module):
 
         foreground_feat, mask_weight, mask_weight_norm = self.occ_unit(features)
         bn_foreground_feat = self.bnneck_occ(foreground_feat)
-        bn_foreground_feat = Flatten()(bn_foreground_feat)
+        bn_foreground_feat = bn_foreground_feat[..., 0, 0]
 
         # Evaluation
         if not self.training:
             return bn_foreground_feat, SpatialFeatAll, mask_weight_norm
-
         # Training
         global_feat = self.pool_layer(features)
         bn_feat = self.bnneck(global_feat)
-        bn_feat = Flatten()(bn_feat)
+        bn_feat = bn_feat[..., 0, 0]
 
         try:
             pred_class_logits = self.classifier(bn_feat)
@@ -118,4 +118,4 @@ class DSRHead(nn.Module):
         except TypeError:
             pred_class_logits = self.classifier(bn_feat, targets)
             fore_pred_class_legits = self.classifier_occ(bn_foreground_feat, targets)
-        return pred_class_logits, Flatten()(global_feat), fore_pred_class_legits, Flatten()(foreground_feat), targets
+        return pred_class_logits, global_feat[..., 0, 0], fore_pred_class_legits, foreground_feat[..., 0, 0], targets
