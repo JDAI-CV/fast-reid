@@ -47,3 +47,16 @@ class GeneralizedMeanPoolingP(GeneralizedMeanPooling):
     def __init__(self, norm=3, output_size=1, eps=1e-6):
         super(GeneralizedMeanPoolingP, self).__init__(norm, output_size, eps)
         self.p = nn.Parameter(torch.ones(1) * norm)
+
+
+class AdaptiveAvgMaxPool2d(nn.Module):
+    def __init__(self, output_size):
+        super(AdaptiveAvgMaxPool2d, self).__init__()
+        self.output_size = output_size
+
+    def forward(self, x):
+        x_max = F.adaptive_avg_pool2d(x, self.output_size)
+        x_avg = F.adaptive_max_pool2d(x, self.output_size)
+        x = x_max + x_avg
+        return x
+

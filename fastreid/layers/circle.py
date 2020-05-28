@@ -15,17 +15,13 @@ from fastreid.utils.one_hot import one_hot
 
 
 class Circle(nn.Module):
-    def __init__(self, cfg, in_feat):
+    def __init__(self, cfg, in_feat, num_classes):
         super().__init__()
-        self._num_classes = cfg.MODEL.HEADS.NUM_CLASSES
+        self._num_classes = num_classes
         self._s = cfg.MODEL.HEADS.SCALE
         self._m = cfg.MODEL.HEADS.MARGIN
 
         self.weight = Parameter(torch.Tensor(self._num_classes, in_feat))
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
     def forward(self, features, targets):
         sim_mat = F.linear(F.normalize(features), F.normalize(self.weight))

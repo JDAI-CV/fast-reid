@@ -20,16 +20,15 @@ class BNneckHead(nn.Module):
         self.bnneck.apply(weights_init_kaiming)
 
         # identity classification layer
-        if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
-            self.classifier = nn.Linear(in_feat, num_classes, bias=False)
-            self.classifier.apply(weights_init_classifier)
-        elif cfg.MODEL.HEADS.CLS_LAYER == 'arcface':
-            self.classifier = Arcface(cfg, in_feat)
-        elif cfg.MODEL.HEADS.CLS_LAYER == 'circle':
-            self.classifier = Circle(cfg, in_feat)
+        cls_type = cfg.MODEL.HEADS.CLS_LAYER
+        if cls_type == 'linear':    self.classifier = nn.Linear(in_feat, num_classes, bias=False)
+        elif cls_type == 'arcface': self.classifier = Arcface(cfg, in_feat, num_classes)
+        elif cls_type == 'circle':  self.classifier = Circle(cfg, in_feat, num_classes)
         else:
-            self.classifier = nn.Linear(in_feat, num_classes, bias=False)
-            self.classifier.apply(weights_init_classifier)
+            raise KeyError(f"{cls_type} is invalid, please choose from "
+                           f"'linear', 'arcface' and 'circle'.")
+
+        self.classifier.apply(weights_init_classifier)
 
     def forward(self, features, targets=None):
         """
@@ -39,18 +38,13 @@ class BNneckHead(nn.Module):
         bn_feat = self.bnneck(global_feat)
         bn_feat = bn_feat[..., 0, 0]
         # Evaluation
-        if not self.training:
-            return bn_feat
+        if not self.training: return bn_feat
         # Training
-        try:
-            pred_class_logits = self.classifier(bn_feat)
-        except TypeError:
-            pred_class_logits = self.classifier(bn_feat, targets)
+        try:              pred_class_logits = self.classifier(bn_feat)
+        except TypeError: pred_class_logits = self.classifier(bn_feat, targets)
 
-        if self.neck_feat == "before":
-            feat = global_feat[..., 0, 0]
-        elif self.neck_feat == "after":
-            feat = bn_feat
+        if self.neck_feat == "before":  feat = global_feat[..., 0, 0]
+        elif self.neck_feat == "after": feat = bn_feat
         else:
             raise KeyError("MODEL.HEADS.NECK_FEAT value is invalid, must choose from ('after' & 'before')")
         return pred_class_logits, feat, targets

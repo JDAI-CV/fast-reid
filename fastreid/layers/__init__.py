@@ -13,7 +13,7 @@ from .non_local import Non_local
 from .se_layer import SELayer
 from .frn import FRN, TLU
 from .activation import *
-from .gem_pool import GeneralizedMeanPoolingP
+from .gem_pool import GeneralizedMeanPoolingP, AdaptiveAvgMaxPool2d
 from .arcface import Arcface
 from .circle import Circle
 from .splat import SplAtConv2d

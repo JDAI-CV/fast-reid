@@ -8,7 +8,7 @@ import copy
 import torch
 from torch import nn
 
-from fastreid.layers import GeneralizedMeanPoolingP, get_norm
+from fastreid.layers import GeneralizedMeanPoolingP, get_norm, AdaptiveAvgMaxPool2d
 from fastreid.modeling.backbones import build_backbone
 from fastreid.modeling.backbones.resnet import Bottleneck
 from fastreid.modeling.heads import build_reid_heads
@@ -50,14 +50,15 @@ class MGN(nn.Module):
             Bottleneck(2048, 512, bn_norm, num_splits, False, with_se))
         res_p_conv5.load_state_dict(backbone.layer4.state_dict())
 
-        if cfg.MODEL.HEADS.POOL_LAYER == 'avgpool':
-            pool_layer = nn.AdaptiveAvgPool2d(1)
-        elif cfg.MODEL.HEADS.POOL_LAYER == 'maxpool':
-            pool_layer = nn.AdaptiveMaxPool2d(1)
-        elif cfg.MODEL.HEADS.POOL_LAYER == 'gempool':
-            pool_layer = GeneralizedMeanPoolingP()
+        pool_type = cfg.MODEL.HEADS.POOL_LAYER
+        if pool_type == 'avgpool':      pool_layer = nn.AdaptiveAvgPool2d(1)
+        elif pool_type == 'maxpool':    pool_layer = nn.AdaptiveMaxPool2d(1)
+        elif pool_type == 'gempool':    pool_layer = GeneralizedMeanPoolingP()
+        elif pool_type == "avgmaxpool": pool_layer = AdaptiveAvgMaxPool2d(1)
+        elif pool_type == "identity":   pool_layer = nn.Identity()
         else:
-            pool_layer = nn.Identity()
+            raise KeyError(f"{pool_type} is invalid, please choose from "
+                           f"'avgpool', 'maxpool', 'gempool', 'avgmaxpool' and 'identity'.")
 
         # head
         in_feat = cfg.MODEL.HEADS.IN_FEAT
@@ -117,10 +118,8 @@ class MGN(nn.Module):
     def forward(self, batched_inputs):
         if not self.training:
             pred_feat = self.inference(batched_inputs)
-            try:
-                return pred_feat, batched_inputs["targets"], batched_inputs["camid"]
-            except KeyError:
-                return pred_feat
+            try:             return pred_feat, batched_inputs["targets"], batched_inputs["camid"]
+            except KeyError: return pred_feat
 
         images = self.preprocess_image(batched_inputs)
         targets = batched_inputs["targets"].long()

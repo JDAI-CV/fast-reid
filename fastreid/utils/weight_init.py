@@ -4,6 +4,7 @@
 @contact: liaoxingyu5@jd.com
 """
 
+import math
 from torch import nn
 
 __all__ = [
@@ -34,3 +35,5 @@ def weights_init_classifier(m):
         nn.init.normal_(m.weight, std=0.001)
         if m.bias is not None:
             nn.init.constant_(m.bias, 0.0)
+    elif classname.find("Arcface") and classname.find("Circle") != -1:
+        nn.init.kaiming_uniform_(m.weight, a=math.sqrt(5))
