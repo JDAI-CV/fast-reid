@@ -156,27 +156,94 @@ Bag of Specials(BoS):
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:| 
-| BoT(R50-ibn) | ImageNet | 97.0%  | 81.9% | 46.3% | -|
+| [BoT(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/VeRi/sbs_R50-ibn.yml) | ImageNet | 97.0%  | 81.9% | 46.3% | -|
 
 ### VehicleID Baseline
 
-**BoT**:
-Method: BoT(R50-ibn+gem pooling+weighted triplet+soft margin)  
-Test protocol: 10-fold cross-validation
+**BoT**:  
+Test protocol: 10-fold cross-validation; trained on 4 NVIDIA P40 GPU.
 
-| Testset size | Pretrained | Rank@1 | Rank@5 | download |
-| :---: | :---: | :---: |:---: | :---:|
-| Small(800) | ImageNet | 86.6%  | 97.9% | -|
-| Medium(1600) | ImageNet | 82.9%  | 96.0% | -|
-| Large(2400) | ImageNet | 80.6%  | 93.9% | -|
+<table>
+<thead>
+  <tr>
+    <th rowspan="3" align="center">Method</th>
+    <th rowspan="3" align="center">Pretrained</th>
+    <th colspan="6" align="center">Testset size</th>
+    <th rowspan="3" align="center">download</th>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">Small</td>
+    <td colspan="2" align="center">Medium</td>
+    <td colspan="2" align="center">Large</td>
+  </tr>
+  <tr>
+    <td align="center">Rank@1</td>
+    <td align="center">Rank@5</td>
+    <td align="center">Rank@1</td>
+    <td align="center">Rank@5</td>
+    <td align="center">Rank@1</td>
+    <td align="center">Rank@5</td>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td nowrap align="center"><a href="https://github.com/JDAI-CV/fast-reid/blob/master/configs/VehicleID/bagtricks_R50-ibn.yml">BoT(R50-ibn)</a></td>
+    <td align="center">ImageNet</td>
+    <td align="center">86.6%</td>
+    <td align="center">97.9%</td>
+    <td align="center">82.9%</td>
+    <td align="center">96.0%</td>
+    <td align="center">80.6%</td>
+    <td align="center">93.9%</td>
+    <td align="center">-</td>
+  </tr>
+</tbody>
+</table>
 
 ### VERI-Wild Baseline
 
 **BoT**:  
-Method: BoT(R50-ibn+gem pooling+weighted triplet+soft margin)
+Test protocol: Trained on 4 NVIDIA P40 GPU.
 
-| Testset size | Pretrained | Rank@1 | mAP | mINP | download |
-| :---: | :---: | :---: |:---: | :---: | :---:|
-| Small(3000) | ImageNet | 96.4%  | 87.7% | 69.2% | -|
-| Medium(5000) | ImageNet | 95.1%  | 83.5% | 61.2% | -|
-| Large(10000) | ImageNet | 92.5%  | 77.3% | 49.8% | -|
+<table>
+<thead>
+  <tr>
+    <th rowspan="3" align="center"> Method</th>
+    <th rowspan="3" align="center">Pretrained</th>
+    <th colspan="9" align="center">Testset size</th>
+    <th rowspan="3" align="center">download</th>
+  </tr>
+  <tr>
+    <td colspan="3" align="center">Small</td>
+    <td colspan="3" align="center">Medium</td>
+    <td colspan="3" align="center">Large</td>
+  </tr>
+  <tr>
+    <td align="center">Rank@1</td>
+    <td align="center">mAP</td>
+    <td align="center">mINP</td>
+    <td align="center">Rank@1</td>
+    <td align="center">mAP</td>
+    <td align="center">mINP</td>
+    <td align="center">Rank@1</td>
+    <td align="center">mAP</td>
+    <td align="center">mINP</td>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td nowrap align="center"><a href="https://github.com/JDAI-CV/fast-reid/blob/master/configs/VERIWild/bagtricks_R50-ibn.yml">BoT(R50-ibn)</a></td>
+    <td align="center">ImageNet</td>
+    <td align="center">96.4%</td>
+    <td align="center">87.7%</td>
+    <td align="center">69.2%</td>
+    <td align="center">95.1%</td>
+    <td align="center">83.5%</td>
+    <td align="center">61.2%</td>
+    <td align="center">92.5%</td>
+    <td align="center">77.3%</td>
+    <td align="center">49.8%</td>
+    <td align="center">-</td>
+  </tr>
+</tbody>
+</table>
