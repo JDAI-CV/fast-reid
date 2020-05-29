@@ -26,3 +26,7 @@ Learn more at out [documentation](). And see [projects/](https://github.com/JDAI
 ## Model Zoo and Baselines
 
 We provide a large set of baseline results and trained models available for download in the [Fastreid Model Zoo](https://github.com/JDAI-CV/fast-reid/blob/master/MODEL_ZOO.md).
+
+## License
+
+Fastreid is released under the [Apache 2.0 license](https://github.com/JDAI-CV/fast-reid/blob/master/LICENSE).
