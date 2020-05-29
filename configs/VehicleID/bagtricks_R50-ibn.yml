@@ -1,0 +1,38 @@
+_BASE_: "../Base-bagtricks.yml"
+
+INPUT:
+  SIZE_TRAIN: [256, 256]
+  SIZE_TEST: [256, 256]
+
+MODEL:
+  BACKBONE:
+    WITH_IBN: True
+    PRETRAIN_PATH: '/export2/home/zjk/pretrain_models/resnet50_ibn_a.pth.tar'
+  HEADS:
+    NUM_CLASSES: 13164
+    POOL_LAYER: gempool
+  LOSSES:
+    TRI:
+      HARD_MINING: False
+      MARGIN: 0.0
+
+DATASETS:
+  NAMES: ("VehicleID",)
+  TESTS: ("SmallVehicleID", "MediumVehicleID", "LargeVehicleID",)
+
+SOLVER:
+  BIAS_LR_FACTOR: 1.
+
+  IMS_PER_BATCH: 512
+  MAX_ITER: 28600
+  STEPS: [8800, 19800]
+  WARMUP_ITERS: 2200
+
+  LOG_PERIOD: 220
+  CHECKPOINT_PERIOD: 8800
+
+TEST:
+  EVAL_PERIOD: 2200
+  IMS_PER_BATCH: 1024
+
+OUTPUT_DIR: "logs/vehicleid/bagtricks_R50-ibn_4gpu"
