@@ -36,10 +36,11 @@ class CommDataset(Dataset):
     def __getitem__(self, index):
         img_path, pid, camid = self.img_items[index]
         img = read_image(img_path)
-        if self.transform is not None:
-            img = self.transform(img)
-        if self.relabel:
-            pid = self.pid_dict[pid]
+
+        if self.transform is not None: img = self.transform(img)
+
+        if self.relabel: pid = self.pid_dict[pid]
+
         return {
             'images': img,
             'targets': pid,
@@ -50,10 +51,9 @@ class CommDataset(Dataset):
     @staticmethod
     def get_pids(file_path, pid):
         """ Suitable for muilti-dataset training """
-        if 'cuhk03' in file_path:
-            prefix = 'cuhk'
-        else:
-            prefix = file_path.split('/')[1]
+        if 'cuhk03' in file_path: prefix = 'cuhk'
+        else:                     prefix = file_path.split('/')[1]
+
         return prefix + '_' + str(pid)
 
     def update_pid_dict(self, pid_dict):
