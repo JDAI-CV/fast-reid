@@ -242,6 +242,12 @@ class DefaultTrainer(SimpleTrainer):
         # The checkpoint stores the training iteration that just finished, thus we start
         # at the next iteration (or iter zero if there's no checkpoint).
         checkpoint = self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume)
+
+        # Reinitialize dataloader iter because when we update dataset person identity dict
+        # to resume training, DataLoader won't update this dictionary when using multiprocess
+        # because of the function scope.
+        self._data_loader_iter = iter(self.data_loader)
+
         self.start_iter = checkpoint.get("iteration", -1) if resume else -1
         # The checkpoint stores the training iteration that just finished, thus we start
         # at the next iteration (or iter zero if there's no checkpoint).
