@@ -17,6 +17,7 @@ from fastreid.utils.one_hot import one_hot
 class Arcface(nn.Module):
     def __init__(self, cfg, in_feat, num_classes):
         super().__init__()
+        self.in_feat = in_feat
         self._num_classes = num_classes
         self._s = cfg.MODEL.HEADS.SCALE
         self._m = cfg.MODEL.HEADS.MARGIN
@@ -40,3 +41,8 @@ class Arcface(nn.Module):
         pred_class_logits *= self._s
 
         return pred_class_logits
+
+    def extra_repr(self):
+        return 'in_features={}, num_classes={}, scale={}, margin={}'.format(
+            self.in_feat, self._num_classes, self._s, self._m
+        )
