@@ -19,6 +19,13 @@ First install FastReID following the .. and then put Partial Datasets in directo
 </div>
 
 and the detail you can refer to
+## Datasets
+
+PartialREID---gallery: 300 images of 60 ids, query: 300 images of 60 ids
+
+PartialiLIDS---gallery: 238 images of 119 ids, query: 238 images of 119 ids
+
+OccludedREID---gallery: 1,000 images of 200 ids, query: 1,000 images of 200 ids
 
 ## Training and Evaluation
 
