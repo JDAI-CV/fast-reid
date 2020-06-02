@@ -8,7 +8,7 @@ This directory contains:
 
 ## Tutorial
 
-This is a tiny example steps for convert baseline `meta_arch` to Caffe model, if you want to convert more complext architecture, you need to customize more things.
+This is a tiny example for converting fastreid-baseline in `meta_arch` to Caffe model, if you want to convert more complex architecture, you need to customize more things.
 
 1. Change `preprocess_image` in `fastreid/modeling/meta_arch/baseline.py` as below
 
@@ -99,4 +99,4 @@ This is a tiny example steps for convert baseline `meta_arch` to Caffe model, if
 
 ## Acknowledgements
 
-Thank to [CPFLAME](https://github.com/CPFLAME), [](), [YuxiangJohn](https://github.com/YuxiangJohn) and []() at JDAI Model Acceleration Group for help in PyTorch to Caffe model converting.
+Thank to [CPFLAME](https://github.com/CPFLAME), [gcong18](https://github.com/gcong18), [YuxiangJohn](https://github.com/YuxiangJohn) and [wiggin66](https://github.com/wiggin66) at JDAI Model Acceleration Group for help in PyTorch to Caffe model converting.
