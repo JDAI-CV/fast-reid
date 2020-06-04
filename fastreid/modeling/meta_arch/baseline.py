@@ -48,7 +48,7 @@ class Baseline(nn.Module):
             pred_feat = self.inference(batched_inputs)
             try:
                 return pred_feat, batched_inputs["targets"], batched_inputs["camid"]
-            except KeyError:
+            except Exception:
                 return pred_feat
 
         images = self.preprocess_image(batched_inputs)
