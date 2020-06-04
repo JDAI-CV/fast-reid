@@ -245,7 +245,8 @@ class CUHK03(ImageDataset):
             'num_gallery_pids': gallery_info[1],
             'num_gallery_imgs': gallery_info[2]
         }]
-        write_json(split, self.split_new_det_json_path)
+        with open(self.split_new_det_json_path, 'w') as out_file:
+            json.dump(split, out_file)
 
         print('Creating new split for labeled images (767/700) ...')
         train_info, query_info, gallery_info = _extract_new_split(
@@ -263,4 +264,5 @@ class CUHK03(ImageDataset):
             'num_gallery_pids': gallery_info[1],
             'num_gallery_imgs': gallery_info[2]
         }]
-        write_json(split, self.split_new_lab_json_path)
+        with open(self.split_new_lab_json_path, 'w') as out_file:
+            json.dump(split, out_file)
