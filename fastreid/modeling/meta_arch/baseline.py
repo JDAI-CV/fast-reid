@@ -46,10 +46,8 @@ class Baseline(nn.Module):
     def forward(self, batched_inputs):
         if not self.training:
             pred_feat = self.inference(batched_inputs)
-            try:
-                return pred_feat, batched_inputs["targets"], batched_inputs["camid"]
-            except Exception:
-                return pred_feat
+            try:              return pred_feat, batched_inputs["targets"], batched_inputs["camid"]
+            except Exception: return pred_feat
 
         images = self.preprocess_image(batched_inputs)
         targets = batched_inputs["targets"].long()
@@ -71,6 +69,7 @@ class Baseline(nn.Module):
         """
         # images = [x["images"] for x in batched_inputs]
         images = batched_inputs["images"]
+        # images = batched_inputs
         images.sub_(self.pixel_mean).div_(self.pixel_std)
         return images
 
