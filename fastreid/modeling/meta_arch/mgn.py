@@ -67,7 +67,7 @@ class MGN(nn.Module):
         self.b1 = nn.Sequential(
             copy.deepcopy(res_conv4), copy.deepcopy(res_g_conv5)
         )
-        self.b1_pool = self._build_pool_reduce(pool_layer, reduce_dim=in_feat)
+        self.b1_pool = self._build_pool_reduce(pool_layer, bn_norm, num_splits, reduce_dim=in_feat)
 
         self.b1_head = build_reid_heads(cfg, in_feat, num_classes, nn.Identity())
 
@@ -75,37 +75,37 @@ class MGN(nn.Module):
         self.b2 = nn.Sequential(
             copy.deepcopy(res_conv4), copy.deepcopy(res_p_conv5)
         )
-        self.b2_pool = self._build_pool_reduce(pool_layer, reduce_dim=in_feat)
+        self.b2_pool = self._build_pool_reduce(pool_layer, bn_norm, num_splits, reduce_dim=in_feat)
         self.b2_head = build_reid_heads(cfg, in_feat, num_classes, nn.Identity())
 
-        self.b21_pool = self._build_pool_reduce(pool_layer, reduce_dim=in_feat)
+        self.b21_pool = self._build_pool_reduce(pool_layer, bn_norm, num_splits, reduce_dim=in_feat)
         self.b21_head = build_reid_heads(cfg, in_feat, num_classes, nn.Identity())
 
-        self.b22_pool = self._build_pool_reduce(pool_layer, reduce_dim=in_feat)
+        self.b22_pool = self._build_pool_reduce(pool_layer, bn_norm, num_splits, reduce_dim=in_feat)
         self.b22_head = build_reid_heads(cfg, in_feat, num_classes, nn.Identity())
 
         # branch3
         self.b3 = nn.Sequential(
             copy.deepcopy(res_conv4), copy.deepcopy(res_p_conv5)
         )
-        self.b3_pool = self._build_pool_reduce(pool_layer, reduce_dim=in_feat)
+        self.b3_pool = self._build_pool_reduce(pool_layer, bn_norm, num_splits, reduce_dim=in_feat)
         self.b3_head = build_reid_heads(cfg, in_feat, num_classes, nn.Identity())
 
-        self.b31_pool = self._build_pool_reduce(pool_layer, reduce_dim=in_feat)
+        self.b31_pool = self._build_pool_reduce(pool_layer, bn_norm, num_splits, reduce_dim=in_feat)
         self.b31_head = build_reid_heads(cfg, in_feat, num_classes, nn.Identity())
 
-        self.b32_pool = self._build_pool_reduce(pool_layer, reduce_dim=in_feat)
+        self.b32_pool = self._build_pool_reduce(pool_layer, bn_norm, num_splits, reduce_dim=in_feat)
         self.b32_head = build_reid_heads(cfg, in_feat, num_classes, nn.Identity())
 
-        self.b33_pool = self._build_pool_reduce(pool_layer, reduce_dim=in_feat)
+        self.b33_pool = self._build_pool_reduce(pool_layer, bn_norm, num_splits, reduce_dim=in_feat)
         self.b33_head = build_reid_heads(cfg, in_feat, num_classes, nn.Identity())
 
     @staticmethod
-    def _build_pool_reduce(pool_layer, input_dim=2048, reduce_dim=256):
+    def _build_pool_reduce(pool_layer, bn_norm, num_splits, input_dim=2048, reduce_dim=256):
         pool_reduce = nn.Sequential(
             pool_layer,
             nn.Conv2d(input_dim, reduce_dim, 1, bias=False),
-            nn.BatchNorm2d(reduce_dim),
+            get_norm(bn_norm, reduce_dim, num_splits),
             nn.ReLU(True),
         )
         pool_reduce.apply(weights_init_kaiming)
@@ -118,8 +118,8 @@ class MGN(nn.Module):
     def forward(self, batched_inputs):
         if not self.training:
             pred_feat = self.inference(batched_inputs)
-            try:             return pred_feat, batched_inputs["targets"], batched_inputs["camid"]
-            except KeyError: return pred_feat
+            try:              return pred_feat, batched_inputs["targets"], batched_inputs["camid"]
+            except Exception: return pred_feat
 
         images = self.preprocess_image(batched_inputs)
         targets = batched_inputs["targets"].long()
