@@ -9,7 +9,7 @@ FastReID is a research platform that implements state-of-the-art re-identificati
 - Can be used as a library to support [different projects](https://github.com/JDAI-CV/fast-reid/tree/master/projects) on top of it. We'll open source more research projects in this way.
 - It trains much faster.
 
-We write a chinese blog about this toolbox in [zhihu](https://zhuanlan.zhihu.com/p/144944220).
+We write a [chinese blog](https://l1aoxingyu.github.io/blogpages/reid/2020/05/29/fastreid.html) about this toolbox.
 
 ## Installation
 
