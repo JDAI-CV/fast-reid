@@ -38,3 +38,14 @@ Fastreid is released under the [Apache 2.0 license](https://github.com/JDAI-CV/f
 ## Citing Fastreid
 
 If you use Fastreid in your research or wish to refer to the baseline results published in the Model Zoo, please use the following BibTeX entry.
+
+```BibTeX
+@misc{he2020fastreid,
+    title={FastReID: A Pytorch Toolbox for Real-world Person Re-identification},
+    author={Lingxiao He and Xingyu Liao and Wu Liu and Xinchen Liu and Peng Cheng and Tao Mei},
+    year={2020},
+    eprint={2006.02631},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV}
+}
+```
