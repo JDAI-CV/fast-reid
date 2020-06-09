@@ -565,7 +565,6 @@ message LayerParameter {
   optional RecurrentParameter recurrent_param = 146;
   optional ReductionParameter reduction_param = 136;
   optional ReLUParameter relu_param = 123;
-  optional ReLU6Parameter relu6_param = 208;
   optional ReshapeParameter reshape_param = 133;
   optional ROIPoolingParameter roi_pooling_param = 8266711; //roi pooling
   optional ScaleParameter scale_param = 142;
@@ -601,7 +600,7 @@ message LayerParameter {
   optional CropParameter crop_param = 167;
   optional DetectionEvaluateParameter detection_evaluate_param = 168;
   optional DetectionOutputParameter detection_output_param = 169;
-  optional NormalizeParameter norm_param = 170;
+  //optional NormalizeParameter normalize_param = 170;
   optional MultiBoxLossParameter multibox_loss_param = 171;
   optional PermuteParameter permute_param = 172;
   optional VideoDataParameter video_data_param = 173;
@@ -633,7 +632,7 @@ message LayerParameter {
   optional UpsampleParameter  upsample_param = 100003;
   optional MatMulParameter matmul_param = 100005;
   optional PassThroughParameter pass_through_param = 100004;
-  //optional NormalizeParameter norm_param = 100001;
+  optional NormalizeParameter norm_param = 100001;
 }
 
 //*********************add by wdd******************
@@ -659,13 +658,13 @@ message PassThroughParameter {
   optional uint32 block_width = 3 [default = 0];
 }
 
-//message NormalizeParameter{
-//optional bool across_spatial = 1 [default = true];
-//optional FillerParameter scale_filler = 2;
-//optional bool channel_shared = 3 [default = true];
-//optional float eps = 4 [default = 1e-10];
-//optional float sqrt_a = 5 [default = 1];
-//}
+message NormalizeParameter{
+optional bool across_spatial = 1 [default = true];
+optional FillerParameter scale_filler = 2;
+optional bool channel_shared = 3 [default = true];
+optional float eps = 4 [default = 1e-10];
+optional float sqrt_a = 5 [default = 1];
+}
 
 
 
@@ -1593,15 +1592,19 @@ message MultiBoxLossParameter {
 }
 
 // Message that stores parameters used by NormalizeLayer
-message NormalizeParameter {
-  optional bool across_spatial = 1 [default = true];
-  // Initial value of scale. Default is 1.0 for all
-  optional FillerParameter scale_filler = 2;
-  // Whether or not scale parameters are shared across channels.
-  optional bool channel_shared = 3 [default = true];
-  // Epsilon for not dividing by zero while normalizing variance
-  optional float eps = 4 [default = 1e-10];
-}
+//message NormalizeParameter {
+//  //optional bool across_spatial = 1 [default = true];
+//  // Initial value of scale. Default is 1.0 for all
+//  //optional FillerParameter scale_filler = 2;
+//  // Whether or not scale parameters are shared across channels.
+//  //optional bool channel_shared = 3 [default = true];
+//  // Epsilon for not dividing by zero while normalizing variance
+//  //optional float eps = 4 [default = 1e-10];
+//  //**************************************************
+//  optional string normalize_type = 1 [default = "L2"];
+//  optional bool fix_gradient = 2 [default = false];
+//  optional bool bp_norm = 3 [default = false];
+//}
 
 message PermuteParameter {
   // The new orders of the axes of data. Notice it should be with
@@ -1781,16 +1784,6 @@ message ReLUParameter {
   // improve neural network acoustic models. In ICML Workshop on Deep Learning
   // for Audio, Speech, and Language Processing.
   optional float negative_slope = 1 [default = 0];
-  enum Engine {
-    DEFAULT = 0;
-    CAFFE = 1;
-    CUDNN = 2;
-  }
-  optional Engine engine = 2 [default = DEFAULT];
-}
-
-// Message that stores parameters used by ReLU6Layer
-message ReLU6Parameter {
   enum Engine {
     DEFAULT = 0;
     CAFFE = 1;

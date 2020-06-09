@@ -71,46 +71,9 @@ class Layer_param():
             conv_param.dilation.extend(pair_reduce(dilation))
         if groups:
             conv_param.group=groups
-            if groups != 1:
-                conv_param.engine = 1
         self.param.convolution_param.CopyFrom(conv_param)
 
-    def norm_param(self, eps):
-        """
-        add a conv_param layer if you spec the layer type "Convolution"
-        Args:
-            num_output: a int
-            kernel_size: int list
-            stride: a int list
-            weight_filler_type: the weight filer type
-            bias_filler_type: the bias filler type
-        Returns:
-        """
-        l2norm_param = pb.NormalizeParameter()
-        l2norm_param.across_spatial = False
-        l2norm_param.channel_shared = False
-        l2norm_param.eps = eps
-        self.param.norm_param.CopyFrom(l2norm_param)
-
-
-    def permute_param(self, order1, order2, order3, order4):
-        """
-        add a conv_param layer if you spec the layer type "Convolution"
-        Args:
-            num_output: a int
-            kernel_size: int list
-            stride: a int list
-            weight_filler_type: the weight filer type
-            bias_filler_type: the bias filler type
-        Returns:
-        """
-        permute_param = pb.PermuteParameter()
-        permute_param.order.extend([order1, order2, order3, order4])
-
-        self.param.permute_param.CopyFrom(permute_param)
-
-
-    def pool_param(self,type='MAX',kernel_size=2,stride=2,pad=None, ceil_mode = True):
+    def pool_param(self,type='MAX',kernel_size=2,stride=2,pad=None, ceil_mode = False):
         pool_param=pb.PoolingParameter()
         pool_param.pool=pool_param.PoolMethod.Value(type)
         pool_param.kernel_size=pair_process(kernel_size)
@@ -158,10 +121,22 @@ class Layer_param():
             if isinstance(size,int):
                 upsample_param.upsample_h = size
             else:
-                upsample_param.upsample_h = size[0] * scale_factor
-                upsample_param.\
-                    upsample_w = size[1] * scale_factor
+                upsample_param.upsample_h = size[0]
+                upsample_param.upsample_w = size[1]
+                #upsample_param.upsample_h = size[0] * scale_factor
+                #upsample_param.upsample_w = size[1] * scale_factor
         self.param.upsample_param.CopyFrom(upsample_param)
+    def interp_param(self,size=None, scale_factor=None):
+        interp_param=pb.InterpParameter()
+        if scale_factor:
+            if isinstance(scale_factor,int):
+                interp_param.zoom_factor = scale_factor
+
+        if size:
+            print('size:', size)
+            interp_param.height = size[0]
+            interp_param.width = size[1]
+        self.param.interp_param.CopyFrom(interp_param)
 
     def add_data(self,*args):
         """Args are data numpy array

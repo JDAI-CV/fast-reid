@@ -7,7 +7,6 @@ from .layer_param import Layer_param
 class _Net(object):
     def __init__(self):
         self.net=pb.NetParameter()
-        self.needChange = {}
 
     def layer_index(self,layer_name):
         # find a layer's index by name. if the layer was found, return the layer position in the net, else return -1.
@@ -40,20 +39,6 @@ class _Net(object):
                 return
         raise(AttributeError, "cannot found layer %s" % str(layer_name))
 
-
-
-    def remove_layer_by_type(self,type_name):
-        for i,layer in enumerate(self.net.layer):
-            if layer.type == type_name:
-                # self.change_layer_bottom(layer.top,layer.bottom)
-                s1 = "\"" + layer.top[0] + "\""
-                s2 = "\"" + layer.bottom[0] + "\""
-                self.needChange[s1]=s2
-                del self.net.layer[i]
-        return
-
-
-
     def get_layer_by_name(self, layer_name):
         # get the layer by layer_name
         for layer in self.net.layer:
@@ -67,10 +52,7 @@ class _Net(object):
         for layer in prototxt.layer:
             del layer.blobs[:]
         with open(path,'w') as f:
-            string = text_format.MessageToString(prototxt)
-            for origin_name in self.needChange.keys():
-                string = string.replace(origin_name,self.needChange[origin_name])
-            f.write(string)
+            f.write(text_format.MessageToString(prototxt))
 
     def layer(self,layer_name):
         return self.get_layer_by_name(layer_name)

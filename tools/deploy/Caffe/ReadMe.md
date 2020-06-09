@@ -1,4 +1,4 @@
-# The Caffe in PytorchToCaffe Provides some convenient API
+# The Caffe in nn_tools Provides some convenient API
 If there are some problem in parse your prototxt or caffemodel, Please replace
 the caffe.proto with your own version and compile it with command
                    `protoc --python_out ./ caffe.proto`
