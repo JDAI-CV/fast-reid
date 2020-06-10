@@ -65,19 +65,9 @@ class DsrEvaluator(DatasetEvaluator):
         logger.info("Testing without DSR setting")
         self._results = OrderedDict()
         if self.cfg.TEST.DSR.ENABLED:
-            max_value = 0
-            fusion_weight = 0
             topk = self.cfg.TEST.DSR.TOPK
-            dsr_dist = compute_dsr_dist(spatial_features[:self._num_query], spatial_features[self._num_query:], dist,
+            dist = compute_dsr_dist(spatial_features[:self._num_query], spatial_features[self._num_query:], dist,
                                     scores[:self._num_query], topk)
-            for i in range(0, 101):
-                lamb = 0.01 * i
-                fusion_dist = (1 - lamb) * dist + lamb * dsr_dist
-                cmc, all_AP, all_INP = evaluate_rank(fusion_dist, query_pids, gallery_pids, query_camids, gallery_camids)
-                if (cmc[0]>max_value):
-                    fusion_weight = lamb
-                    max_value = cmc[0]
-            dist = (1 - fusion_weight) * dist + fusion_weight * dsr_dist
             logger.info("Testing with DSR setting")
 
         cmc, all_AP, all_INP = evaluate_rank(dist, query_pids, gallery_pids, query_camids, gallery_camids)
