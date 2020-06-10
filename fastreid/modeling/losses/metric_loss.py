@@ -164,10 +164,10 @@ class TripletLoss(object):
 
 class CircleLoss(object):
     def __init__(self, cfg):
-        self._scale = cfg.MODEL.LOSSES.SCALE_TRI
+        self._scale = cfg.MODEL.LOSSES.CIRCLE.SCALE
 
-        self.m = 0.25
-        self.s = 128
+        self.m = cfg.MODEL.LOSSES.CIRCLE.MARGIN
+        self.s = cfg.MODEL.LOSSES.CIRCLE.SCALE
 
     def __call__(self, _, global_features, targets):
         global_features = normalize(global_features, axis=-1)
