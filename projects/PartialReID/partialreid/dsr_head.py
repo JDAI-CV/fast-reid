@@ -35,8 +35,9 @@ class OcclusionUnit(nn.Module):
         SpatialFeatAll = SpatialFeatAll.transpose(1, 2)  # shape: [n, c, m]
         y = self.mask_layer(SpatialFeatAll)
         mask_weight = torch.sigmoid(y[:, :, 0])
-
-        mask_score = F.normalize(mask_weight[:, :48], p=1, dim=1)
+        
+        feat_dim = SpaFeat1.size(2) * SpaFeat1.size(3)
+        mask_score = F.normalize(mask_weight[:, :feat_dim], p=1, dim=1)
         mask_weight_norm = F.normalize(mask_weight, p=1, dim=1)
         mask_score = mask_score.unsqueeze(1)
 
