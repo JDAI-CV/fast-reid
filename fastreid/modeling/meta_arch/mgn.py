@@ -8,7 +8,7 @@ import copy
 import torch
 from torch import nn
 
-from fastreid.layers import GeneralizedMeanPoolingP, get_norm, AdaptiveAvgMaxPool2d
+from fastreid.layers import GeneralizedMeanPoolingP, get_norm, AdaptiveAvgMaxPool2d, FastGlobalAvgPool2d
 from fastreid.modeling.backbones import build_backbone
 from fastreid.modeling.backbones.resnet import Bottleneck
 from fastreid.modeling.heads import build_reid_heads
@@ -51,10 +51,10 @@ class MGN(nn.Module):
         res_p_conv5.load_state_dict(backbone.layer4.state_dict())
 
         pool_type = cfg.MODEL.HEADS.POOL_LAYER
-        if pool_type == 'avgpool':      pool_layer = nn.AdaptiveAvgPool2d(1)
+        if pool_type == 'avgpool':      pool_layer = FastGlobalAvgPool2d()
         elif pool_type == 'maxpool':    pool_layer = nn.AdaptiveMaxPool2d(1)
         elif pool_type == 'gempool':    pool_layer = GeneralizedMeanPoolingP()
-        elif pool_type == "avgmaxpool": pool_layer = AdaptiveAvgMaxPool2d(1)
+        elif pool_type == "avgmaxpool": pool_layer = AdaptiveAvgMaxPool2d()
         elif pool_type == "identity":   pool_layer = nn.Identity()
         else:
             raise KeyError(f"{pool_type} is invalid, please choose from "

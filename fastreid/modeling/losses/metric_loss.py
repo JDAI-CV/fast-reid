@@ -167,10 +167,10 @@ class CircleLoss(object):
         self._scale = cfg.MODEL.LOSSES.CIRCLE.SCALE
 
         self.m = cfg.MODEL.LOSSES.CIRCLE.MARGIN
-        self.s = cfg.MODEL.LOSSES.CIRCLE.SCALE
+        self.s = cfg.MODEL.LOSSES.CIRCLE.ALPHA
 
     def __call__(self, _, global_features, targets):
-        global_features = normalize(global_features, axis=-1)
+        global_features = F.normalize(global_features, dim=1)
 
         sim_mat = torch.matmul(global_features, global_features.t())
 

@@ -11,7 +11,7 @@ from fastreid.utils.weight_init import weights_init_classifier
 
 @REID_HEADS_REGISTRY.register()
 class LinearHead(nn.Module):
-    def __init__(self, cfg, in_feat, num_classes, pool_layer=nn.AdaptiveAvgPool2d(1)):
+    def __init__(self, cfg, in_feat, num_classes, pool_layer):
         super().__init__()
         self.pool_layer = pool_layer
 

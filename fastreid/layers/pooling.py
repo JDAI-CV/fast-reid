@@ -9,6 +9,11 @@ import torch.nn.functional as F
 from torch import nn
 
 
+class Flatten(nn.Module):
+    def forward(self, input):
+        return input.view(input.size(0), -1)
+
+
 class GeneralizedMeanPooling(nn.Module):
     r"""Applies a 2D power-average adaptive pooling over an input signal composed of several input planes.
     The function computed is: :math:`f(X) = pow(sum(pow(X, p)), 1/p)`
@@ -50,13 +55,25 @@ class GeneralizedMeanPoolingP(GeneralizedMeanPooling):
 
 
 class AdaptiveAvgMaxPool2d(nn.Module):
-    def __init__(self, output_size):
+    def __init__(self):
         super(AdaptiveAvgMaxPool2d, self).__init__()
-        self.output_size = output_size
+        self.avgpool = FastGlobalAvgPool2d()
 
     def forward(self, x):
-        x_max = F.adaptive_avg_pool2d(x, self.output_size)
-        x_avg = F.adaptive_max_pool2d(x, self.output_size)
+        x_avg = self.avgpool(x, self.output_size)
+        x_max = F.adaptive_max_pool2d(x, 1)
         x = x_max + x_avg
         return x
 
+
+class FastGlobalAvgPool2d(nn.Module):
+    def __init__(self, flatten=False):
+        super(FastGlobalAvgPool2d, self).__init__()
+        self.flatten = flatten
+
+    def forward(self, x):
+        if self.flatten:
+            in_size = x.size()
+            return x.view((in_size[0], in_size[1], -1)).mean(dim=2)
+        else:
+            return x.view(x.size(0), x.size(1), -1).mean(-1).view(x.size(0), x.size(1), 1, 1)

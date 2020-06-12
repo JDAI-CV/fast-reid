@@ -86,7 +86,7 @@ _C.MODEL.LOSSES.CE = CN()
 # if epsilon == 0, it means no label smooth regularization,
 # if epsilon == -1, it means adaptive label smooth regularization
 _C.MODEL.LOSSES.CE.EPSILON = 0.0
-_C.MODEL.LOSSES.CE.ALPHA = 0.3
+_C.MODEL.LOSSES.CE.ALPHA = 0.2
 _C.MODEL.LOSSES.CE.SCALE = 1.0
 
 # Triplet Loss options
@@ -100,7 +100,8 @@ _C.MODEL.LOSSES.TRI.SCALE = 1.0
 # Circle Loss options
 _C.MODEL.LOSSES.CIRCLE = CN()
 _C.MODEL.LOSSES.CIRCLE.MARGIN = 0.25
-_C.MODEL.LOSSES.CIRCLE.SCALE = 128
+_C.MODEL.LOSSES.CIRCLE.ALPHA = 128
+_C.MODEL.LOSSES.CIRCLE.SCALE = 1.0
 
 # Focal Loss options
 _C.MODEL.LOSSES.FL = CN()

@@ -11,7 +11,7 @@ from .build import REID_HEADS_REGISTRY
 
 @REID_HEADS_REGISTRY.register()
 class ReductionHead(nn.Module):
-    def __init__(self, cfg, in_feat, num_classes, pool_layer=nn.AdaptiveAvgPool2d(1)):
+    def __init__(self, cfg, in_feat, num_classes, pool_layer):
         super().__init__()
         reduction_dim = cfg.MODEL.HEADS.REDUCTION_DIM
         self.neck_feat = cfg.MODEL.HEADS.NECK_FEAT
