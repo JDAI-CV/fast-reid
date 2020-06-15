@@ -129,16 +129,12 @@ class TripletLoss(object):
         self._normalize_feature = cfg.MODEL.LOSSES.TRI.NORM_FEAT
         self._scale = cfg.MODEL.LOSSES.TRI.SCALE
         self._hard_mining = cfg.MODEL.LOSSES.TRI.HARD_MINING
-        self._use_cosine_dist = cfg.MODEL.LOSSES.TRI.USE_COSINE_DIST
 
     def __call__(self, _, global_features, targets):
         if self._normalize_feature:
             global_features = normalize(global_features, axis=-1)
 
-        if self._use_cosine_dist:
-            dist_mat = cosine_dist(global_features, global_features)
-        else:
-            dist_mat = euclidean_dist(global_features, global_features)
+        dist_mat = euclidean_dist(global_features, global_features)
 
         N = dist_mat.size(0)
         is_pos = targets.expand(N, N).eq(targets.expand(N, N).t())

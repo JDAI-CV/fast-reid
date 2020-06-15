@@ -30,7 +30,10 @@ def build_reid_train_loader(cfg):
     num_instance = cfg.DATALOADER.NUM_INSTANCE
 
     if cfg.DATALOADER.PK_SAMPLER:
-        data_sampler = samplers.RandomIdentitySampler(train_set.img_items, batch_size, num_instance)
+        if cfg.DATALOADER.NAIVE_WAY:
+            data_sampler = samplers.NaiveIdentitySampler(train_set.img_items, batch_size, num_instance)
+        else:
+            data_sampler = samplers.BalancedIdentitySampler(train_set.img_items, batch_size, num_instance)
     else:
         data_sampler = samplers.TrainingSampler(len(train_set))
     batch_sampler = torch.utils.data.sampler.BatchSampler(data_sampler, batch_size, True)

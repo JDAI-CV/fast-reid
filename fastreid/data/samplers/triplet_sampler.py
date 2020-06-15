@@ -6,6 +6,7 @@
 
 import random
 from collections import defaultdict
+import copy
 
 import numpy as np
 import torch
@@ -17,7 +18,7 @@ def No_index(a, b):
     return [i for i, j in enumerate(a) if j != b]
 
 
-class RandomIdentitySampler(Sampler):
+class BalancedIdentitySampler(Sampler):
     def __init__(self, data_source, batch_size, num_instances=4):
         self.data_source = data_source
         self.batch_size = batch_size
@@ -84,4 +85,67 @@ class RandomIdentitySampler(Sampler):
             if drop_indices == 0:
                 yield from identities
             yield from identities[:-drop_indices]
+
+
+class NaiveIdentitySampler(Sampler):
+    """
+    Randomly sample N identities, then for each identity,
+    randomly sample K instances, therefore batch size is N*K.
+    Args:
+    - data_source (list): list of (img_path, pid, camid).
+    - num_instances (int): number of instances per identity in a batch.
+    - batch_size (int): number of examples in a batch.
+    """
+
+    def __init__(self, data_source, batch_size, num_instances):
+        self.data_source = data_source
+        self.batch_size = batch_size
+        self.num_instances = num_instances
+        self.num_pids_per_batch = batch_size // self.num_instances
+
+        self.index_pid = defaultdict(list)
+        self.pid_cam = defaultdict(list)
+        self.pid_index = defaultdict(list)
+
+        for index, info in enumerate(data_source):
+            pid = info[1]
+            camid = info[2]
+            self.index_pid[index] = pid
+            self.pid_cam[pid].append(camid)
+            self.pid_index[pid].append(index)
+
+        self.pids = list(self.pid_index.keys())
+        self.num_identities = len(self.pids)
+
+        self._seed = 0
+
+    def __iter__(self):
+        np.random.seed(self._seed)
+
+        while True:
+            batch_idxs_dict = defaultdict(list)
+
+            for pid in self.pids:
+                idxs = copy.deepcopy(self.pid_index[pid])
+                if len(idxs) < self.num_instances:
+                    idxs = np.random.choice(idxs, size=self.num_instances, replace=True)
+                random.shuffle(idxs)
+                batch_idxs = []
+                for idx in idxs:
+                    batch_idxs.append(idx)
+                    if len(batch_idxs) == self.num_instances:
+                        batch_idxs_dict[pid].append(batch_idxs)
+                        batch_idxs = []
+
+            avai_pids = copy.deepcopy(self.pids)
+            final_idxs = []
+
+            while len(avai_pids) >= self.num_pids_per_batch:
+                selected_pids = random.sample(avai_pids, self.num_pids_per_batch)
+                for pid in selected_pids:
+                    batch_idxs = batch_idxs_dict[pid].pop(0)
+                    final_idxs.extend(batch_idxs)
+                    if len(batch_idxs_dict[pid]) == 0:
+                        avai_pids.remove(pid)
+            yield from final_idxs
 
