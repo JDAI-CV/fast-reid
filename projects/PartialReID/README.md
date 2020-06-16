@@ -13,7 +13,7 @@ Lingxiao He, Xingyu Liao
 
 ## Installation
 
-First install FastReID following the .. and then put Partial Datasets in directory datasets. The whole framework of FastReID-DSR is
+First install FastReID， and then put Partial Datasets in directory datasets. The whole framework of FastReID-DSR is
 <div align="center">
 <img src="https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSherlockWorkspace%2F1nVTE3Sn5c.jpg?alt=media&token=e7e9fcfc-4fc1-49c8-bcf4-c007028fdd25" width="700px" />
 </div>
