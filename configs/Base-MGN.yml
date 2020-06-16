@@ -33,7 +33,6 @@ MODEL:
       MARGIN: 0.0
       HARD_MINING: True
       NORM_FEAT: False
-      USE_COSINE_DIST: False
       SCALE: 0.20
 
 DATASETS:

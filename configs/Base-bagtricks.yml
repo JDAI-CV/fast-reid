@@ -25,7 +25,6 @@ MODEL:
     TRI:
       MARGIN: 0.3
       HARD_MINING: True
-      USE_COSINE_DIST: False
       SCALE: 1.
 
 DATASETS:
