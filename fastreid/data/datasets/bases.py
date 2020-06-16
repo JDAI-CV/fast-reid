@@ -5,11 +5,8 @@
 """
 
 import copy
-import os
-
-import numpy as np
-import torch
 import logging
+import os
 
 
 class Dataset(object):

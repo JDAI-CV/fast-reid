@@ -4,6 +4,7 @@
 @contact: sherlockliao01@gmail.com
 """
 
+import os
 import torch
 from torch._six import container_abcs, string_classes, int_classes
 from torch.utils.data import DataLoader
@@ -13,13 +14,15 @@ from .common import CommDataset
 from .datasets import DATASET_REGISTRY
 from .transforms import build_transforms
 
+_root = os.getenv("FASTREID_DATASETS", "datasets")
+
 
 def build_reid_train_loader(cfg):
     train_transforms = build_transforms(cfg, is_train=True)
 
     train_items = list()
     for d in cfg.DATASETS.NAMES:
-        dataset = DATASET_REGISTRY.get(d)(combineall=cfg.DATASETS.COMBINEALL)
+        dataset = DATASET_REGISTRY.get(d)(root=_root, combineall=cfg.DATASETS.COMBINEALL)
         dataset.show_train()
         train_items.extend(dataset.train)
 
@@ -50,7 +53,7 @@ def build_reid_train_loader(cfg):
 def build_reid_test_loader(cfg, dataset_name):
     test_transforms = build_transforms(cfg, is_train=False)
 
-    dataset = DATASET_REGISTRY.get(dataset_name)()
+    dataset = DATASET_REGISTRY.get(dataset_name)(root=_root)
     dataset.show_test()
     test_items = dataset.query + dataset.gallery
 

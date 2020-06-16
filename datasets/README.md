@@ -2,9 +2,9 @@
 
 Fastreid has buildin support for a few datasets. The datasets are assumed to exist in a directory specified by the environment variable `FASTREID_DATASETS`. Under this directory, fastreid expects to find datasets in the structure described below.
 
-You can set the location for builtin datasets by `export FASTREID_DATASETS=/path/to/datasets/`. If left unset, the default is `./datasets` relative to your current working directory.
+You can set the location for builtin datasets by `export FASTREID_DATASETS=/path/to/datasets/`. If left unset, the default is `datasets/` relative to your current working directory.
 
-The model zoo contains configs and models that use these buildin datasets.
+The [model zoo](https://github.com/JDAI-CV/fast-reid/blob/master/MODEL_ZOO.md) contains configs and models that use these buildin datasets.
 
 ## Expected dataset structure for Market1501
 
@@ -20,4 +20,24 @@ datasets/
 
 ## Expected dataset structure for DukeMTMC
 
+1. Download datasets to `datasets/`
+2. Extract dataset. The dataset structure would like:
+
+```bash
+datasets/
+    DukeMTMC-reID/
+        bounding_box_train/
+        bounding_box_test/
+```
+
 ## Expected dataset structure for MSMT17
+
+1. Download datasets to `datasets/`
+2. Extract dataset. The dataset structure would like:
+
+```bash
+datasets/
+    MSMT17_V2/
+        mask_train_v2/
+        mask_test_v2/
+```

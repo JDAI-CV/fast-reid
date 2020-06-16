@@ -95,7 +95,7 @@ class Checkpointer(object):
         if not path:
             # no checkpoint provided
             self.logger.info(
-                "No checkpoint found. Initializing model from scratch"
+                "No checkpoint found. Training model from scratch"
             )
             return {}
         self.logger.info("Loading checkpoint from {}".format(path))
