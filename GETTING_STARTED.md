@@ -33,4 +33,4 @@ CUDA_VISIBLE_DEVICES=$gpus ./tools/train_net.py --config-file ./configs/Market15
 --eval-only MODEL.WEIGHTS /path/to/checkpoint_file
 ```
 
-For more options, see `./train_net.py -h`.
+For more options, see `./tools/train_net.py -h`.
