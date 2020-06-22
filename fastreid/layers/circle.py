@@ -22,7 +22,7 @@ class Circle(nn.Module):
         self._s = cfg.MODEL.HEADS.SCALE
         self._m = cfg.MODEL.HEADS.MARGIN
 
-        self.weight = Parameter(torch.Tensor(self._num_classes, in_feat))
+        self.weight = Parameter(torch.Tensor(num_classes, in_feat))
 
     def forward(self, features, targets):
         sim_mat = F.linear(F.normalize(features), F.normalize(self.weight))
