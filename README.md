@@ -41,7 +41,7 @@ If you use Fastreid in your research or wish to refer to the baseline results pu
 
 ```BibTeX
 @article{he2020fastreid,
-  title={FastReID: A Pytorch Toolbox for Real-world Person Re-identification},
+  title={FastReID: A Pytorch Toolbox for General Instance Re-identification},
   author={He, Lingxiao and Liao, Xingyu and Liu, Wu and Liu, Xinchen and Cheng, Peng and Mei, Tao},
   journal={arXiv preprint arXiv:2006.02631},
   year={2020}
