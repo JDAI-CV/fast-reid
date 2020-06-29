@@ -66,10 +66,10 @@ class DsrEvaluator(DatasetEvaluator):
         self._results = OrderedDict()
         if self.cfg.TEST.DSR.ENABLED:
             topk = self.cfg.TEST.DSR.TOPK
-            dist = compute_dsr_dist(spatial_features[:self._num_query], spatial_features[self._num_query:], dist,
+            dsr_dist = compute_dsr_dist(spatial_features[:self._num_query], spatial_features[self._num_query:], dist,
                                     scores[:self._num_query], topk)
             logger.info("Testing with DSR setting")
-
+        dist = 0.99 * dsr_dist + 0.01 * dist
         cmc, all_AP, all_INP = evaluate_rank(dist, query_pids, gallery_pids, query_camids, gallery_camids)
         mAP = np.mean(all_AP)
         mINP = np.mean(all_INP)
