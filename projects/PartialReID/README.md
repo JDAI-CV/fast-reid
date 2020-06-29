@@ -21,7 +21,7 @@ First install FastReID, and then put Partial Datasets in directory datasets. The
 and the detail you can refer to
 ## Datasets
 
-The datasets can find in - [Google Drive](https://drive.google.com/file/d/1p7Jvo-RJhU_B6hf9eAhIEFNhvrzM5cdh/view?usp=sharing)
+The datasets can find in [Google Drive](https://drive.google.com/file/d/1p7Jvo-RJhU_B6hf9eAhIEFNhvrzM5cdh/view?usp=sharing)
 
 PartialREID---gallery: 300 images of 60 ids, query: 300 images of 60 ids
 
