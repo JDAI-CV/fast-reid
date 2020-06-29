@@ -47,7 +47,7 @@ def compute_dist(array1, array2, type='euclidean'):
         dist = np.sqrt(squared_dist)
         return dist
 
-def get_dsr_dist(array1, array2, distmat, scores):
+def get_dsr_dist(array1, array2, distmat, scores, topk=30):
     """ Compute the sptial feature reconstruction of all pairs
      array: [M, N, C] M: the number of query, N: the number of spatial feature, C: the dimension of each spatial feature
      array2: [M, N, C] M: the number of gallery
@@ -73,7 +73,7 @@ def get_dsr_dist(array1, array2, distmat, scores):
         q = torch.FloatTensor(array1[i])
         q = q.view(q.size(0), q.size(1))
         q = q.cuda()
-        for j in range(0, 100):
+        for j in range(topk):
             g = array2[index[i,j]]
             g = torch.FloatTensor(g)
             g = g.view(g.size(0), g.size(1))
