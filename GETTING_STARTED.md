@@ -21,7 +21,7 @@ You may want to use it as a reference to write your own training script.
 To train a model with "train_net.py", first setup up the corresponding datasets following [datasets/README.md](https://github.com/JDAI-CV/fast-reid/tree/master/datasets), then run:
 
 ```bash
-CUDA_VISIBLE_DEVICES=$gpus ./tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml
+./tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml MODEL.DEVICE "cuda:0"
 ```
 
 The configs are made for 1-GPU training.
@@ -29,8 +29,8 @@ The configs are made for 1-GPU training.
 To evaluate a model's performance, use
 
 ```bash
-CUDA_VISIBLE_DEVICES=$gpus ./tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml \
---eval-only MODEL.WEIGHTS /path/to/checkpoint_file
+./tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml --eval-only \
+MODEL.WEIGHTS /path/to/checkpoint_file MODEL.DEVICE "cuda:0"
 ```
 
 For more options, see `./tools/train_net.py -h`.
