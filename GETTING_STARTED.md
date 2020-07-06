@@ -26,6 +26,12 @@ To train a model with "train_net.py", first setup up the corresponding datasets 
 
 The configs are made for 1-GPU training.
 
+If you want to train model with 4 GPUs, you can run:
+
+```bash
+./tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml --num-gpus 4
+```
+
 To evaluate a model's performance, use
 
 ```bash
