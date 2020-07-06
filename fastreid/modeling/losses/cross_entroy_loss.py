@@ -20,33 +20,31 @@ class CrossEntropyLoss(object):
         self._alpha = cfg.MODEL.LOSSES.CE.ALPHA
         self._scale = cfg.MODEL.LOSSES.CE.SCALE
 
-        self._topk = (1,)
-
-    def _log_accuracy(self, pred_class_logits, gt_classes):
+    @staticmethod
+    def log_accuracy(pred_class_logits, gt_classes, topk=(1,)):
         """
         Log the accuracy metrics to EventStorage.
         """
         bsz = pred_class_logits.size(0)
-        maxk = max(self._topk)
+        maxk = max(topk)
         _, pred_class = pred_class_logits.topk(maxk, 1, True, True)
         pred_class = pred_class.t()
         correct = pred_class.eq(gt_classes.view(1, -1).expand_as(pred_class))
 
         ret = []
-        for k in self._topk:
+        for k in topk:
             correct_k = correct[:k].view(-1).float().sum(dim=0, keepdim=True)
             ret.append(correct_k.mul_(1. / bsz))
 
         storage = get_event_storage()
         storage.put_scalar("cls_accuracy", ret[0])
 
-    def __call__(self, pred_class_logits, _, gt_classes):
+    def __call__(self, pred_class_logits, gt_classes):
         """
         Compute the softmax cross entropy loss for box classification.
         Returns:
             scalar Tensor
         """
-        self._log_accuracy(pred_class_logits, gt_classes)
         if self._eps >= 0:
             smooth_param = self._eps
         else:
@@ -61,6 +59,4 @@ class CrossEntropyLoss(object):
             targets.scatter_(1, gt_classes.data.unsqueeze(1), (1 - smooth_param))
 
         loss = (-targets * log_probs).mean(0).sum()
-        return {
-            "loss_cls": loss * self._scale,
-        }
+        return loss * self._scale

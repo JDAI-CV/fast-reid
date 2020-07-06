@@ -57,9 +57,7 @@ def update_bn_stats(model, data_loader, num_iters: int = 200):
     running_var = [torch.zeros_like(bn.running_var) for bn in bn_layers]
 
     for ind, inputs in enumerate(itertools.islice(data_loader, num_iters)):
-        # Change targets to zero to avoid error in circle(arcface) loss
-        # which will use targets in forward
-        inputs['targets'].zero_()
+        inputs['targets'].fill_(-1)
         with torch.no_grad():  # No need to backward
             model(inputs)
         for i, bn in enumerate(bn_layers):

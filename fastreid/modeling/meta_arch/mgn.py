@@ -12,7 +12,7 @@ from fastreid.layers import GeneralizedMeanPoolingP, get_norm, AdaptiveAvgMaxPoo
 from fastreid.modeling.backbones import build_backbone
 from fastreid.modeling.backbones.resnet import Bottleneck
 from fastreid.modeling.heads import build_reid_heads
-from fastreid.modeling.losses import reid_losses, CrossEntropyLoss
+from fastreid.modeling.losses import CrossEntropyLoss, TripletLoss
 from fastreid.utils.weight_init import weights_init_kaiming
 from .build import META_ARCH_REGISTRY
 
@@ -21,9 +21,10 @@ from .build import META_ARCH_REGISTRY
 class MGN(nn.Module):
     def __init__(self, cfg):
         super().__init__()
+        self._cfg = cfg
+        assert len(cfg.MODEL.PIXEL_MEAN) == len(cfg.MODEL.PIXEL_STD)
         self.register_buffer("pixel_mean", torch.Tensor(cfg.MODEL.PIXEL_MEAN).view(1, -1, 1, 1))
         self.register_buffer("pixel_std", torch.Tensor(cfg.MODEL.PIXEL_STD).view(1, -1, 1, 1))
-        self._cfg = cfg
 
         # backbone
         bn_norm = cfg.MODEL.BACKBONE.NORM
@@ -116,129 +117,113 @@ class MGN(nn.Module):
         return self.pixel_mean.device
 
     def forward(self, batched_inputs):
-        if not self.training:
-            pred_feat = self.inference(batched_inputs)
-            try:              return pred_feat, batched_inputs["targets"], batched_inputs["camid"]
-            except Exception: return pred_feat
 
         images = self.preprocess_image(batched_inputs)
-        targets = batched_inputs["targets"].long()
-
-        # Training
         features = self.backbone(images)  # (bs, 2048, 16, 8)
 
         # branch1
         b1_feat = self.b1(features)
         b1_pool_feat = self.b1_pool(b1_feat)
-        b1_logits, b1_pool_feat, _ = self.b1_head(b1_pool_feat, targets)
 
         # branch2
         b2_feat = self.b2(features)
         # global
         b2_pool_feat = self.b2_pool(b2_feat)
-        b2_logits, b2_pool_feat, _ = self.b2_head(b2_pool_feat, targets)
 
         b21_feat, b22_feat = torch.chunk(b2_feat, 2, dim=2)
         # part1
         b21_pool_feat = self.b21_pool(b21_feat)
-        b21_logits, b21_pool_feat, _ = self.b21_head(b21_pool_feat, targets)
         # part2
         b22_pool_feat = self.b22_pool(b22_feat)
-        b22_logits, b22_pool_feat, _ = self.b22_head(b22_pool_feat, targets)
 
         # branch3
         b3_feat = self.b3(features)
         # global
         b3_pool_feat = self.b3_pool(b3_feat)
-        b3_logits, b3_pool_feat, _ = self.b3_head(b3_pool_feat, targets)
 
         b31_feat, b32_feat, b33_feat = torch.chunk(b3_feat, 3, dim=2)
         # part1
         b31_pool_feat = self.b31_pool(b31_feat)
-        b31_logits, b31_pool_feat, _ = self.b31_head(b31_pool_feat, targets)
         # part2
         b32_pool_feat = self.b32_pool(b32_feat)
-        b32_logits, b32_pool_feat, _ = self.b32_head(b32_pool_feat, targets)
         # part3
         b33_pool_feat = self.b33_pool(b33_feat)
-        b33_logits, b33_pool_feat, _ = self.b33_head(b33_pool_feat, targets)
 
-        return (b1_logits, b2_logits, b3_logits, b21_logits, b22_logits, b31_logits, b32_logits, b33_logits), \
-               (b1_pool_feat, b2_pool_feat, b3_pool_feat,
+        if self.training:
+            assert "targets" in batched_inputs, "Person ID annotation are missing in training!"
+            targets = batched_inputs["targets"].long().to(self.device)
+
+            if targets.sum() < 0:
+                targets.zero_()
+                self.b1_head(b1_pool_feat, targets)
+                self.b2_head(b2_pool_feat, targets)
+                self.b21_head(b21_pool_feat, targets)
+                self.b22_head(b22_pool_feat, targets)
+                self.b3_head(b3_pool_feat, targets)
+                self.b31_head(b31_pool_feat, targets)
+                self.b32_head(b32_pool_feat, targets)
+                self.b33_head(b33_pool_feat, targets)
+                return
+
+            b1_logits, b1_pool_feat = self.b1_head(b1_pool_feat, targets)
+            b2_logits, b2_pool_feat = self.b2_head(b2_pool_feat, targets)
+            b21_logits, b21_pool_feat = self.b21_head(b21_pool_feat, targets)
+            b22_logits, b22_pool_feat = self.b22_head(b22_pool_feat, targets)
+            b3_logits, b3_pool_feat = self.b3_head(b3_pool_feat, targets)
+            b31_logits, b31_pool_feat = self.b31_head(b31_pool_feat, targets)
+            b32_logits, b32_pool_feat = self.b32_head(b32_pool_feat, targets)
+            b33_logits, b33_pool_feat = self.b33_head(b33_pool_feat, targets)
+            losses = self.losses(
+                b1_logits, b2_logits, b21_logits, b22_logits, b3_logits, b31_logits, b32_logits, b33_logits,
+                b1_pool_feat, b2_pool_feat, b3_pool_feat,
                 torch.cat((b21_pool_feat, b22_pool_feat), dim=1),
-                torch.cat((b31_pool_feat, b32_pool_feat, b33_pool_feat), dim=1)), \
-               targets
+                torch.cat((b31_pool_feat, b32_pool_feat, b33_pool_feat), dim=1),
+                targets,
+            )
+            return losses
+        else:
+            b1_pool_feat = self.b1_head(b1_pool_feat)
+            b2_pool_feat = self.b2_head(b2_pool_feat)
+            b21_pool_feat = self.b21_head(b21_pool_feat)
+            b22_pool_feat = self.b22_head(b22_pool_feat)
+            b3_pool_feat = self.b3_head(b3_pool_feat)
+            b31_pool_feat = self.b31_head(b31_pool_feat)
+            b32_pool_feat = self.b32_head(b32_pool_feat)
+            b33_pool_feat = self.b33_head(b33_pool_feat)
 
-    def inference(self, batched_inputs):
-        assert not self.training
-        images = self.preprocess_image(batched_inputs)
-        features = self.backbone(images)  # (bs, 2048, 16, 8)
-
-        # branch1
-        b1_feat = self.b1(features)
-        b1_pool_feat = self.b1_pool(b1_feat)
-        b1_pool_feat = self.b1_head(b1_pool_feat)
-
-        # branch2
-        b2_feat = self.b2(features)
-        # global
-        b2_pool_feat = self.b2_pool(b2_feat)
-        b2_pool_feat = self.b2_head(b2_pool_feat)
-
-        b21_feat, b22_feat = torch.chunk(b2_feat, 2, dim=2)
-        # part1
-        b21_pool_feat = self.b21_pool(b21_feat)
-        b21_pool_feat = self.b21_head(b21_pool_feat)
-        # part2
-        b22_pool_feat = self.b22_pool(b22_feat)
-        b22_pool_feat = self.b22_head(b22_pool_feat)
-
-        # branch3
-        b3_feat = self.b3(features)
-        # global
-        b3_pool_feat = self.b3_pool(b3_feat)
-        b3_pool_feat = self.b3_head(b3_pool_feat)
-
-        b31_feat, b32_feat, b33_feat = torch.chunk(b3_feat, 3, dim=2)
-        # part1
-        b31_pool_feat = self.b31_pool(b31_feat)
-        b31_pool_feat = self.b31_head(b31_pool_feat)
-        # part2
-        b32_pool_feat = self.b32_pool(b32_feat)
-        b32_pool_feat = self.b32_head(b32_pool_feat)
-        # part3
-        b33_pool_feat = self.b33_pool(b33_feat)
-        b33_pool_feat = self.b33_head(b33_pool_feat)
-
-        pred_feat = torch.cat([b1_pool_feat, b2_pool_feat, b3_pool_feat, b21_pool_feat,
-                               b22_pool_feat, b31_pool_feat, b32_pool_feat, b33_pool_feat], dim=1)
-        return pred_feat
+            pred_feat = torch.cat([b1_pool_feat, b2_pool_feat, b3_pool_feat, b21_pool_feat,
+                                   b22_pool_feat, b31_pool_feat, b32_pool_feat, b33_pool_feat], dim=1)
+            return pred_feat
 
     def preprocess_image(self, batched_inputs):
         """
         Normalize and batch the input images.
         """
-        # images = [x["images"] for x in batched_inputs]
-        images = batched_inputs["images"]
+        images = batched_inputs["images"].to(self.device)
+        # images = batched_inputs
         images.sub_(self.pixel_mean).div_(self.pixel_std)
         return images
 
-    def losses(self, outputs):
-        logits, feats, targets = outputs
+    def losses(self, b1_logits, b2_logits, b21_logits, b22_logits, b3_logits, b31_logits, b32_logits, b33_logits,
+               b1_pool_feat, b2_pool_feat, b3_pool_feat, b22_pool_feat, b33_pool_feat, gt_labels):
         loss_dict = {}
-        loss_dict.update(reid_losses(self._cfg, logits[0], feats[0], targets, 'b1_'))
-        loss_dict.update(reid_losses(self._cfg, logits[1], feats[1], targets, 'b2_'))
-        loss_dict.update(reid_losses(self._cfg, logits[2], feats[2], targets, 'b3_'))
-        loss_dict.update(reid_losses(self._cfg, logits[3], feats[3], targets, 'b21_'))
-        loss_dict.update(reid_losses(self._cfg, logits[5], feats[4], targets, 'b31_'))
+        loss_names = self._cfg.MODEL.LOSSES.NAME
 
-        part_ce_loss = [
-            (CrossEntropyLoss(self._cfg)(logits[4], None, targets), 'b22_'),
-            (CrossEntropyLoss(self._cfg)(logits[6], None, targets), 'b32_'),
-            (CrossEntropyLoss(self._cfg)(logits[7], None, targets), 'b33_')
-        ]
-        named_ce_loss = {}
-        for item in part_ce_loss:
-            named_ce_loss[item[1] + [*item[0]][0]] = [*item[0].values()][0]
-        loss_dict.update(named_ce_loss)
+        if "CrossEntropyLoss" in loss_names:
+            loss_dict['loss_cls_b1'] = CrossEntropyLoss(self._cfg)(b1_logits, gt_labels)
+            loss_dict['loss_cls_b2'] = CrossEntropyLoss(self._cfg)(b2_logits, gt_labels)
+            loss_dict['loss_cls_b21'] = CrossEntropyLoss(self._cfg)(b21_logits, gt_labels)
+            loss_dict['loss_cls_b22'] = CrossEntropyLoss(self._cfg)(b22_logits, gt_labels)
+            loss_dict['loss_cls_b3'] = CrossEntropyLoss(self._cfg)(b3_logits, gt_labels)
+            loss_dict['loss_cls_b31'] = CrossEntropyLoss(self._cfg)(b31_logits, gt_labels)
+            loss_dict['loss_cls_b32'] = CrossEntropyLoss(self._cfg)(b32_logits, gt_labels)
+            loss_dict['loss_cls_b33'] = CrossEntropyLoss(self._cfg)(b33_logits, gt_labels)
+
+        if "TripletLoss" in loss_names:
+            loss_dict['loss_triplet_b1'] = TripletLoss(self._cfg)(b1_pool_feat, gt_labels)
+            loss_dict['loss_triplet_b2'] = TripletLoss(self._cfg)(b2_pool_feat, gt_labels)
+            loss_dict['loss_triplet_b3'] = TripletLoss(self._cfg)(b3_pool_feat, gt_labels)
+            loss_dict['loss_triplet_b22'] = TripletLoss(self._cfg)(b22_pool_feat, gt_labels)
+            loss_dict['loss_triplet_b33'] = TripletLoss(self._cfg)(b33_pool_feat, gt_labels)
+
         return loss_dict

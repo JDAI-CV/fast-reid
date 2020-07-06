@@ -20,6 +20,9 @@ from fastreid.config import get_cfg
 from fastreid.utils.file_io import PathManager
 from predictor import FeatureExtractionDemo
 
+# import some modules added in project like this below
+# from projects.PartialReID.partialreid import *
+
 cudnn.benchmark = True
 
 
@@ -40,12 +43,7 @@ def get_parser():
         help="path to config file",
     )
     parser.add_argument(
-        '--device',
-        default='cuda: 1',
-        help='CUDA device to use'
-    )
-    parser.add_argument(
-        '--parallel',
+        "--parallel",
         action='store_true',
         help='If use multiprocess for feature extraction.'
     )
@@ -72,7 +70,7 @@ def get_parser():
 if __name__ == '__main__':
     args = get_parser().parse_args()
     cfg = setup_cfg(args)
-    demo = FeatureExtractionDemo(cfg, device=args.device, parallel=args.parallel)
+    demo = FeatureExtractionDemo(cfg, parallel=args.parallel)
 
     PathManager.mkdirs(args.output)
     if args.input:

@@ -154,10 +154,8 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
 
     all_cmc = np.asarray(all_cmc).astype(np.float32)
     all_cmc = all_cmc.sum(0) / num_valid_q
-    mAP = np.mean(all_AP)
-    mINP = np.mean(all_INP)
 
-    return all_cmc, mAP, mINP
+    return all_cmc, all_AP, all_INP
 
 
 def evaluate_py(

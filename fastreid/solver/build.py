@@ -20,7 +20,7 @@ def build_optimizer(cfg, model):
         if "bias" in key:
             lr *= cfg.SOLVER.BIAS_LR_FACTOR
             weight_decay = cfg.SOLVER.WEIGHT_DECAY_BIAS
-        params += [{"params": [value], "lr": lr, "weight_decay": weight_decay}]
+        params += [{"name": key, "params": [value], "lr": lr, "weight_decay": weight_decay, "freeze": False}]
 
     solver_opt = cfg.SOLVER.OPT
     if hasattr(optim, solver_opt):

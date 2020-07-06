@@ -14,8 +14,8 @@ import torch.nn.functional as F
 from .evaluator import DatasetEvaluator
 from .query_expansion import aqe
 from .rank import evaluate_rank
-from .roc import evaluate_roc
 from .rerank import re_ranking
+from .roc import evaluate_roc
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +35,10 @@ class ReidEvaluator(DatasetEvaluator):
         self.pids = []
         self.camids = []
 
-    def process(self, outputs):
-        self.features.append(outputs[0].cpu())
-        self.pids.extend(outputs[1].cpu().numpy())
-        self.camids.extend(outputs[2].cpu().numpy())
+    def process(self, inputs, outputs):
+        self.pids.extend(inputs["targets"].numpy())
+        self.camids.extend(inputs["camid"].numpy())
+        self.features.append(outputs.cpu())
 
     @staticmethod
     def cal_dist(metric: str, query_feat: torch.tensor, gallery_feat: torch.tensor):
@@ -92,13 +92,12 @@ class ReidEvaluator(DatasetEvaluator):
         cmc, all_AP, all_INP = evaluate_rank(dist, query_pids, gallery_pids, query_camids, gallery_camids)
         mAP = np.mean(all_AP)
         mINP = np.mean(all_INP)
-        for r in [1, 5, 10]:
-            self._results['Rank-{}'.format(r)] = cmc[r - 1]
+        self._results['R-1'] = cmc[0]
         self._results['mAP'] = mAP
         self._results['mINP'] = mINP
 
-        tprs = evaluate_roc(dist, query_pids, gallery_pids, query_camids, gallery_camids)
-        fprs = [1e-4, 1e-3, 1e-2]
-        for i in range(len(fprs)):
-            self._results["TPR@FPR={}".format(fprs[i])] = tprs[i]
+        # tprs = evaluate_roc(dist, query_pids, gallery_pids, query_camids, gallery_camids)
+        # fprs = [1e-4, 1e-3, 1e-2]
+        # for i in range(len(fprs)):
+        #     self._results["TPR@FPR={}".format(fprs[i])] = tprs[i]
         return copy.deepcopy(self._results)

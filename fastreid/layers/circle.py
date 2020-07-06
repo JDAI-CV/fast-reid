@@ -4,14 +4,10 @@
 @contact: sherlockliao01@gmail.com
 """
 
-import math
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
-
-from fastreid.utils.one_hot import one_hot
 
 
 class Circle(nn.Module):
@@ -34,7 +30,7 @@ class Circle(nn.Module):
         s_p = self._s * alpha_p * (sim_mat - delta_p)
         s_n = self._s * alpha_n * (sim_mat - delta_n)
 
-        targets = one_hot(targets, self._num_classes)
+        targets = F.one_hot(targets, num_classes=self._num_classes)
 
         pred_class_logits = targets * s_p + (1.0 - targets) * s_n
 

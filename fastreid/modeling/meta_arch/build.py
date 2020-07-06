@@ -3,8 +3,9 @@
 @author:  liaoxingyu
 @contact: sherlockliao01@gmail.com
 """
+import torch
 
-from ...utils.registry import Registry
+from fastreid.utils.registry import Registry
 
 META_ARCH_REGISTRY = Registry("META_ARCH")  # noqa F401 isort:skip
 META_ARCH_REGISTRY.__doc__ = """
@@ -20,4 +21,6 @@ def build_model(cfg):
     Note that it does not load any weights from ``cfg``.
     """
     meta_arch = cfg.MODEL.META_ARCHITECTURE
-    return META_ARCH_REGISTRY.get(meta_arch)(cfg)
+    model = META_ARCH_REGISTRY.get(meta_arch)(cfg)
+    model.to(torch.device(cfg.MODEL.DEVICE))
+    return model

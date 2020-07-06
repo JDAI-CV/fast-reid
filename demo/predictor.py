@@ -21,7 +21,7 @@ except RuntimeError:
 
 
 class FeatureExtractionDemo(object):
-    def __init__(self, cfg, device='cuda:0', parallel=False):
+    def __init__(self, cfg, parallel=False):
         """
         Args:
             cfg (CfgNode):
@@ -35,7 +35,7 @@ class FeatureExtractionDemo(object):
             self.num_gpus = torch.cuda.device_count()
             self.predictor = AsyncPredictor(cfg, self.num_gpus)
         else:
-            self.predictor = DefaultPredictor(cfg, device)
+            self.predictor = DefaultPredictor(cfg)
 
     def run_on_image(self, original_image):
         """
@@ -51,6 +51,8 @@ class FeatureExtractionDemo(object):
         original_image = original_image[:, :, ::-1]
         # Apply pre-processing to image.
         image = cv2.resize(original_image, tuple(self.cfg.INPUT.SIZE_TEST[::-1]), interpolation=cv2.INTER_CUBIC)
+        # Make shape with a new batch dimension which is adapted for
+        # network input
         image = torch.as_tensor(image.astype("float32").transpose(2, 0, 1))[None]
         predictions = self.predictor(image)
         return predictions
@@ -68,16 +70,16 @@ class FeatureExtractionDemo(object):
                 if cnt >= buffer_size:
                     batch = batch_data.popleft()
                     predictions = self.predictor.get()
-                    yield predictions, batch['targets'].numpy(), batch['camid'].numpy()
+                    yield predictions, batch["targets"].numpy(), batch["camid"].numpy()
 
             while len(batch_data):
                 batch = batch_data.popleft()
                 predictions = self.predictor.get()
-                yield predictions, batch['targets'].numpy(), batch['camid'].numpy()
+                yield predictions, batch["targets"].numpy(), batch["camid"].numpy()
         else:
             for batch in data_loader:
                 predictions = self.predictor(batch["images"])
-                yield predictions, batch['targets'].numpy(), batch['camid'].numpy()
+                yield predictions, batch["targets"].numpy(), batch["camid"].numpy()
 
 
 class AsyncPredictor:
@@ -90,15 +92,14 @@ class AsyncPredictor:
         pass
 
     class _PredictWorker(mp.Process):
-        def __init__(self, cfg, device, task_queue, result_queue):
+        def __init__(self, cfg, task_queue, result_queue):
             self.cfg = cfg
-            self.device = device
             self.task_queue = task_queue
             self.result_queue = result_queue
             super().__init__()
 
         def run(self):
-            predictor = DefaultPredictor(self.cfg, self.device)
+            predictor = DefaultPredictor(self.cfg)
 
             while True:
                 task = self.task_queue.get()
@@ -120,9 +121,11 @@ class AsyncPredictor:
         self.result_queue = mp.Queue(maxsize=num_workers * 3)
         self.procs = []
         for gpuid in range(max(num_gpus, 1)):
-            device = "cuda:{}".format(gpuid) if num_gpus > 0 else "cpu"
+            cfg = cfg.clone()
+            cfg.defrost()
+            cfg.MODEL.DEVICE = "cuda: {}".format(gpuid) if num_gpus > 0 else "cpu"
             self.procs.append(
-                AsyncPredictor._PredictWorker(cfg, device, self.task_queue, self.result_queue)
+                AsyncPredictor._PredictWorker(cfg, self.task_queue, self.result_queue)
             )
 
         self.put_idx = 0

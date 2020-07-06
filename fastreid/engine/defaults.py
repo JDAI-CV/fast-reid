@@ -11,20 +11,22 @@ since they are meant to represent the "common default behavior" people need in t
 import argparse
 import logging
 import os
+import sys
 from collections import OrderedDict
 
 import torch
 import torch.nn.functional as F
-from torch.nn import DataParallel
+from torch.nn.parallel import DistributedDataParallel
 
 from fastreid.data import build_reid_test_loader, build_reid_train_loader
 from fastreid.evaluation import (DatasetEvaluator, ReidEvaluator,
                                  inference_on_dataset, print_csv_format)
 from fastreid.modeling.meta_arch import build_model
-from fastreid.layers.sync_bn import patch_replication_callback
 from fastreid.solver import build_lr_scheduler, build_optimizer
 from fastreid.utils import comm
+from fastreid.utils.env import seed_all_rng
 from fastreid.utils.checkpoint import Checkpointer
+from fastreid.utils.collect_env import collect_env_info
 from fastreid.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
 from fastreid.utils.file_io import PathManager
 from fastreid.utils.logger import setup_logger
@@ -36,7 +38,7 @@ __all__ = ["default_argument_parser", "default_setup", "DefaultPredictor", "Defa
 
 def default_argument_parser():
     """
-    Create a parser with some common arguments used by detectron2 users.
+    Create a parser with some common arguments used by fastreid users.
     Returns:
         argparse.ArgumentParser:
     """
@@ -48,17 +50,17 @@ def default_argument_parser():
         help="whether to attempt to resume from the checkpoint directory",
     )
     parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
-    # parser.add_argument("--num-gpus", type=int, default=1, help="number of gpus *per machine*")
-    # parser.add_argument("--num-machines", type=int, default=1)
-    # parser.add_argument(
-    #     "--machine-rank", type=int, default=0, help="the rank of this machine (unique per machine)"
-    # )
+    parser.add_argument("--num-gpus", type=int, default=1, help="number of gpus *per machine*")
+    parser.add_argument("--num-machines", type=int, default=1, help="total number of machines")
+    parser.add_argument(
+        "--machine-rank", type=int, default=0, help="the rank of this machine (unique per machine)"
+    )
 
     # PyTorch still may leave orphan processes in multi-gpu training.
     # Therefore we use a deterministic way to obtain port,
     # so that users are aware of orphan processes by seeing the port occupied.
-    # port = 2 ** 15 + 2 ** 14 + hash(os.getuid()) % 2 ** 14
-    # parser.add_argument("--dist-url", default="tcp://127.0.0.1:{}".format(port))
+    port = 2 ** 15 + 2 ** 14 + hash(os.getuid() if sys.platform != "win32" else 1) % 2 ** 14
+    parser.add_argument("--dist-url", default="tcp://127.0.0.1:{}".format(port))
     parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
@@ -87,7 +89,7 @@ def default_setup(cfg, args):
     logger = setup_logger(output_dir, distributed_rank=rank)
 
     logger.info("Rank of current process: {}. World size: {}".format(rank, comm.get_world_size()))
-    # logger.info("Environment info:\n" + collect_env_info())
+    logger.info("Environment info:\n" + collect_env_info())
 
     logger.info("Command line arguments: " + str(args))
     if hasattr(args, "config_file") and args.config_file != "":
@@ -105,6 +107,9 @@ def default_setup(cfg, args):
         with PathManager.open(path, "w") as f:
             f.write(cfg.dump())
         logger.info("Full config saved to {}".format(os.path.abspath(path)))
+
+    # make sure each worker has a different, yet deterministic seed if specified
+    seed_all_rng()
 
     # cudnn benchmark has large overhead. It shouldn't be used considering the small size of
     # typical validation set.
@@ -128,17 +133,14 @@ class DefaultPredictor:
         outputs = pred(inputs)
     """
 
-    def __init__(self, cfg, device='cpu'):
+    def __init__(self, cfg):
         self.cfg = cfg.clone()  # cfg can be modified by model
         self.cfg.defrost()
         self.cfg.MODEL.BACKBONE.PRETRAIN = False
-        self.device = device
         self.model = build_model(self.cfg)
-        self.model.to(device)
         self.model.eval()
 
-        checkpointer = Checkpointer(self.model)
-        checkpointer.load(cfg.MODEL.WEIGHTS)
+        Checkpointer(self.model).load(cfg.MODEL.WEIGHTS)
 
     def __call__(self, image):
         """
@@ -147,9 +149,8 @@ class DefaultPredictor:
         Returns:
             predictions (torch.tensor): the output features of the model
         """
+        inputs = {"images": image}
         with torch.no_grad():  # https://github.com/sphinx-doc/sphinx/issues/4258
-            image = image.to(self.device)
-            inputs = {"images": image}
             predictions = self.model(inputs)
             # Normalize feature to compute cosine distance
             pred_feat = F.normalize(predictions)
@@ -196,20 +197,24 @@ class DefaultTrainer(SimpleTrainer):
             cfg (CfgNode):
         """
         self.cfg = cfg
-        logger = logging.getLogger(__name__)
+        logger = logging.getLogger("fastreid")
         if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for fastreid
             setup_logger()
+
         # Assume these objects must be constructed in this order.
+        data_loader = self.build_train_loader(cfg)
+        cfg = self.auto_scale_hyperparams(cfg, data_loader)
         model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)
-        logger.info('Prepare training set')
-        data_loader = self.build_train_loader(cfg)
-        # For training, wrap with DP. But don't need this for inference.
-        model = DataParallel(model)
-        if cfg.MODEL.BACKBONE.NORM == "syncBN":
-            # Monkey-patching with syncBN
-            patch_replication_callback(model)
-        model = model.cuda()
+
+        # For training, wrap with DDP. But don't need this for inference.
+        if comm.get_world_size() > 1:
+            # ref to https://github.com/pytorch/pytorch/issues/22049 to set `find_unused_parameters=True`
+            # for part of the parameters is not updated.
+            model = DistributedDataParallel(
+                model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
+            )
+
         super().__init__(model, data_loader, optimizer)
 
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)
@@ -218,8 +223,8 @@ class DefaultTrainer(SimpleTrainer):
         self.checkpointer = Checkpointer(
             # Assume you want to save checkpoints together with logs/statistics
             model,
-            self.data_loader.dataset,
             cfg.OUTPUT_DIR,
+            save_to_disk=comm.is_main_process(),
             optimizer=optimizer,
             scheduler=self.scheduler,
         )
@@ -246,12 +251,10 @@ class DefaultTrainer(SimpleTrainer):
         # Reinitialize dataloader iter because when we update dataset person identity dict
         # to resume training, DataLoader won't update this dictionary when using multiprocess
         # because of the function scope.
-        self._data_loader_iter = iter(self.data_loader)
-
-        self.start_iter = checkpoint.get("iteration", -1) if resume else -1
-        # The checkpoint stores the training iteration that just finished, thus we start
-        # at the next iteration (or iter zero if there's no checkpoint).
-        self.start_iter += 1
+        if resume and self.checkpointer.has_checkpoint():
+            self.start_iter = checkpoint.get("iteration", -1) + 1
+            # The checkpoint stores the training iteration that just finished, thus we start
+            # at the next iteration (or iter zero if there's no checkpoint).
 
     def build_hooks(self):
         """
@@ -292,31 +295,38 @@ class DefaultTrainer(SimpleTrainer):
                 cfg.TEST.PRECISE_BN.NUM_ITER,
             ))
 
-        if cfg.MODEL.OPEN_LAYERS != [''] and cfg.SOLVER.FREEZE_ITERS > 0:
-            open_layers = ",".join(cfg.MODEL.OPEN_LAYERS)
-            logger.info(f'Open "{open_layers}" training for {cfg.SOLVER.FREEZE_ITERS:d} iters')
+        if cfg.MODEL.FREEZE_LAYERS != [''] and cfg.SOLVER.FREEZE_ITERS > 0:
+            freeze_layers = ",".join(cfg.MODEL.FREEZE_LAYERS)
+            logger.info(f'Freeze layer group "{freeze_layers}" training for {cfg.SOLVER.FREEZE_ITERS:d} iterations')
             ret.append(hooks.FreezeLayer(
                 self.model,
-                cfg.MODEL.OPEN_LAYERS,
+                self.optimizer,
+                cfg.MODEL.FREEZE_LAYERS,
                 cfg.SOLVER.FREEZE_ITERS,
             ))
         # Do PreciseBN before checkpointer, because it updates the model and need to
         # be saved by checkpointer.
         # This is not always the best: if checkpointing has a different frequency,
         # some checkpoints may have more precise statistics than others.
-        # if comm.is_main_process():
-        ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
+        if comm.is_main_process():
+            ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
 
         def test_and_save_results():
-            self._last_eval_results = self.test(self.cfg, self.model)
-            return self._last_eval_results
+            if comm.is_main_process():
+                self._last_eval_results = self.test(self.cfg, self.model)
+                torch.cuda.empty_cache()
+                return self._last_eval_results
+            else:
+                return None
 
         # Do evaluation after checkpointer, because then if it fails,
         # we can use the saved checkpoint to debug.
         ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results))
 
-        # run writers in the end, so that evaluation metrics are written
-        ret.append(hooks.PeriodicWriter(self.build_writers(), cfg.SOLVER.LOG_PERIOD))
+        if comm.is_main_process():
+            # run writers in the end, so that evaluation metrics are written
+            ret.append(hooks.PeriodicWriter(self.build_writers(), 200))
+
         return ret
 
     def build_writers(self):
@@ -351,9 +361,12 @@ class DefaultTrainer(SimpleTrainer):
             OrderedDict of results, if evaluation is enabled. Otherwise None.
         """
         super().train(self.start_iter, self.max_iter)
-        # if hasattr(self, "_last_eval_results") and comm.is_main_process():
-        #     verify_results(self.cfg, self._last_eval_results)
-        #     return self._last_eval_results
+        if comm.is_main_process():
+            assert hasattr(
+                self, "_last_eval_results"
+            ), "No evaluation results obtained during training!"
+            # verify_results(self.cfg, self._last_eval_results)
+            return self._last_eval_results
 
     @classmethod
     def build_model(cls, cfg):
@@ -365,7 +378,7 @@ class DefaultTrainer(SimpleTrainer):
         """
         model = build_model(cfg)
         logger = logging.getLogger(__name__)
-        logger.info("Model:\n{}".format(model))
+        # logger.info("Model:\n{}".format(model))
         return model
 
     @classmethod
@@ -394,6 +407,8 @@ class DefaultTrainer(SimpleTrainer):
         It now calls :func:`fastreid.data.build_detection_train_loader`.
         Overwrite it if you'd like a different data loader.
         """
+        logger = logging.getLogger(__name__)
+        logger.info("Prepare training set")
         return build_reid_train_loader(cfg)
 
     @classmethod
@@ -433,7 +448,7 @@ class DefaultTrainer(SimpleTrainer):
 
         results = OrderedDict()
         for idx, dataset_name in enumerate(cfg.DATASETS.TESTS):
-            logger.info(f'prepare test set')
+            logger.info("Prepare testing set")
             data_loader, num_query = cls.build_test_loader(cfg, dataset_name)
             # When evaluators are passed in as arguments,
             # implicitly assume that evaluators can be created before data_loader.
@@ -451,15 +466,53 @@ class DefaultTrainer(SimpleTrainer):
                     continue
             results_i = inference_on_dataset(model, data_loader, evaluator)
             results[dataset_name] = results_i
-            if comm.is_main_process():
-                assert isinstance(
-                    results_i, dict
-                ), "Evaluator must return a dict on the main process. Got {} instead.".format(
-                    results_i
-                )
-                logger.info("Evaluation results for {} in csv format:".format(dataset_name))
-                print_csv_format(results_i)
 
-        if len(results) == 1:
-            results = list(results.values())[0]
+        if comm.is_main_process():
+            assert isinstance(
+                results, dict
+            ), "Evaluator must return a dict on the main process. Got {} instead.".format(
+                results
+            )
+            print_csv_format(results)
+
+        if len(results) == 1: results = list(results.values())[0]
+
         return results
+
+    @staticmethod
+    def auto_scale_hyperparams(cfg, data_loader):
+        r"""
+        This is used for auto-computation actual training iterations,
+        because some hyper-param, such as MAX_ITER, means training epochs rather than iters,
+        so we need to convert specific hyper-param to training iterations.
+        """
+
+        cfg = cfg.clone()
+        frozen = cfg.is_frozen()
+        cfg.defrost()
+
+        iters_per_epoch = len(data_loader.dataset) // (cfg.SOLVER.IMS_PER_BATCH * comm.get_world_size())
+        cfg.MODEL.HEADS.NUM_CLASSES = data_loader.dataset.num_classes
+        cfg.SOLVER.MAX_ITER *= iters_per_epoch
+        cfg.SOLVER.WARMUP_ITERS *= iters_per_epoch
+        cfg.SOLVER.FREEZE_ITERS *= iters_per_epoch
+        cfg.SOLVER.DELAY_ITERS *= iters_per_epoch
+        for i in range(len(cfg.SOLVER.STEPS)):
+            cfg.SOLVER.STEPS[i] *= iters_per_epoch
+        cfg.SOLVER.SWA.ITER *= iters_per_epoch
+        cfg.SOLVER.SWA.PERIOD *= iters_per_epoch
+        cfg.SOLVER.CHECKPOINT_PERIOD *= iters_per_epoch
+        cfg.TEST.EVAL_PERIOD *= iters_per_epoch
+
+        logger = logging.getLogger(__name__)
+        logger.info(
+            f"Auto-scaling the config to num_classes={cfg.MODEL.HEADS.NUM_CLASSES}, "
+            f"max_Iter={cfg.SOLVER.MAX_ITER}, wamrup_Iter={cfg.SOLVER.WARMUP_ITERS}, "
+            f"freeze_Iter={cfg.SOLVER.FREEZE_ITERS}, delay_Iter={cfg.SOLVER.DELAY_ITERS}, "
+            f"step_Iter={cfg.SOLVER.STEPS}, ckpt_Iter={cfg.SOLVER.CHECKPOINT_PERIOD}, "
+            f"eval_Iter={cfg.TEST.EVAL_PERIOD}."
+        )
+
+        if frozen: cfg.freeze()
+
+        return cfg

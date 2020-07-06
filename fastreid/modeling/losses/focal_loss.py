@@ -7,8 +7,6 @@
 import torch
 import torch.nn.functional as F
 
-from fastreid.utils.one_hot import one_hot
-
 
 # based on:
 # https://github.com/kornia/kornia/blob/master/kornia/losses/focal.py
@@ -49,9 +47,7 @@ def focal_loss(
     input_soft = F.softmax(input, dim=1)
 
     # create the labels one hot tensor
-    target_one_hot = one_hot(
-        target, num_classes=input.shape[1],
-        dtype=input.dtype)
+    target_one_hot = F.one_hot(target, num_classes=input.shape[1])
 
     # compute the actual focal loss
     weight = torch.pow(-input_soft + 1., gamma)

@@ -63,7 +63,6 @@ if __name__ == '__main__':
 
     model = build_model(cfg)
     Checkpointer(model).load(cfg.MODEL.WEIGHTS)
-    model.cuda()
     model.eval()
     print(model)
 

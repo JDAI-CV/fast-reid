@@ -5,10 +5,12 @@ https://github.com/facebookresearch/detectron2/blob/master/detectron2/engine/tra
 """
 
 import logging
-import numpy as np
 import time
 import weakref
+
+import numpy as np
 import torch
+
 import fastreid.utils.comm as comm
 from fastreid.utils.events import EventStorage
 
@@ -194,12 +196,12 @@ class SimpleTrainer(TrainerBase):
         """
         data = next(self._data_loader_iter)
         data_time = time.perf_counter() - start
+
         """
         If your want to do something with the heads, you can wrap the model.
         """
-        outputs = self.model(data)
-        loss_dict = self.model.module.losses(outputs)
-        losses = sum(loss for loss in loss_dict.values())
+        loss_dict = self.model(data)
+        losses = sum(loss_dict.values())
         self._detect_anomaly(losses, loss_dict)
 
         metrics_dict = loss_dict
@@ -238,23 +240,22 @@ class SimpleTrainer(TrainerBase):
         }
         # gather metrics among all workers for logging
         # This assumes we do DDP-style training, which is currently the only
-        # supported method in detectron2.
+        # supported method in fastreid.
         all_metrics_dict = comm.gather(metrics_dict)
 
-        # if comm.is_main_process():
-        if "data_time" in all_metrics_dict[0]:
-            # data_time among workers can have high variance. The actual latency
-            # caused by data_time is the maximum among workers.
-            data_time = np.max([x.pop("data_time") for x in all_metrics_dict])
-            self.storage.put_scalar("data_time", data_time)
+        if comm.is_main_process():
+            if "data_time" in all_metrics_dict[0]:
+                # data_time among workers can have high variance. The actual latency
+                # caused by data_time is the maximum among workers.
+                data_time = np.max([x.pop("data_time") for x in all_metrics_dict])
+                self.storage.put_scalar("data_time", data_time)
 
-        # average the rest metrics
-        metrics_dict = {
-            k: np.mean([x[k] for x in all_metrics_dict]) for k in all_metrics_dict[0].keys()
-        }
-        total_losses_reduced = sum(loss for loss in metrics_dict.values())
+            # average the rest metrics
+            metrics_dict = {
+                k: np.mean([x[k] for x in all_metrics_dict]) for k in all_metrics_dict[0].keys()
+            }
+            total_losses_reduced = sum(loss for loss in metrics_dict.values())
 
-        self.storage.put_scalar("total_loss", total_losses_reduced)
-        if len(metrics_dict) > 1:
-            self.storage.put_scalars(**metrics_dict)
-
+            self.storage.put_scalar("total_loss", total_losses_reduced)
+            if len(metrics_dict) > 1:
+                self.storage.put_scalars(**metrics_dict)

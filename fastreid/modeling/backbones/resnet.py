@@ -256,7 +256,7 @@ def build_resnet_backbone(cfg):
     if pretrain:
         if not with_ibn:
             try:
-                state_dict = torch.load(pretrain_path)['model']
+                state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))['model']
                 # Remove module.encoder in name
                 new_state_dict = {}
                 for k in state_dict:
@@ -270,7 +270,7 @@ def build_resnet_backbone(cfg):
                 state_dict = model_zoo.load_url(model_urls[depth])
                 logger.info("Loading pretrained model from torchvision")
         else:
-            state_dict = torch.load(pretrain_path)['state_dict']  # ibn-net
+            state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))['state_dict']  # ibn-net
             # Remove module in name
             new_state_dict = {}
             for k in state_dict:

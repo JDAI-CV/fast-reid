@@ -6,7 +6,7 @@ from contextlib import contextmanager
 
 import torch
 
-from ..utils.logger import log_every_n_seconds
+from fastreid.utils.logger import log_every_n_seconds
 
 
 class DatasetEvaluator:
@@ -28,12 +28,12 @@ class DatasetEvaluator:
     def preprocess_inputs(self, inputs):
         pass
 
-    def process(self, output):
+    def process(self, inputs, outputs):
         """
         Process an input/output pair.
         Args:
-            input: the input that's used to call the model.
-            output: the return value of `model(input)`
+            inputs: the inputs that's used to call the model.
+            outputs: the return value of `model(input)`
         """
         pass
 
@@ -95,11 +95,10 @@ def inference_on_dataset(model, data_loader, evaluator):
     Returns:
         The return value of `evaluator.evaluate()`
     """
-    # num_devices = torch.distributed.get_world_size() if torch.distributed.is_initialized() else 1
     logger = logging.getLogger(__name__)
     logger.info("Start inference on {} images".format(len(data_loader.dataset)))
 
-    total = len(data_loader)  # inference data loader must have a fixed length
+    total = len(data_loader.dataset)  # inference data loader must have a fixed length
     evaluator.reset()
 
     num_warmup = min(5, total - 1)
@@ -116,7 +115,7 @@ def inference_on_dataset(model, data_loader, evaluator):
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             total_compute_time += time.perf_counter() - start_compute_time
-            evaluator.process(outputs)
+            evaluator.process(inputs, outputs)
 
             idx += 1
             iters_after_start = idx + 1 - num_warmup * int(idx >= num_warmup)

@@ -68,7 +68,7 @@ class Lamb(Optimizer):
 
         for group in self.param_groups:
             for p in group['params']:
-                if p.grad is None:
+                if p.grad is None or group['freeze']:
                     continue
                 grad = p.grad.data
                 if grad.is_sparse:

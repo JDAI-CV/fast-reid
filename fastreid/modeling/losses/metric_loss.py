@@ -6,11 +6,27 @@
 
 import torch
 import torch.nn.functional as F
+from fastreid.utils import comm
 
 __all__ = [
     "TripletLoss",
     "CircleLoss",
 ]
+
+
+# utils
+@torch.no_grad()
+def concat_all_gather(tensor):
+    """
+    Performs all_gather operation on the provided tensors.
+    *** Warning ***: torch.distributed.all_gather has no gradient.
+    """
+    tensors_gather = [torch.ones_like(tensor)
+                      for _ in range(torch.distributed.get_world_size())]
+    torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
+
+    output = torch.cat(tensors_gather, dim=0)
+    return output
 
 
 def normalize(x, axis=-1):
@@ -54,9 +70,9 @@ def softmax_weights(dist, mask):
 def hard_example_mining(dist_mat, is_pos, is_neg):
     """For each anchor, find the hardest positive and negative sample.
     Args:
-      dist_mat: pytorch Variable, pair wise distance between samples, shape [N, N]
-      labels: pytorch LongTensor, with shape [N]
-      return_inds: whether to return the indices. Save time if `False`(?)
+      dist_mat: pair wise distance between samples, shape [N, M]
+      is_pos: positive index with shape [N, M]
+      is_neg: negative index with shape [N, M]
     Returns:
       dist_ap: pytorch Variable, distance(anchor, positive); shape [N]
       dist_an: pytorch Variable, distance(anchor, negative); shape [N]
@@ -69,7 +85,6 @@ def hard_example_mining(dist_mat, is_pos, is_neg):
     """
 
     assert len(dist_mat.size()) == 2
-    assert dist_mat.size(0) == dist_mat.size(1)
     N = dist_mat.size(0)
 
     # `dist_ap` means distance(anchor, positive)
@@ -98,12 +113,13 @@ def weighted_example_mining(dist_mat, is_pos, is_neg):
     """For each anchor, find the weighted positive and negative sample.
     Args:
       dist_mat: pytorch Variable, pair wise distance between samples, shape [N, N]
+      is_pos:
+      is_neg:
     Returns:
       dist_ap: pytorch Variable, distance(anchor, positive); shape [N]
       dist_an: pytorch Variable, distance(anchor, negative); shape [N]
     """
     assert len(dist_mat.size()) == 2
-    assert dist_mat.size(0) == dist_mat.size(1)
 
     is_pos = is_pos.float()
     is_neg = is_neg.float()
@@ -130,15 +146,23 @@ class TripletLoss(object):
         self._scale = cfg.MODEL.LOSSES.TRI.SCALE
         self._hard_mining = cfg.MODEL.LOSSES.TRI.HARD_MINING
 
-    def __call__(self, _, global_features, targets):
+    def __call__(self, embedding, targets):
         if self._normalize_feature:
-            global_features = normalize(global_features, axis=-1)
+            embedding = normalize(embedding, axis=-1)
 
-        dist_mat = euclidean_dist(global_features, global_features)
+        # For distributed training, gather all features from different process.
+        if comm.get_world_size() > 1:
+            all_embedding = concat_all_gather(embedding)
+            all_targets = concat_all_gather(targets)
+        else:
+            all_embedding = embedding
+            all_targets = targets
 
-        N = dist_mat.size(0)
-        is_pos = targets.expand(N, N).eq(targets.expand(N, N).t())
-        is_neg = targets.expand(N, N).ne(targets.expand(N, N).t())
+        dist_mat = euclidean_dist(embedding, all_embedding)
+
+        N, M = dist_mat.size()
+        is_pos = targets.view(N, 1).expand(N, M).eq(all_targets.view(M, 1).expand(M, N).t())
+        is_neg = targets.view(N, 1).expand(N, M).ne(all_targets.view(M, 1).expand(M, N).t())
 
         if self._hard_mining:
             dist_ap, dist_an = hard_example_mining(dist_mat, is_pos, is_neg)
@@ -153,9 +177,7 @@ class TripletLoss(object):
             loss = F.soft_margin_loss(dist_an - dist_ap, y)
             if loss == float('Inf'): loss = F.margin_ranking_loss(dist_an, dist_ap, y, margin=0.3)
 
-        return {
-            "loss_triplet": loss * self._scale,
-        }
+        return loss * self._scale
 
 
 class CircleLoss(object):
@@ -165,18 +187,24 @@ class CircleLoss(object):
         self.m = cfg.MODEL.LOSSES.CIRCLE.MARGIN
         self.s = cfg.MODEL.LOSSES.CIRCLE.ALPHA
 
-    def __call__(self, _, global_features, targets):
-        global_features = F.normalize(global_features, dim=1)
+    def __call__(self, embedding, targets):
+        embedding = F.normalize(embedding, dim=1)
 
-        sim_mat = torch.matmul(global_features, global_features.t())
+        if comm.get_world_size() > 1:
+            all_embedding = concat_all_gather(embedding)
+            all_targets = concat_all_gather(targets)
+        else:
+            all_embedding = embedding
+            all_targets = targets
 
-        N = sim_mat.size(0)
-        is_pos = targets.expand(N, N).eq(targets.expand(N, N).t()).float() - torch.eye(N).to(sim_mat.device)
-        is_pos = is_pos.bool()
-        is_neg = targets.expand(N, N).ne(targets.expand(N, N).t())
+        dist_mat = torch.matmul(embedding, all_embedding.t())
 
-        s_p = sim_mat[is_pos].contiguous().view(N, -1)
-        s_n = sim_mat[is_neg].contiguous().view(N, -1)
+        N, M = dist_mat.size()
+        is_pos = targets.view(N, 1).expand(N, M).eq(all_targets.view(M, 1).expand(M, N).t())
+        is_neg = targets.view(N, 1).expand(N, M).ne(all_targets.view(M, 1).expand(M, N).t())
+
+        s_p = dist_mat[is_pos].contiguous().view(N, -1)
+        s_n = dist_mat[is_neg].contiguous().view(N, -1)
 
         alpha_p = F.relu(-s_p.detach() + 1 + self.m)
         alpha_n = F.relu(s_n.detach() + self.m)
@@ -188,6 +216,4 @@ class CircleLoss(object):
 
         loss = F.softplus(torch.logsumexp(logit_p, dim=1) + torch.logsumexp(logit_n, dim=1)).mean()
 
-        return {
-            "loss_circle": loss * self._scale,
-        }
+        return loss * self._scale
