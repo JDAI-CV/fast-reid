@@ -5,6 +5,7 @@
 """
 
 from fastreid.layers import *
+from fastreid.modeling.losses import *
 from fastreid.utils.weight_init import weights_init_kaiming, weights_init_classifier
 from .build import REID_HEADS_REGISTRY
 
@@ -13,6 +14,7 @@ from .build import REID_HEADS_REGISTRY
 class ReductionHead(nn.Module):
     def __init__(self, cfg, in_feat, num_classes, pool_layer):
         super().__init__()
+        self._cfg = cfg
         reduction_dim = cfg.MODEL.HEADS.REDUCTION_DIM
         self.neck_feat = cfg.MODEL.HEADS.NECK_FEAT
 
@@ -48,14 +50,24 @@ class ReductionHead(nn.Module):
         global_feat = self.bottleneck(features)
         bn_feat = self.bnneck(global_feat)
         bn_feat = bn_feat[..., 0, 0]
+
         # Evaluation
         if not self.training: return bn_feat
+
         # Training
-        try:              pred_class_logits = self.classifier(bn_feat)
-        except TypeError: pred_class_logits = self.classifier(bn_feat, targets)
+        try:
+            cls_outputs = self.classifier(bn_feat)
+            pred_class_logits = cls_outputs.detach()
+        except TypeError:
+            cls_outputs = self.classifier(bn_feat, targets)
+            pred_class_logits = F.linear(F.normalize(bn_feat.detach()), F.normalize(self.classifier.weight.detach()))
+        # Log prediction accuracy
+        CrossEntropyLoss.log_accuracy(pred_class_logits, targets)
 
         if self.neck_feat == "before":  feat = global_feat[..., 0, 0]
         elif self.neck_feat == "after": feat = bn_feat
         else:
             raise KeyError("MODEL.HEADS.NECK_FEAT value is invalid, must choose from ('after' & 'before')")
-        return pred_class_logits, feat, targets
+
+        return cls_outputs, feat
+

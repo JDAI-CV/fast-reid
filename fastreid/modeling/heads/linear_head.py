@@ -5,6 +5,7 @@
 """
 
 from fastreid.layers import *
+from fastreid.modeling.losses import *
 from .build import REID_HEADS_REGISTRY
 from fastreid.utils.weight_init import weights_init_classifier
 
@@ -32,8 +33,18 @@ class LinearHead(nn.Module):
         """
         global_feat = self.pool_layer(features)
         global_feat = global_feat[..., 0, 0]
+
+        # Evaluation
         if not self.training: return global_feat
-        # training
-        try:              pred_class_logits = self.classifier(global_feat)
-        except TypeError: pred_class_logits = self.classifier(global_feat, targets)
-        return pred_class_logits, global_feat, targets
+
+        # Training
+        try:
+            cls_outputs = self.classifier(global_feat)
+            pred_class_logits = cls_outputs.detach()
+        except TypeError:
+            cls_outputs = self.classifier(global_feat, targets)
+            pred_class_logits = F.linear(F.normalize(global_feat.detach()), F.normalize(self.classifier.weight.detach()))
+        # Log prediction accuracy
+        CrossEntropyLoss.log_accuracy(pred_class_logits, targets)
+
+        return cls_outputs, global_feat
