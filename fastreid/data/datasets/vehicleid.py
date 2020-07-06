@@ -24,7 +24,8 @@ class VehicleID(ImageDataset):
         - identities: 13164.
         - images: 113346.
     """
-    dataset_dir = 'vehicleid'
+    dataset_dir = "vehicleid"
+    dataset_name = "vehicleid"
 
     def __init__(self, root='datasets', test_list='', **kwargs):
         self.dataset_dir = osp.join(root, self.dataset_dir)
@@ -55,16 +56,17 @@ class VehicleID(ImageDataset):
         dataset = []
         for idx, line in enumerate(img_list_lines):
             line = line.strip()
-            vid = line.split(' ')[1]
+            vid = int(line.split(' ')[1])
             imgid = line.split(' ')[0]
             img_path = osp.join(self.image_dir, imgid + '.jpg')
-            dataset.append((img_path, int(vid), int(imgid)))
+            if is_train:
+                vid = self.dataset_name + "_" + str(vid)
+            dataset.append((img_path, vid, int(imgid)))
 
-        random.shuffle(dataset)
-        vid_container = set()
-        if is_train:
-            return dataset
+        if is_train: return dataset
         else:
+            random.shuffle(dataset)
+            vid_container = set()
             query = []
             gallery = []
             for sample in dataset:

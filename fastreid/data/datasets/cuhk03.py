@@ -7,10 +7,9 @@
 import json
 import os.path as osp
 
-# from utils.iotools import mkdir_if_missing, write_json, read_json
+from fastreid.data.datasets import DATASET_REGISTRY
 from fastreid.utils.file_io import PathManager
 from .bases import ImageDataset
-from fastreid.data.datasets import DATASET_REGISTRY
 
 
 @DATASET_REGISTRY.register()
@@ -30,6 +29,7 @@ class CUHK03(ImageDataset):
     """
     dataset_dir = 'cuhk03'
     dataset_url = None
+    dataset_name = "cuhk03"
 
     def __init__(self, root='datasets', split_id=0, cuhk03_labeled=False, cuhk03_classic_split=False, **kwargs):
         # self.root = osp.abspath(osp.expanduser(root))
@@ -69,14 +69,20 @@ class CUHK03(ImageDataset):
 
         with PathManager.open(split_path) as f:
             splits = json.load(f)
-        # splits = read_json(split_path)
         assert split_id < len(splits), 'Condition split_id ({}) < len(splits) ({}) is false'.format(split_id,
                                                                                                     len(splits))
         split = splits[split_id]
 
         train = split['train']
+        tmp_train = []
+        for img_path, pid, camid in train:
+            new_pid = self.dataset_name + "_" + str(pid)
+            tmp_train.append((img_path, new_pid, camid))
+        train = tmp_train
+        del tmp_train
         query = split['query']
         gallery = split['gallery']
+        from ipdb import set_trace; set_trace()
 
         super(CUHK03, self).__init__(train, query, gallery, **kwargs)
 
@@ -245,7 +251,9 @@ class CUHK03(ImageDataset):
             'num_gallery_pids': gallery_info[1],
             'num_gallery_imgs': gallery_info[2]
         }]
-        write_json(split, self.split_new_det_json_path)
+
+        with PathManager.open(self.split_new_det_json_path, 'w') as f:
+            json.dump(split, f, indent=4, separators=(',', ': '))
 
         print('Creating new split for labeled images (767/700) ...')
         train_info, query_info, gallery_info = _extract_new_split(
@@ -263,4 +271,5 @@ class CUHK03(ImageDataset):
             'num_gallery_pids': gallery_info[1],
             'num_gallery_imgs': gallery_info[2]
         }]
-        write_json(split, self.split_new_lab_json_path)
+        with PathManager.open(self.split_new_lab_json_pat, 'w') as f:
+            json.dump(split, f, indent=4, separators=(',', ': '))

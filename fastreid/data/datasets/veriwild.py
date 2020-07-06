@@ -23,7 +23,8 @@ class VeRiWild(ImageDataset):
         - identities: 30671.
         - images: 277797.
     """
-    dataset_dir = 'VERI-Wild'
+    dataset_dir = "VERI-Wild"
+    dataset_name = "veriwild"
 
     def __init__(self, root='datasets', query_list='', gallery_list='', **kwargs):
         self.dataset_dir = osp.join(root, self.dataset_dir)
@@ -50,20 +51,22 @@ class VeRiWild(ImageDataset):
         self.imgid2vid, self.imgid2camid, self.imgid2imgpath = self.process_vehicle(self.vehicle_info)
 
         train = self.process_dir(self.train_list)
-        query = self.process_dir(self.query_list)
-        gallery = self.process_dir(self.gallery_list)
+        query = self.process_dir(self.query_list, is_train=False)
+        gallery = self.process_dir(self.gallery_list, is_train=False)
 
         super(VeRiWild, self).__init__(train, query, gallery, **kwargs)
 
-    def process_dir(self, img_list):
+    def process_dir(self, img_list, is_train=True):
         img_list_lines = open(img_list, 'r').readlines()
 
         dataset = []
         for idx, line in enumerate(img_list_lines):
             line = line.strip()
-            vid = line.split('/')[0]
+            vid = int(line.split('/')[0])
             imgid = line.split('/')[1]
-            dataset.append((self.imgid2imgpath[imgid], int(vid), int(self.imgid2camid[imgid])))
+            if is_train:
+                vid = self.dataset_name + "_" + str(vid)
+            dataset.append((self.imgid2imgpath[imgid], vid, int(self.imgid2camid[imgid])))
 
         assert len(dataset) == len(img_list_lines)
         return dataset

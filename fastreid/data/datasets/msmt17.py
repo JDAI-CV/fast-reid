@@ -43,6 +43,7 @@ class MSMT17(ImageDataset):
     """
     # dataset_dir = 'MSMT17_V2'
     dataset_url = None
+    dataset_name = 'msmt17'
 
     def __init__(self, root='datasets', **kwargs):
         self.root = root
@@ -73,8 +74,8 @@ class MSMT17(ImageDataset):
 
         train = self.process_dir(self.train_dir, self.list_train_path)
         val = self.process_dir(self.train_dir, self.list_val_path)
-        query = self.process_dir(self.test_dir, self.list_query_path)
-        gallery = self.process_dir(self.test_dir, self.list_gallery_path)
+        query = self.process_dir(self.test_dir, self.list_query_path, is_train=False)
+        gallery = self.process_dir(self.test_dir, self.list_gallery_path, is_train=False)
 
         num_train_pids = self.get_num_pids(train)
         query_tmp = []
@@ -96,7 +97,7 @@ class MSMT17(ImageDataset):
 
         super(MSMT17, self).__init__(train, query, gallery, **kwargs)
 
-    def process_dir(self, dir_path, list_path):
+    def process_dir(self, dir_path, list_path, is_train=True):
         with open(list_path, 'r') as txt:
             lines = txt.readlines()
 
@@ -107,6 +108,8 @@ class MSMT17(ImageDataset):
             pid = int(pid)  # no need to relabel
             camid = int(img_path.split('_')[2]) - 1  # index starts from 0
             img_path = osp.join(dir_path, img_path)
+            if is_train:
+                pid = self.dataset_name + "_" + str(pid)
             data.append((img_path, pid, camid))
 
         return data
