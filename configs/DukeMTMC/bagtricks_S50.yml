@@ -4,9 +4,6 @@ MODEL:
   BACKBONE:
     NAME: "build_resnest_backbone"
 
-  HEADS:
-    NUM_CLASSES: 702
-
 DATASETS:
   NAMES: ("DukeMTMC",)
   TESTS: ("DukeMTMC",)

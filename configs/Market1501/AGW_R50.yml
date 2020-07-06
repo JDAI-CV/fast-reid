@@ -1,10 +1,5 @@
 _BASE_: "../Base-AGW.yml"
 
-MODEL:
-  HEADS:
-    NUM_CLASSES: 751
-
-
 DATASETS:
   NAMES: ("Market1501",)
   TESTS: ("Market1501",)

@@ -4,25 +4,8 @@ MODEL:
   BACKBONE:
     NAME: "build_resnest_backbone"
 
-  HEADS:
-    NUM_CLASSES: 1041
-
-  LOSSES:
-    TRI:
-      MARGIN: 0.3
-
 DATASETS:
   NAMES: ("MSMT17",)
   TESTS: ("MSMT17",)
-
-SOLVER:
-  MAX_ITER: 42000
-  STEPS: [19000, 33000]
-  WARMUP_ITERS: 4700
-
-  CHECKPOINT_PERIOD: 5000
-
-TEST:
-  EVAL_PERIOD: 5000
 
 OUTPUT_DIR: "logs/msmt17/agw_S50"

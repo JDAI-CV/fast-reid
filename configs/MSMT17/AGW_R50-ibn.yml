@@ -3,23 +3,10 @@ _BASE_: "../Base-AGW.yml"
 MODEL:
   BACKBONE:
     WITH_IBN: True
-    PRETRAIN_PATH: "/export/home/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
-
-  HEADS:
-    NUM_CLASSES: 1041
+    PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
 
 DATASETS:
   NAMES: ("MSMT17",)
   TESTS: ("MSMT17",)
-
-SOLVER:
-  MAX_ITER: 42000
-  STEPS: [19000, 33000]
-  WARMUP_ITERS: 4700
-
-  CHECKPOINT_PERIOD: 5000
-
-TEST:
-  EVAL_PERIOD: 5000
 
 OUTPUT_DIR: "logs/msmt17/agw_R50-ibn"

@@ -4,14 +4,6 @@ MODEL:
   BACKBONE:
     NAME: "build_resnest_backbone"
 
-  HEADS:
-    NECK_FEAT: "before"
-    NUM_CLASSES: 751
-
-  LOSSES:
-    TRI:
-      MARGIN: 0.3
-
 DATASETS:
   NAMES: ("Market1501",)
   TESTS: ("Market1501",)

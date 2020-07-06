@@ -1,19 +1,11 @@
-MODEL:
-  META_ARCHITECTURE: 'Baseline'
+_BASE_: "Base-bagtricks.yml"
 
+MODEL:
   BACKBONE:
-    NAME: "build_resnet_backbone"
-    DEPTH: 50
-    LAST_STRIDE: 1
     WITH_NL: True
-    PRETRAIN: True
 
   HEADS:
-    NAME: "BNneckHead"
     POOL_LAYER: "gempool"
-    NECK_FEAT: "before"
-    CLS_LAYER: "linear"
-    NUM_CLASSES: 702
 
   LOSSES:
     NAME: ("CrossEntropyLoss", "TripletLoss")
@@ -25,46 +17,3 @@ MODEL:
       MARGIN: 0.0
       HARD_MINING: False
       SCALE: 1.0
-
-DATASETS:
-  NAMES: ("DukeMTMC",)
-  TESTS: ("DukeMTMC",)
-
-INPUT:
-  SIZE_TRAIN: [256, 128]
-  SIZE_TEST: [256, 128]
-  REA:
-    ENABLED: True
-    PROB: 0.5
-    MEAN: [123.675, 116.28, 103.53]
-  DO_PAD: True
-
-DATALOADER:
-  PK_SAMPLER: True
-  NUM_INSTANCE: 4
-  NUM_WORKERS: 16
-
-SOLVER:
-  OPT: "Adam"
-  MAX_ITER: 24000
-  BASE_LR: 0.00035
-  BIAS_LR_FACTOR: 2.
-  WEIGHT_DECAY: 0.0005
-  WEIGHT_DECAY_BIAS: 0.0005
-  IMS_PER_BATCH: 64
-
-  STEPS: [8000, 18000]
-  GAMMA: 0.1
-
-  WARMUP_FACTOR: 0.01
-  WARMUP_ITERS: 2000
-
-  LOG_PERIOD: 200
-  CHECKPOINT_PERIOD: 6000
-
-TEST:
-  EVAL_PERIOD: 2000
-  IMS_PER_BATCH: 256
-
-CUDNN_BENCHMARK: True
-

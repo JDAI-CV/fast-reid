@@ -4,10 +4,6 @@ MODEL:
   BACKBONE:
     NAME: "build_resnest_backbone"
 
-  HEADS:
-    NUM_CLASSES: 751
-
-
 DATASETS:
   NAMES: ("Market1501",)
   TESTS: ("Market1501",)
