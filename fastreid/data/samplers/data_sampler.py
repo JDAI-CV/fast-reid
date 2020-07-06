@@ -9,6 +9,8 @@ from typing import Optional
 import numpy as np
 from torch.utils.data import Sampler
 
+from fastreid.utils import comm
+
 
 class TrainingSampler(Sampler):
     """
@@ -34,11 +36,15 @@ class TrainingSampler(Sampler):
         assert size > 0
         self._shuffle = shuffle
         if seed is None:
-            seed = np.random.randint(2 ** 31)
+            seed = comm.shared_random_seed()
         self._seed = int(seed)
 
+        self._rank = comm.get_rank()
+        self._world_size = comm.get_world_size()
+
     def __iter__(self):
-        yield from itertools.islice(self._infinite_indices(), 0, None, 1)
+        start = self._rank
+        yield from itertools.islice(self._infinite_indices(), start, None, self._world_size)
 
     def _infinite_indices(self):
         np.random.seed(self._seed)

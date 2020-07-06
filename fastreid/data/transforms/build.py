@@ -7,7 +7,7 @@
 import torchvision.transforms as T
 
 from .transforms import *
-from .autoaugment import *
+from .autoaugment import AutoAugment
 
 
 def build_transforms(cfg, is_train=True):
@@ -44,7 +44,7 @@ def build_transforms(cfg, is_train=True):
         rpt_prob = cfg.INPUT.RPT.PROB
 
         if do_autoaug:
-            res.append(ImageNetPolicy(total_iter))
+            res.append(AutoAugment(total_iter))
         res.append(T.Resize(size_train, interpolation=3))
         if do_flip:
             res.append(T.RandomHorizontalFlip(p=flip_prob))
