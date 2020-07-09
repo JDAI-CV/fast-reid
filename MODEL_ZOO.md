@@ -156,7 +156,7 @@ Bag of Specials(BoS):
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:| 
-| [BoT(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/VeRi/sbs_R50-ibn.yml) | ImageNet | 97.0%  | 81.9% | 46.3% | -|
+| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/VeRi/sbs_R50-ibn.yml) | ImageNet | 97.0%  | 81.9% | 46.3% | -|
 
 ### VehicleID Baseline
 
