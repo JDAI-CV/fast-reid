@@ -25,8 +25,9 @@ class BNneckHead(nn.Module):
         if cls_type == 'linear':    self.classifier = nn.Linear(in_feat, num_classes, bias=False)
         elif cls_type == 'arcface': self.classifier = Arcface(cfg, in_feat, num_classes)
         elif cls_type == 'circle':  self.classifier = Circle(cfg, in_feat, num_classes)
-        else:                       raise KeyError(f"{cls_type} is invalid, please choose from "
-                                                   f"'linear', 'arcface' and 'circle'.")
+        else:
+            raise KeyError(f"{cls_type} is invalid, please choose from "
+                           f"'linear', 'arcface' and 'circle'.")
 
         self.classifier.apply(weights_init_classifier)
 

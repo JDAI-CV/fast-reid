@@ -98,7 +98,7 @@ def inference_on_dataset(model, data_loader, evaluator):
     logger = logging.getLogger(__name__)
     logger.info("Start inference on {} images".format(len(data_loader.dataset)))
 
-    total = len(data_loader.dataset)  # inference data loader must have a fixed length
+    total = len(data_loader)  # inference data loader must have a fixed length
     evaluator.reset()
 
     num_warmup = min(5, total - 1)
@@ -119,14 +119,14 @@ def inference_on_dataset(model, data_loader, evaluator):
 
             idx += 1
             iters_after_start = idx + 1 - num_warmup * int(idx >= num_warmup)
-            seconds_per_img = total_compute_time / iters_after_start
-            if idx >= num_warmup * 2 or seconds_per_img > 30:
+            seconds_per_batch = total_compute_time / iters_after_start
+            if idx >= num_warmup * 2 or seconds_per_batch > 30:
                 total_seconds_per_img = (time.perf_counter() - start_time) / iters_after_start
                 eta = datetime.timedelta(seconds=int(total_seconds_per_img * (total - idx - 1)))
                 log_every_n_seconds(
                     logging.INFO,
-                    "Inference done {}/{}. {:.4f} s / img. ETA={}".format(
-                        idx + 1, total, seconds_per_img, str(eta)
+                    "Inference done {}/{}. {:.4f} s / batch. ETA={}".format(
+                        idx + 1, total, seconds_per_batch, str(eta)
                     ),
                     n=30,
                 )
@@ -136,13 +136,13 @@ def inference_on_dataset(model, data_loader, evaluator):
     total_time_str = str(datetime.timedelta(seconds=total_time))
     # NOTE this format is parsed by grep
     logger.info(
-        "Total inference time: {} ({:.6f} s / img per device)".format(
+        "Total inference time: {} ({:.6f} s / batch per device)".format(
             total_time_str, total_time / (total - num_warmup)
         )
     )
     total_compute_time_str = str(datetime.timedelta(seconds=int(total_compute_time)))
     logger.info(
-        "Total inference pure compute time: {} ({:.6f} s / img per device)".format(
+        "Total inference pure compute time: {} ({:.6f} s / batch per device)".format(
             total_compute_time_str, total_compute_time / (total - num_warmup)
         )
     )

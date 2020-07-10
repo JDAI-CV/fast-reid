@@ -178,7 +178,7 @@ class DefaultTrainer(SimpleTrainer):
     3. Write your own training loop similar to `tools/plain_train_net.py`.
     Also note that the behavior of this class, like other functions/classes in
     this file, is not stable, since it is meant to represent the "common default behavior".
-    It is only guaranteed to work well with the standard models and training workflow in detectron2.
+    It is only guaranteed to work well with the standard models and training workflow in fastreid.
     To obtain more stable behavior, write your own training logic with other public APIs.
     Attributes:
         scheduler:
@@ -196,7 +196,6 @@ class DefaultTrainer(SimpleTrainer):
         Args:
             cfg (CfgNode):
         """
-        self.cfg = cfg
         logger = logging.getLogger("fastreid")
         if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for fastreid
             setup_logger()
@@ -314,7 +313,6 @@ class DefaultTrainer(SimpleTrainer):
         def test_and_save_results():
             if comm.is_main_process():
                 self._last_eval_results = self.test(self.cfg, self.model)
-                torch.cuda.empty_cache()
                 return self._last_eval_results
             else:
                 return None
@@ -373,7 +371,7 @@ class DefaultTrainer(SimpleTrainer):
         """
         Returns:
             torch.nn.Module:
-        It now calls :func:`detectron2.modeling.build_model`.
+        It now calls :func:`fastreid.modeling.build_model`.
         Overwrite it if you'd like a different model.
         """
         model = build_model(cfg)
@@ -386,7 +384,7 @@ class DefaultTrainer(SimpleTrainer):
         """
         Returns:
             torch.optim.Optimizer:
-        It now calls :func:`detectron2.solver.build_optimizer`.
+        It now calls :func:`fastreid.solver.build_optimizer`.
         Overwrite it if you'd like a different optimizer.
         """
         return build_optimizer(cfg, model)
@@ -394,7 +392,7 @@ class DefaultTrainer(SimpleTrainer):
     @classmethod
     def build_lr_scheduler(cls, cfg, optimizer):
         """
-        It now calls :func:`detectron2.solver.build_lr_scheduler`.
+        It now calls :func:`fastreid.solver.build_lr_scheduler`.
         Overwrite it if you'd like a different scheduler.
         """
         return build_lr_scheduler(cfg, optimizer)
@@ -416,7 +414,7 @@ class DefaultTrainer(SimpleTrainer):
         """
         Returns:
             iterable
-        It now calls :func:`detectron2.data.build_detection_test_loader`.
+        It now calls :func:`fastreid.data.build_detection_test_loader`.
         Overwrite it if you'd like a different data loader.
         """
         return build_reid_test_loader(cfg, dataset_name)
@@ -502,7 +500,10 @@ class DefaultTrainer(SimpleTrainer):
         cfg.SOLVER.SWA.ITER *= iters_per_epoch
         cfg.SOLVER.SWA.PERIOD *= iters_per_epoch
         cfg.SOLVER.CHECKPOINT_PERIOD *= iters_per_epoch
-        cfg.TEST.EVAL_PERIOD *= iters_per_epoch
+
+        # Evaluation period must be divided by 200 for writing into tensorboard.
+        num_mode = 200 - (cfg.TEST.EVAL_PERIOD * iters_per_epoch) % 200
+        cfg.TEST.EVAL_PERIOD = cfg.TEST.EVAL_PERIOD * iters_per_epoch + num_mode
 
         logger = logging.getLogger(__name__)
         logger.info(

@@ -10,4 +10,4 @@ DATASETS:
   NAMES: ("MSMT17",)
   TESTS: ("MSMT17",)
 
-OUTPUT_DIR: "logs/msmt17/sbs-R101-ibn"
+OUTPUT_DIR: "logs/msmt17/sbs_R101-ibn"

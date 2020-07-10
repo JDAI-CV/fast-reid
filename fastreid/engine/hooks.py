@@ -174,7 +174,7 @@ class PeriodicWriter(HookBase):
 
 class PeriodicCheckpointer(_PeriodicCheckpointer, HookBase):
     """
-    Same as :class:`detectron2.checkpoint.PeriodicCheckpointer`, but as a hook.
+    Same as :class:`fastreid.utils.checkpoint.PeriodicCheckpointer`, but as a hook.
     Note that when used as a hook,
     it is unable to save additional data other than what's defined
     by the given `checkpointer`.
@@ -327,6 +327,9 @@ class EvalHook(HookBase):
                         "Got '{}: {}' instead.".format(k, v)
                     )
             self.trainer.storage.put_scalars(**flattened_results, smoothing_hint=False)
+
+        # Remove extra memory cache of main process due to evaluation
+        torch.cuda.empty_cache()
 
     def after_step(self):
         next_iter = self.trainer.iter + 1

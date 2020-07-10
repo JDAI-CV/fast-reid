@@ -6,12 +6,8 @@
 
 import torch
 import torch.nn.functional as F
-from fastreid.utils import comm
 
-__all__ = [
-    "TripletLoss",
-    "CircleLoss",
-]
+from fastreid.utils import comm
 
 
 # utils

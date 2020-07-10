@@ -173,14 +173,12 @@ class MGN(nn.Module):
             b31_logits, b31_pool_feat = self.b31_head(b31_pool_feat, targets)
             b32_logits, b32_pool_feat = self.b32_head(b32_pool_feat, targets)
             b33_logits, b33_pool_feat = self.b33_head(b33_pool_feat, targets)
-            losses = self.losses(
-                b1_logits, b2_logits, b21_logits, b22_logits, b3_logits, b31_logits, b32_logits, b33_logits,
-                b1_pool_feat, b2_pool_feat, b3_pool_feat,
-                torch.cat((b21_pool_feat, b22_pool_feat), dim=1),
-                torch.cat((b31_pool_feat, b32_pool_feat, b33_pool_feat), dim=1),
-                targets,
-            )
-            return losses
+            return b1_logits, b2_logits, b21_logits, b22_logits, \
+                b3_logits, b31_logits, b32_logits, b33_logits, \
+                b1_pool_feat, b2_pool_feat, b3_pool_feat, \
+                torch.cat((b21_pool_feat, b22_pool_feat), dim=1), \
+                torch.cat((b31_pool_feat, b32_pool_feat, b33_pool_feat), dim=1), targets
+
         else:
             b1_pool_feat = self.b1_head(b1_pool_feat)
             b2_pool_feat = self.b2_head(b2_pool_feat)
@@ -204,8 +202,9 @@ class MGN(nn.Module):
         images.sub_(self.pixel_mean).div_(self.pixel_std)
         return images
 
-    def losses(self, b1_logits, b2_logits, b21_logits, b22_logits, b3_logits, b31_logits, b32_logits, b33_logits,
-               b1_pool_feat, b2_pool_feat, b3_pool_feat, b22_pool_feat, b33_pool_feat, gt_labels):
+    def losses(self, outputs):
+        b1_logits, b2_logits, b21_logits, b22_logits, b3_logits, b31_logits, b32_logits, b33_logits, \
+        b1_pool_feat, b2_pool_feat, b3_pool_feat, b22_pool_feat, b33_pool_feat, gt_labels = outputs
         loss_dict = {}
         loss_names = self._cfg.MODEL.LOSSES.NAME
 
