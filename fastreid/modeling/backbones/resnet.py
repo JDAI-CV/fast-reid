@@ -83,11 +83,11 @@ class Bottleneck(nn.Module):
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
                                padding=1, bias=False)
         self.bn2 = get_norm(bn_norm, planes, num_splits)
-        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
-        self.bn3 = get_norm(bn_norm, planes * 4, num_splits)
+        self.conv3 = nn.Conv2d(planes, planes * self.expansion, kernel_size=1, bias=False)
+        self.bn3 = get_norm(bn_norm, planes * self.expansion, num_splits)
         self.relu = nn.ReLU(inplace=True)
         if with_se:
-            self.se = SELayer(planes * 4, reduction)
+            self.se = SELayer(planes * self.expansion, reduction)
         else:
             self.se = nn.Identity()
         self.downsample = downsample
