@@ -10,6 +10,7 @@ import weakref
 
 import numpy as np
 import torch
+from torch.nn.parallel import DistributedDataParallel
 
 import fastreid.utils.comm as comm
 from fastreid.utils.events import EventStorage
@@ -200,7 +201,14 @@ class SimpleTrainer(TrainerBase):
         """
         If your want to do something with the heads, you can wrap the model.
         """
-        loss_dict = self.model(data)
+        outputs = self.model(data)
+
+        # Compute loss
+        if isinstance(self.model, DistributedDataParallel):
+            loss_dict = self.model.module.losses(outputs)
+        else:
+            loss_dict = self.model.losses(outputs)
+
         losses = sum(loss_dict.values())
         self._detect_anomaly(losses, loss_dict)
 
