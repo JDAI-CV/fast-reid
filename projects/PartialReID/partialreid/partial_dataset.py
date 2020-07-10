@@ -33,7 +33,8 @@ def process_test(query_path, gallery_path):
 
 @DATASET_REGISTRY.register()
 class PartialREID(ImageDataset):
-    def __init__(self, root='datasets', ):
+    dataset_name = "partialreid"
+    def __init__(self, root='datasets',):
         self.root = root
 
         self.query_dir = osp.join(self.root, 'PartialREID/query')
@@ -45,7 +46,8 @@ class PartialREID(ImageDataset):
 
 @DATASET_REGISTRY.register()
 class PartialiLIDS(ImageDataset):
-    def __init__(self, root='datasets', ):
+    dataset_name = "partialilids"
+    def __init__(self, root='datasets',):
         self.root = root
 
         self.query_dir = osp.join(self.root, 'PartialiLIDS/query')
@@ -57,7 +59,8 @@ class PartialiLIDS(ImageDataset):
 
 @DATASET_REGISTRY.register()
 class OccludedREID(ImageDataset):
-    def __init__(self, root='datasets', ):
+    dataset_name = "occludereid"
+    def __init__(self, root='datasets',):
         self.root = root
 
         self.query_dir = osp.join(self.root, 'OccludedREID/query')

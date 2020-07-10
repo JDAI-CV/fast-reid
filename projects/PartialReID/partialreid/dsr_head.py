@@ -4,9 +4,6 @@
 @contact: helingxiao3@jd.com
 """
 
-import torch
-import torch.nn.functional as F
-
 from fastreid.layers import *
 from fastreid.modeling.heads.build import REID_HEADS_REGISTRY
 from fastreid.utils.weight_init import weights_init_classifier, weights_init_kaiming
@@ -35,7 +32,7 @@ class OcclusionUnit(nn.Module):
         SpatialFeatAll = SpatialFeatAll.transpose(1, 2)  # shape: [n, c, m]
         y = self.mask_layer(SpatialFeatAll)
         mask_weight = torch.sigmoid(y[:, :, 0])
-        
+
         feat_dim = SpaFeat1.size(2) * SpaFeat1.size(3)
         mask_score = F.normalize(mask_weight[:, :feat_dim], p=1, dim=1)
         mask_weight_norm = F.normalize(mask_weight, p=1, dim=1)
@@ -108,6 +105,7 @@ class DSRHead(nn.Module):
         # Evaluation
         if not self.training:
             return bn_foreground_feat, SpatialFeatAll, mask_weight_norm
+
         # Training
         global_feat = self.pool_layer(features)
         bn_feat = self.bnneck(global_feat)
@@ -119,4 +117,4 @@ class DSRHead(nn.Module):
         except TypeError:
             pred_class_logits = self.classifier(bn_feat, targets)
             fore_pred_class_legits = self.classifier_occ(bn_foreground_feat, targets)
-        return pred_class_logits, global_feat[..., 0, 0], fore_pred_class_legits, foreground_feat[..., 0, 0], targets
+        return pred_class_logits, global_feat[..., 0, 0], fore_pred_class_legits, foreground_feat[..., 0, 0]
