@@ -39,5 +39,6 @@ def compute_dsr_dist(array1, array2, distmat, scores, topk=30):
             dist[i, index[i, j]] = (min_value * score).sum()
     dist = dist.cpu()
     dist = dist.numpy()
+    dist = 0.98 * dist + 0.02 * distmat
 
     return dist
