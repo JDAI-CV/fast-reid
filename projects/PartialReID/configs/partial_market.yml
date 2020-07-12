@@ -19,7 +19,6 @@ MODEL:
     TRI:
       MARGIN: 0.3
       SCALE: 1.
-      USE_COSINE_DIST: False
       
 DATASETS:
   NAMES: ("Market1501",)
@@ -54,7 +53,6 @@ SOLVER:
   WARMUP_FACTOR: 0.01
   WARMUP_ITERS: 3
 
-  LOG_PERIOD: 1
   CHECKPOINT_PERIOD: 10
 
 TEST:
