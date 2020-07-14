@@ -11,6 +11,10 @@ Lingxiao He, Xingyu Liao
 
 [[`ICCV2019`](http://openaccess.thecvf.com/content_ICCV_2019/papers/He_Foreground-Aware_Pyramid_Reconstruction_for_Alignment-Free_Occluded_Person_Re-Identification_ICCV_2019_paper.pdf)] [[`BibTeX`](#CitingFPR)]
 
+## News！
+
+[1] The old_version code can be check in [old_version](https://github.com/JDAI-CV/Partial-Person-ReID), you can obtain the same result published in paper, and the new version code is updating, please waiting!
+
 ## Installation
 
 First install FastReID, and then put Partial Datasets in directory datasets. The whole framework of FastReID-DSR is
