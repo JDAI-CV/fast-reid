@@ -58,11 +58,9 @@ class Baseline(nn.Module):
             # throw an error. We just set all the targets to 0 to avoid this problem.
             if targets.sum() < 0: targets.zero_()
 
-            cls_outputs, features = self.heads(features, targets)
-            return cls_outputs, features, targets
+            return self.heads(features, targets), targets
         else:
-            pred_features = self.heads(features)
-            return pred_features
+            return self.heads(features)
 
     def preprocess_image(self, batched_inputs):
         """
@@ -73,22 +71,22 @@ class Baseline(nn.Module):
         images.sub_(self.pixel_mean).div_(self.pixel_std)
         return images
 
-    def losses(self, outputs):
+    def losses(self, outputs, gt_labels):
         r"""
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
         """
-        cls_outputs, pred_features, gt_labels = outputs
+        cls_outputs, pred_class_logits, pred_features = outputs
         loss_dict = {}
         loss_names = self._cfg.MODEL.LOSSES.NAME
+
+        # Log prediction accuracy
+        CrossEntropyLoss.log_accuracy(pred_class_logits.detach(), gt_labels)
 
         if "CrossEntropyLoss" in loss_names:
             loss_dict['loss_cls'] = CrossEntropyLoss(self._cfg)(cls_outputs, gt_labels)
 
         if "TripletLoss" in loss_names:
             loss_dict['loss_triplet'] = TripletLoss(self._cfg)(pred_features, gt_labels)
-
-        if "CircleLoss" in loss_names:
-            loss_dict['loss_circle'] = CircleLoss(self._cfg)(pred_features, gt_labels)
 
         return loss_dict

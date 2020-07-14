@@ -153,31 +153,21 @@ class MGN(nn.Module):
             assert "targets" in batched_inputs, "Person ID annotation are missing in training!"
             targets = batched_inputs["targets"].long().to(self.device)
 
-            if targets.sum() < 0:
-                targets.zero_()
-                self.b1_head(b1_pool_feat, targets)
-                self.b2_head(b2_pool_feat, targets)
-                self.b21_head(b21_pool_feat, targets)
-                self.b22_head(b22_pool_feat, targets)
-                self.b3_head(b3_pool_feat, targets)
-                self.b31_head(b31_pool_feat, targets)
-                self.b32_head(b32_pool_feat, targets)
-                self.b33_head(b33_pool_feat, targets)
-                return
+            if targets.sum() < 0: targets.zero_()
 
-            b1_logits, b1_pool_feat = self.b1_head(b1_pool_feat, targets)
-            b2_logits, b2_pool_feat = self.b2_head(b2_pool_feat, targets)
-            b21_logits, b21_pool_feat = self.b21_head(b21_pool_feat, targets)
-            b22_logits, b22_pool_feat = self.b22_head(b22_pool_feat, targets)
-            b3_logits, b3_pool_feat = self.b3_head(b3_pool_feat, targets)
-            b31_logits, b31_pool_feat = self.b31_head(b31_pool_feat, targets)
-            b32_logits, b32_pool_feat = self.b32_head(b32_pool_feat, targets)
-            b33_logits, b33_pool_feat = self.b33_head(b33_pool_feat, targets)
-            return b1_logits, b2_logits, b21_logits, b22_logits, \
-                b3_logits, b31_logits, b32_logits, b33_logits, \
-                b1_pool_feat, b2_pool_feat, b3_pool_feat, \
-                torch.cat((b21_pool_feat, b22_pool_feat), dim=1), \
-                torch.cat((b31_pool_feat, b32_pool_feat, b33_pool_feat), dim=1), targets
+            b1_logits, pred_class_logits, b1_pool_feat = self.b1_head(b1_pool_feat, targets)
+            b2_logits, _, b2_pool_feat = self.b2_head(b2_pool_feat, targets)
+            b21_logits, _, b21_pool_feat = self.b21_head(b21_pool_feat, targets)
+            b22_logits, _, b22_pool_feat = self.b22_head(b22_pool_feat, targets)
+            b3_logits, _, b3_pool_feat = self.b3_head(b3_pool_feat, targets)
+            b31_logits, _, b31_pool_feat = self.b31_head(b31_pool_feat, targets)
+            b32_logits, _, b32_pool_feat = self.b32_head(b32_pool_feat, targets)
+            b33_logits, _, b33_pool_feat = self.b33_head(b33_pool_feat, targets)
+
+            return (b1_logits, b2_logits, b21_logits, b22_logits, b3_logits, b31_logits, b32_logits, b33_logits,
+                    b1_pool_feat, b2_pool_feat, b3_pool_feat,
+                    torch.cat((b21_pool_feat, b22_pool_feat), dim=1),
+                    torch.cat((b31_pool_feat, b32_pool_feat, b33_pool_feat), dim=1), pred_class_logits), targets
 
         else:
             b1_pool_feat = self.b1_head(b1_pool_feat)
@@ -202,11 +192,15 @@ class MGN(nn.Module):
         images.sub_(self.pixel_mean).div_(self.pixel_std)
         return images
 
-    def losses(self, outputs):
+    def losses(self, outputs, gt_labels):
         b1_logits, b2_logits, b21_logits, b22_logits, b3_logits, b31_logits, b32_logits, b33_logits, \
-        b1_pool_feat, b2_pool_feat, b3_pool_feat, b22_pool_feat, b33_pool_feat, gt_labels = outputs
+            b1_pool_feat, b2_pool_feat, b3_pool_feat, b22_pool_feat, b33_pool_feat, pred_class_logits = outputs
+
         loss_dict = {}
         loss_names = self._cfg.MODEL.LOSSES.NAME
+
+        # Log prediction accuracy
+        CrossEntropyLoss.log_accuracy(pred_class_logits.detach(), gt_labels)
 
         if "CrossEntropyLoss" in loss_names:
             loss_dict['loss_cls_b1'] = CrossEntropyLoss(self._cfg)(b1_logits, gt_labels)

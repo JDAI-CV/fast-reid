@@ -489,7 +489,7 @@ class DefaultTrainer(SimpleTrainer):
         frozen = cfg.is_frozen()
         cfg.defrost()
 
-        iters_per_epoch = len(data_loader.dataset) // (cfg.SOLVER.IMS_PER_BATCH * comm.get_world_size())
+        iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
         cfg.MODEL.HEADS.NUM_CLASSES = data_loader.dataset.num_classes
         cfg.SOLVER.MAX_ITER *= iters_per_epoch
         cfg.SOLVER.WARMUP_ITERS *= iters_per_epoch
@@ -502,8 +502,8 @@ class DefaultTrainer(SimpleTrainer):
         cfg.SOLVER.CHECKPOINT_PERIOD *= iters_per_epoch
 
         # Evaluation period must be divided by 200 for writing into tensorboard.
-        num_mode = 200 - (cfg.TEST.EVAL_PERIOD * iters_per_epoch) % 200
-        cfg.TEST.EVAL_PERIOD = cfg.TEST.EVAL_PERIOD * iters_per_epoch + num_mode
+        num_mod = (200 - cfg.TEST.EVAL_PERIOD * iters_per_epoch) % 200
+        cfg.TEST.EVAL_PERIOD = cfg.TEST.EVAL_PERIOD * iters_per_epoch + num_mod
 
         logger = logging.getLogger(__name__)
         logger.info(

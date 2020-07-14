@@ -43,19 +43,14 @@ class BNneckHead(nn.Module):
         if not self.training: return bn_feat
 
         # Training
-        try:
-            cls_outputs = self.classifier(bn_feat)
-            pred_class_logits = cls_outputs.detach()
-        except TypeError:
-            cls_outputs = self.classifier(bn_feat, targets)
-            pred_class_logits = F.linear(F.normalize(bn_feat.detach()), F.normalize(self.classifier.weight.detach()))
-        # Log prediction accuracy
-        CrossEntropyLoss.log_accuracy(pred_class_logits, targets)
+        try:              cls_outputs = self.classifier(bn_feat)
+        except TypeError: cls_outputs = self.classifier(bn_feat, targets)
 
-        if self.neck_feat == "before":
-            feat = global_feat[..., 0, 0]
-        elif self.neck_feat == "after":
-            feat = bn_feat
+        pred_class_logits = F.linear(bn_feat, self.classifier.weight)
+
+        if self.neck_feat == "before":  feat = global_feat[..., 0, 0]
+        elif self.neck_feat == "after": feat = bn_feat
         else:
             raise KeyError("MODEL.HEADS.NECK_FEAT value is invalid, must choose from ('after' & 'before')")
-        return cls_outputs, feat
+
+        return cls_outputs, pred_class_logits, feat

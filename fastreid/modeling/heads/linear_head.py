@@ -38,13 +38,9 @@ class LinearHead(nn.Module):
         if not self.training: return global_feat
 
         # Training
-        try:
-            cls_outputs = self.classifier(global_feat)
-            pred_class_logits = cls_outputs.detach()
-        except TypeError:
-            cls_outputs = self.classifier(global_feat, targets)
-            pred_class_logits = F.linear(F.normalize(global_feat.detach()), F.normalize(self.classifier.weight.detach()))
-        # Log prediction accuracy
-        CrossEntropyLoss.log_accuracy(pred_class_logits, targets)
+        try:              cls_outputs = self.classifier(global_feat)
+        except TypeError: cls_outputs = self.classifier(global_feat, targets)
 
-        return cls_outputs, global_feat
+        pred_class_logits = F.linear(global_feat, self.classifier.weight)
+
+        return cls_outputs, pred_class_logits, global_feat

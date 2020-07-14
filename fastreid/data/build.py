@@ -31,17 +31,16 @@ def build_reid_train_loader(cfg):
     train_set = CommDataset(train_items, train_transforms, relabel=True)
 
     num_workers = cfg.DATALOADER.NUM_WORKERS
-    mini_batch_size = cfg.SOLVER.IMS_PER_BATCH
     num_instance = cfg.DATALOADER.NUM_INSTANCE
-    global_batch_size = mini_batch_size * comm.get_world_size()
+    mini_batch_size = cfg.SOLVER.IMS_PER_BATCH // comm.get_world_size()
 
     if cfg.DATALOADER.PK_SAMPLER:
         if cfg.DATALOADER.NAIVE_WAY:
             data_sampler = samplers.NaiveIdentitySampler(train_set.img_items,
-                                                         global_batch_size, num_instance)
+                                                         cfg.SOLVER.IMS_PER_BATCH, num_instance)
         else:
             data_sampler = samplers.BalancedIdentitySampler(train_set.img_items,
-                                                            global_batch_size, num_instance)
+                                                            cfg.SOLVER.IMS_PER_BATCH, num_instance)
     else:
         data_sampler = samplers.TrainingSampler(len(train_set))
     batch_sampler = torch.utils.data.sampler.BatchSampler(data_sampler, mini_batch_size, True)
