@@ -39,12 +39,12 @@ class DsrEvaluator(DatasetEvaluator):
         self.camids = []
 
     def process(self, outputs):
-        self.features.append(F.normalize(outputs[0][0]).cpu())
-        outputs1 = F.normalize(outputs[0][1].data).cpu().numpy()
+        self.features.append(F.normalize(outputs[0]).cpu())
+        outputs1 = F.normalize(outputs[1].data).cpu().numpy()
         self.spatial_features.append(outputs1)
-        self.scores.append(outputs[0][2])
-        self.pids.extend(outputs[1].cpu().numpy())
-        self.camids.extend(outputs[2].cpu().numpy())
+        self.scores.append(outputs[2])
+        self.pids.extend(inputs["targets"].numpy())
+        self.camids.extend(inputs["camid"].numpy())
 
     def evaluate(self):
         features = torch.cat(self.features, dim=0)
