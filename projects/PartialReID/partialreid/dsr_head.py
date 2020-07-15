@@ -69,19 +69,17 @@ class DSRHead(nn.Module):
         if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
             self.classifier = nn.Linear(in_feat, num_classes, bias=False)
             self.classifier_occ = nn.Linear(in_feat, num_classes, bias=False)
-            self.classifier.apply(weights_init_classifier)
-            self.classifier_occ.apply(weights_init_classifier)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'arcface':
-            self.classifier = Arcface(cfg, in_feat)
-            self.classifier_occ = Arcface(cfg, in_feat)
+            self.classifier = Arcface(cfg, in_feat, num_classes)
+            self.classifier_occ = Arcface(cfg, in_feat, num_classes)
         elif cfg.MODEL.HEADS.CLS_LAYER == 'circle':
-            self.classifier = Circle(cfg, in_feat)
-            self.classifier_occ = Circle(cfg, in_feat)
+            self.classifier = Circle(cfg, in_feat, num_classes)
+            self.classifier_occ = Circle(cfg, in_feat, num_classes)
         else:
             self.classifier = nn.Linear(in_feat, num_classes, bias=False)
             self.classifier_occ = nn.Linear(in_feat, num_classes, bias=False)
-            self.classifier.apply(weights_init_classifier)
-            self.classifier_occ.apply(weights_init_classifier)
+        self.classifier.apply(weights_init_classifier)
+        self.classifier_occ.apply(weights_init_classifier)
 
     def forward(self, features, targets=None):
         """
@@ -112,9 +110,12 @@ class DSRHead(nn.Module):
         bn_feat = bn_feat[..., 0, 0]
 
         try:
-            pred_class_logits = self.classifier(bn_feat)
-            fore_pred_class_legits = self.classifier_occ(bn_foreground_feat)
+            cls_outputs = self.classifier(bn_feat)
+            fore_cls_outputs = self.classifier_occ(bn_foreground_feat)
         except TypeError:
-            pred_class_logits = self.classifier(bn_feat, targets)
-            fore_pred_class_legits = self.classifier_occ(bn_foreground_feat, targets)
-        return pred_class_logits, global_feat[..., 0, 0], fore_pred_class_legits, foreground_feat[..., 0, 0]
+            cls_outputs = self.classifier(bn_feat, targets)
+            fore_cls_outputs = self.classifier_occ(bn_foreground_feat, targets)
+
+        pred_class_logits = F.linear(bn_foreground_feat, self.classifier.weight)
+
+        return cls_outputs, fore_cls_outputs, pred_class_logits, global_feat[..., 0, 0], foreground_feat[..., 0, 0]

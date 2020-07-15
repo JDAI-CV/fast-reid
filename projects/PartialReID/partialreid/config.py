@@ -12,5 +12,4 @@ def add_partialreid_config(cfg):
 
     _C.TEST.DSR = CN()
     _C.TEST.DSR.ENABLED = True
-    _C.TEST.DSR.TOPK = 30
 

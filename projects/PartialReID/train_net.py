@@ -43,13 +43,13 @@ def setup(args):
 def main(args):
     cfg = setup(args)
 
-    logger = logging.getLogger('fastreid.' + __name__)
     if args.eval_only:
+        logger = logging.getLogger("fastreid.trainer")
         cfg.defrost()
         cfg.MODEL.BACKBONE.PRETRAIN = False
         model = Trainer.build_model(cfg)
 
-        Checkpointer(model, save_dir=cfg.OUTPUT_DIR).load(cfg.MODEL.WEIGHTS)  # load trained model
+        Checkpointer(model).load(cfg.MODEL.WEIGHTS)  # load trained model
 
         if cfg.TEST.PRECISE_BN.ENABLED and hooks.get_bn_modules(model):
             prebn_cfg = cfg.clone()
