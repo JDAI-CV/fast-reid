@@ -17,7 +17,7 @@ def print_csv_format(results):
     """
     assert isinstance(results, OrderedDict), results  # unordered results cannot be properly printed
     task = list(results.keys())[0]
-    metrics = [k for k in results[task]]
+    metrics = ["Datasets"] + [k for k in results[task]]
     logger = logging.getLogger(__name__)
 
     csv_results = []
