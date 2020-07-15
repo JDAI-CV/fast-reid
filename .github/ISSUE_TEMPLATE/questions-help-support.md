@@ -15,7 +15,7 @@ NOTE:
 
 1. Only general answers are provided.
    If you want to ask about "why X did not work", please use the
-   [Unexpected behaviors]() issue template.
+   [Unexpected behaviors](https://github.com/JDAI-CV/fast-reid/issues/new/choose) issue template.
 
 2. About how to implement new models / new dataloader / new training logic, etc., check documentation first.
 
