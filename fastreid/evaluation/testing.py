@@ -33,9 +33,7 @@ def print_csv_format(results):
         numalign="left",
     )
 
-    logger.info('----------------------------------------')
     logger.info("Evaluation results in csv format: \n" + table)
-    logger.info('----------------------------------------')
 
 
 def verify_results(cfg, results):
