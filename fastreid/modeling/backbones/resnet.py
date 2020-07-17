@@ -29,8 +29,6 @@ model_urls = {
     152: 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
 }
 
-__all__ = ['ResNet', 'BasicBlock', 'Bottleneck']
-
 
 class BasicBlock(nn.Module):
     expansion = 1
