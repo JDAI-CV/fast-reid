@@ -5,10 +5,10 @@
 """
 
 from .activation import *
-from .arcface import Arcface
+from .arc_softmax import ArcSoftmax
 from .batch_drop import BatchDrop
 from .batch_norm import *
-from .circle import Circle
+from .circle_softmax import CircleSoftmax
 from .context_block import ContextBlock
 from .frn import FRN, TLU
 from .non_local import Non_local

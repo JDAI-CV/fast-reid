@@ -31,6 +31,8 @@ _C.MODEL.BACKBONE = CN()
 
 _C.MODEL.BACKBONE.NAME = "build_resnet_backbone"
 _C.MODEL.BACKBONE.DEPTH = 50
+# RegNet volume
+_C.MODEL.BACKBONE.VOLUME = "800y"
 _C.MODEL.BACKBONE.LAST_STRIDE = 1
 # Normalization method for the convolution layers.
 _C.MODEL.BACKBONE.NORM = "BN"
@@ -69,7 +71,7 @@ _C.MODEL.HEADS.NECK_FEAT = "before"  # options: before, after
 _C.MODEL.HEADS.POOL_LAYER = "avgpool"
 
 # Classification layer type
-_C.MODEL.HEADS.CLS_LAYER = "linear"  # "arcface" or "circle"
+_C.MODEL.HEADS.CLS_LAYER = "linear"  # "arcSoftmax" or "circleSoftmax"
 
 # Margin and Scale for margin-based classification layer
 _C.MODEL.HEADS.MARGIN = 0.15

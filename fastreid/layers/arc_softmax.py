@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from torch.nn import Parameter
 
 
-class Arcface(nn.Module):
+class ArcSoftmax(nn.Module):
     def __init__(self, cfg, in_feat, num_classes):
         super().__init__()
         self.in_feat = in_feat

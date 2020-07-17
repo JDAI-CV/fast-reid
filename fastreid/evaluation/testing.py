@@ -6,6 +6,7 @@ from collections import Mapping, OrderedDict
 
 import numpy as np
 from tabulate import tabulate
+from termcolor import colored
 
 
 def print_csv_format(results):
@@ -33,7 +34,7 @@ def print_csv_format(results):
         numalign="left",
     )
 
-    logger.info("Evaluation results in csv format: \n" + table)
+    logger.info("Evaluation results in csv format: \n" + colored(table, "cyan"))
 
 
 def verify_results(cfg, results):

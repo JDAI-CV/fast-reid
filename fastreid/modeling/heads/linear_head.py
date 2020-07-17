@@ -5,9 +5,8 @@
 """
 
 from fastreid.layers import *
-from fastreid.modeling.losses import *
-from .build import REID_HEADS_REGISTRY
 from fastreid.utils.weight_init import weights_init_classifier
+from .build import REID_HEADS_REGISTRY
 
 
 @REID_HEADS_REGISTRY.register()
@@ -18,12 +17,12 @@ class LinearHead(nn.Module):
 
         # identity classification layer
         cls_type = cfg.MODEL.HEADS.CLS_LAYER
-        if cls_type == 'linear':    self.classifier = nn.Linear(in_feat, num_classes, bias=False)
-        elif cls_type == 'arcface': self.classifier = Arcface(cfg, in_feat, num_classes)
-        elif cls_type == 'circle':  self.classifier = Circle(cfg, in_feat, num_classes)
+        if cls_type == 'linear':          self.classifier = nn.Linear(in_feat, num_classes, bias=False)
+        elif cls_type == 'arcSoftmax':    self.classifier = ArcSoftmax(cfg, in_feat, num_classes)
+        elif cls_type == 'circleSoftmax': self.classifier = CircleSoftmax(cfg, in_feat, num_classes)
         else:
             raise KeyError(f"{cls_type} is invalid, please choose from "
-                           f"'linear', 'arcface' and 'circle'.")
+                           f"'linear', 'arcSoftmax' and 'circleSoftmax'.")
 
         self.classifier.apply(weights_init_classifier)
 

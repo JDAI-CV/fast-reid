@@ -249,7 +249,7 @@ def build_resnet_backbone(cfg):
     depth = cfg.MODEL.BACKBONE.DEPTH
 
     num_blocks_per_stage = {34: [3, 4, 6, 3], 50: [3, 4, 6, 3], 101: [3, 4, 23, 3], 152: [3, 8, 36, 3], }[depth]
-    nl_layers_per_stage = {34: [3, 4, 6, 3], 50: [0, 2, 3, 0], 101: [0, 2, 9, 0]}[depth]
+    nl_layers_per_stage = {34: [0, 2, 3, 0], 50: [0, 2, 3, 0], 101: [0, 2, 9, 0]}[depth]
     block = {34: BasicBlock, 50: Bottleneck, 101: Bottleneck}[depth]
     model = ResNet(last_stride, bn_norm, num_splits, with_ibn, with_se, with_nl, block,
                    num_blocks_per_stage, nl_layers_per_stage)
