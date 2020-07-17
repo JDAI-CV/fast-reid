@@ -66,18 +66,20 @@ class DSRHead(nn.Module):
         self.bnneck_occ.apply(weights_init_kaiming)
 
         # identity classification layer
-        if cfg.MODEL.HEADS.CLS_LAYER == 'linear':
+        cls_type = cfg.MODEL.HEADS.CLS_LAYER
+        if cls_type == 'linear':
             self.classifier = nn.Linear(in_feat, num_classes, bias=False)
             self.classifier_occ = nn.Linear(in_feat, num_classes, bias=False)
-        elif cfg.MODEL.HEADS.CLS_LAYER == 'arcface':
-            self.classifier = Arcface(cfg, in_feat, num_classes)
-            self.classifier_occ = Arcface(cfg, in_feat, num_classes)
-        elif cfg.MODEL.HEADS.CLS_LAYER == 'circle':
-            self.classifier = Circle(cfg, in_feat, num_classes)
-            self.classifier_occ = Circle(cfg, in_feat, num_classes)
+        elif cls_type == 'arcSoftmax':
+            self.classifier = ArcSoftmax(cfg, in_feat, num_classes)
+            self.classifier_occ = ArcSoftmax(cfg, in_feat, num_classes)
+        elif cls_type == 'circleSoftmax':
+            self.classifier = CircleSoftmax(cfg, in_feat, num_classes)
+            self.classifier_occ = CircleSoftmax(cfg, in_feat, num_classes)
         else:
-            self.classifier = nn.Linear(in_feat, num_classes, bias=False)
-            self.classifier_occ = nn.Linear(in_feat, num_classes, bias=False)
+            raise KeyError(f"{cls_type} is invalid, please choose from "
+                           f"'linear', 'arcSoftmax' and 'circleSoftmax'.")
+
         self.classifier.apply(weights_init_classifier)
         self.classifier_occ.apply(weights_init_classifier)
 
