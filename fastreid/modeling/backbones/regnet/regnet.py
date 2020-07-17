@@ -474,12 +474,14 @@ def build_regnet_backbone(cfg):
     volume = cfg.MODEL.BACKBONE.VOLUME
 
     cfg_files = {
-        '800x': 'fastreid/modeling/backbones/regnet/RegNetX-800MF_dds_8gpu.yaml',
-        '800y': 'fastreid/modeling/backbones/regnet/RegNetY-800MF_dds_8gpu.yaml',
-        '1600x': 'fastreid/modeling/backbones/regnet/RegNetX-1600MF_dds_8gpu.yaml',
-        '1600y': 'fastreid/modeling/backbones/regnet/RegNetY-1600MF_dds_8gpu.yaml',
-        '3200x': 'fastreid/modeling/backbones/regnet/RegNetX-3200MF_dds_8gpu.yaml',
-        '3200y': 'fastreid/modeling/backbones/regnet/RegNetY-3200MF_dds_8gpu.yaml',
+        '800x': 'fastreid/modeling/backbones/regnet/regnetx/RegNetX-800MF_dds_8gpu.yaml',
+        '800y': 'fastreid/modeling/backbones/regnet/regnety/RegNetY-800MF_dds_8gpu.yaml',
+        '1600x': 'fastreid/modeling/backbones/regnet/regnetx/RegNetX-1.6GF_dds_8gpu.yaml',
+        '1600y': 'fastreid/modeling/backbones/regnet/regnety/RegNetY-1.6GF_dds_8gpu.yaml',
+        '3200x': 'fastreid/modeling/backbones/regnet/regnetx/RegNetX-3.2GF_dds_8gpu.yaml',
+        '3200y': 'fastreid/modeling/backbones/regnet/regnety/RegNetY-3.2GF_dds_8gpu.yaml',
+        '6400x': 'fastreid/modeling/backbones/regnet/regnetx/RegNetX-6.4GF_dds_8gpu.yaml',
+        '6400y': 'fastreid/modeling/backbones/regnet/regnety/RegNetY-6.4GF_dds_8gpu.yaml',
     }[volume]
 
     regnet_cfg.merge_from_file(cfg_files)
