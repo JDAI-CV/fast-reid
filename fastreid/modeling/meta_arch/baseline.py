@@ -7,10 +7,10 @@
 import torch
 from torch import nn
 
-from fastreid.layers import GeneralizedMeanPoolingP, AdaptiveAvgMaxPool2d
+from fastreid.layers import GeneralizedMeanPoolingP, AdaptiveAvgMaxPool2d, FastGlobalAvgPool2d
 from fastreid.modeling.backbones import build_backbone
 from fastreid.modeling.heads import build_reid_heads
-from fastreid.modeling.losses import reid_losses
+from fastreid.modeling.losses import *
 from .build import META_ARCH_REGISTRY
 
 
@@ -18,18 +18,20 @@ from .build import META_ARCH_REGISTRY
 class Baseline(nn.Module):
     def __init__(self, cfg):
         super().__init__()
-        self.register_buffer("pixel_mean", torch.Tensor(cfg.MODEL.PIXEL_MEAN).view(1, -1, 1, 1))
-        self.register_buffer("pixel_std", torch.Tensor(cfg.MODEL.PIXEL_STD).view(1, -1, 1, 1))
         self._cfg = cfg
+        assert len(cfg.MODEL.PIXEL_MEAN) == len(cfg.MODEL.PIXEL_STD)
+        self.register_buffer("pixel_mean", torch.tensor(cfg.MODEL.PIXEL_MEAN).view(1, -1, 1, 1))
+        self.register_buffer("pixel_std", torch.tensor(cfg.MODEL.PIXEL_STD).view(1, -1, 1, 1))
+
         # backbone
         self.backbone = build_backbone(cfg)
 
         # head
         pool_type = cfg.MODEL.HEADS.POOL_LAYER
-        if pool_type == 'avgpool':      pool_layer = nn.AdaptiveAvgPool2d(1)
+        if pool_type == 'avgpool':      pool_layer = FastGlobalAvgPool2d()
         elif pool_type == 'maxpool':    pool_layer = nn.AdaptiveMaxPool2d(1)
         elif pool_type == 'gempool':    pool_layer = GeneralizedMeanPoolingP()
-        elif pool_type == "avgmaxpool": pool_layer = AdaptiveAvgMaxPool2d(1)
+        elif pool_type == "avgmaxpool": pool_layer = AdaptiveAvgMaxPool2d()
         elif pool_type == "identity":   pool_layer = nn.Identity()
         else:
             raise KeyError(f"{pool_type} is invalid, please choose from "
@@ -44,30 +46,26 @@ class Baseline(nn.Module):
         return self.pixel_mean.device
 
     def forward(self, batched_inputs):
-        if not self.training:
-            pred_feat = self.inference(batched_inputs)
-            try:              return pred_feat, batched_inputs["targets"], batched_inputs["camid"]
-            except Exception: return pred_feat
-
         images = self.preprocess_image(batched_inputs)
-        targets = batched_inputs["targets"].long()
+        features = self.backbone(images)
 
-        # training
-        features = self.backbone(images)  # (bs, 2048, 16, 8)
-        return self.heads(features, targets)
+        if self.training:
+            assert "targets" in batched_inputs, "Person ID annotation are missing in training!"
+            targets = batched_inputs["targets"].long().to(self.device)
 
-    def inference(self, batched_inputs):
-        assert not self.training
-        images = self.preprocess_image(batched_inputs)
-        features = self.backbone(images)  # (bs, 2048, 16, 8)
-        pred_feat = self.heads(features)
-        return pred_feat
+            # PreciseBN flag, When do preciseBN on different dataset, the number of classes in new dataset
+            # may be larger than that in the original dataset, so the circle/arcface will
+            # throw an error. We just set all the targets to 0 to avoid this problem.
+            if targets.sum() < 0: targets.zero_()
+
+            return self.heads(features, targets), targets
+        else:
+            return self.heads(features)
 
     def preprocess_image(self, batched_inputs):
         """
         Normalize and batch the input images.
         """
-        # images = [x["images"] for x in batched_inputs]
         if isinstance(batched_inputs, dict):
             images = batched_inputs["images"]
         else:
@@ -75,6 +73,22 @@ class Baseline(nn.Module):
         images.sub_(self.pixel_mean).div_(self.pixel_std)
         return images
 
-    def losses(self, outputs):
-        logits, feat, targets = outputs
-        return reid_losses(self._cfg, logits, feat, targets)
+    def losses(self, outputs, gt_labels):
+        r"""
+        Compute loss from modeling's outputs, the loss function input arguments
+        must be the same as the outputs of the model forwarding.
+        """
+        cls_outputs, pred_class_logits, pred_features = outputs
+        loss_dict = {}
+        loss_names = self._cfg.MODEL.LOSSES.NAME
+
+        # Log prediction accuracy
+        CrossEntropyLoss.log_accuracy(pred_class_logits.detach(), gt_labels)
+
+        if "CrossEntropyLoss" in loss_names:
+            loss_dict['loss_cls'] = CrossEntropyLoss(self._cfg)(cls_outputs, gt_labels)
+
+        if "TripletLoss" in loss_names:
+            loss_dict['loss_triplet'] = TripletLoss(self._cfg)(pred_features, gt_labels)
+
+        return loss_dict
