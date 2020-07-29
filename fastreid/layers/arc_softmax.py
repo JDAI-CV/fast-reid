@@ -26,6 +26,7 @@ class ArcSoftmax(nn.Module):
         self.mm = math.sin(math.pi - self._m) * self._m
 
         self.weight = Parameter(torch.Tensor(num_classes, in_feat))
+        nn.init.xavier_uniform_(self.weight)
         self.register_buffer('t', torch.zeros(1))
 
     def forward(self, features, targets):

@@ -7,10 +7,6 @@ INPUT:
 MODEL:
   BACKBONE:
     WITH_IBN: True
-    PRETRAIN_PATH: "/export2/home/zjk/pretrain_models/resnet50_ibn_a.pth.tar"
-
-  HEADS:
-    NUM_CLASSES: 575
 
 SOLVER:
   OPT: "SGD"

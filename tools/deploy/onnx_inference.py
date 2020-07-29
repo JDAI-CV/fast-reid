@@ -4,30 +4,23 @@
 @contact: sherlockliao01@gmail.com
 """
 
-import caffe
-import tqdm
+import argparse
 import glob
 import os
+
 import cv2
 import numpy as np
-
-caffe.set_mode_gpu()
-
-import argparse
+import onnxruntime
+import tqdm
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="Caffe model inference")
+    parser = argparse.ArgumentParser(description="onnx model inference")
 
     parser.add_argument(
-        "--model-def",
-        default="logs/test_caffe/baseline_R50.prototxt",
-        help="caffe model prototxt"
-    )
-    parser.add_argument(
-        "--model-weights",
-        default="logs/test_caffe/baseline_R50.caffemodel",
-        help="caffe model weights"
+        "--model-path",
+        default="onnx_model/baseline.onnx",
+        help="onnx model path"
     )
     parser.add_argument(
         "--input",
@@ -37,7 +30,7 @@ def get_parser():
     )
     parser.add_argument(
         "--output",
-        default='caffe_output',
+        default='onnx_output',
         help='path to save converted caffe model'
     )
     parser.add_argument(
@@ -61,11 +54,9 @@ def preprocess(image_path, image_height, image_width):
     original_image = original_image[:, :, ::-1]
 
     # Apply pre-processing to image.
-    image = cv2.resize(original_image, (image_width, image_height), interpolation=cv2.INTER_CUBIC)
-    image = image.astype("float32").transpose(2, 0, 1)[np.newaxis]  # (1, 3, h, w)
-    image = (image - np.array([0.485 * 255, 0.456 * 255, 0.406 * 255]).reshape((1, -1, 1, 1))) / np.array(
-        [0.229 * 255, 0.224 * 255, 0.225 * 255]).reshape((1, -1, 1, 1))
-    return image
+    img = cv2.resize(original_image, (image_width, image_height), interpolation=cv2.INTER_CUBIC)
+    img = img.astype("float32").transpose(2, 0, 1)[np.newaxis]  # (1, 3, h, w)
+    return img
 
 
 def normalize(nparray, order=2, axis=-1):
@@ -77,8 +68,9 @@ def normalize(nparray, order=2, axis=-1):
 if __name__ == "__main__":
     args = get_parser().parse_args()
 
-    net = caffe.Net(args.model_def, args.model_weights, caffe.TEST)
-    net.blobs['blob1'].reshape(1, 3, args.height, args.width)
+    ort_sess = onnxruntime.InferenceSession(args.model_path)
+
+    input_name = ort_sess.get_inputs()[0].name
 
     if not os.path.exists(args.output): os.makedirs(args.output)
 
@@ -88,8 +80,6 @@ if __name__ == "__main__":
             assert args.input, "The input path(s) was not found"
         for path in tqdm.tqdm(args.input):
             image = preprocess(path, args.height, args.width)
-            net.blobs['blob1'].data[...] = image
-            feat = net.forward()['output']
-            feat = normalize(feat[..., 0, 0], axis=1)
+            feat = ort_sess.run(None, {input_name: image})[0]
+            feat = normalize(feat, axis=1)
             np.save(os.path.join(args.output, path.replace('.jpg', '.npy').split('/')[-1]), feat)
-

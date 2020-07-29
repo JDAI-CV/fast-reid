@@ -1,7 +1,7 @@
 # encoding: utf-8
 """
 @author:  xingyu liao
-@contact: liaoxingyu5@jd.com
+@contact: sherlockliao01@gmail.com
 """
 # based on:
 # https://github.com/pytorch/contrib/blob/master/torchcontrib/optim/swa.py

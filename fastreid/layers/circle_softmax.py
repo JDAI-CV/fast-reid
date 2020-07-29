@@ -4,6 +4,8 @@
 @contact: sherlockliao01@gmail.com
 """
 
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -19,11 +21,12 @@ class CircleSoftmax(nn.Module):
         self._m = cfg.MODEL.HEADS.MARGIN
 
         self.weight = Parameter(torch.Tensor(num_classes, in_feat))
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
     def forward(self, features, targets):
         sim_mat = F.linear(F.normalize(features), F.normalize(self.weight))
-        alpha_p = F.relu(-sim_mat.detach() + 1 + self._m)
-        alpha_n = F.relu(sim_mat.detach() + self._m)
+        alpha_p = torch.clamp_min(-sim_mat.detach() + 1 + self._m, min=0.)
+        alpha_n = torch.clamp_min(sim_mat.detach() + self._m, min=0.)
         delta_p = 1 - self._m
         delta_n = self._m
 

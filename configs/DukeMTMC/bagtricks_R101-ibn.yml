@@ -4,7 +4,6 @@ MODEL:
   BACKBONE:
     DEPTH: 101
     WITH_IBN: True
-    PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet101_ibn_a.pth.tar"
 
 DATASETS:
   NAMES: ("DukeMTMC",)

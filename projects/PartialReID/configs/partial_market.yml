@@ -3,11 +3,10 @@ MODEL:
 
   BACKBONE:
     NAME: "build_resnet_backbone"
-    DEPTH: 50
+    DEPTH: "50x"
     NORM: "BN"
     LAST_STRIDE: 1
     WITH_IBN: True
-    PRETRAIN_PATH: "/export/home/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
 
   HEADS:
     NAME: "DSRHead"

@@ -9,7 +9,6 @@ import math
 
 import torch
 from torch import nn
-from torch.utils import model_zoo
 
 from fastreid.layers import (
     IBN,
@@ -22,11 +21,15 @@ from .build import BACKBONE_REGISTRY
 
 logger = logging.getLogger(__name__)
 model_urls = {
-    18: 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
-    34: 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
-    50: 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
-    101: 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
-    152: 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
+    '18x': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
+    '34x': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
+    '50x': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
+    '101x': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
+    'ibn_18x': 'https://github.com/XingangPan/IBN-Net/releases/download/v1.0/resnet18_ibn_a-2f571257.pth',
+    'ibn_34x': 'https://github.com/XingangPan/IBN-Net/releases/download/v1.0/resnet34_ibn_a-94bc1577.pth',
+    'ibn_50x': 'https://github.com/XingangPan/IBN-Net/releases/download/v1.0/resnet50_ibn_a-d9d0bb7b.pth',
+    'ibn_101x': 'https://github.com/XingangPan/IBN-Net/releases/download/v1.0/resnet101_ibn_a-59ea0ac6.pth',
+    'se_ibn_101x': 'https://github.com/XingangPan/IBN-Net/releases/download/v1.0/se_resnet101_ibn_a-fabed4e2.pth',
 }
 
 
@@ -37,7 +40,10 @@ class BasicBlock(nn.Module):
                  stride=1, downsample=None, reduction=16):
         super(BasicBlock, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = get_norm(bn_norm, planes, num_splits)
+        if with_ibn:
+            self.bn1 = IBN(planes, bn_norm, num_splits)
+        else:
+            self.bn1 = get_norm(bn_norm, planes, num_splits)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2 = get_norm(bn_norm, planes, num_splits)
         self.relu = nn.ReLU(inplace=True)
@@ -146,8 +152,6 @@ class ResNet(nn.Module):
             )
 
         layers = []
-        if planes == 512:
-            with_ibn = False
         layers.append(block(self.inplanes, planes, bn_norm, num_splits, with_ibn, with_se, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
@@ -227,6 +231,54 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
+def init_pretrained_weights(key):
+    """Initializes model with pretrained weights.
+
+    Layers that don't match with pretrained layers in name or size are kept unchanged.
+    """
+    import os
+    import errno
+    import gdown
+
+    def _get_torch_home():
+        ENV_TORCH_HOME = 'TORCH_HOME'
+        ENV_XDG_CACHE_HOME = 'XDG_CACHE_HOME'
+        DEFAULT_CACHE_DIR = '~/.cache'
+        torch_home = os.path.expanduser(
+            os.getenv(
+                ENV_TORCH_HOME,
+                os.path.join(
+                    os.getenv(ENV_XDG_CACHE_HOME, DEFAULT_CACHE_DIR), 'torch'
+                )
+            )
+        )
+        return torch_home
+
+    torch_home = _get_torch_home()
+    model_dir = os.path.join(torch_home, 'checkpoints')
+    try:
+        os.makedirs(model_dir)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            # Directory already exists, ignore.
+            pass
+        else:
+            # Unexpected OSError, re-raise.
+            raise
+
+    filename = model_urls[key].split('/')[-1]
+
+    cached_file = os.path.join(model_dir, filename)
+
+    if not os.path.exists(cached_file):
+        gdown.download(model_urls[key], cached_file, quiet=False)
+
+    logger.info(f"Loading pretrained model from {cached_file}")
+    state_dict = torch.load(cached_file)
+
+    return state_dict
+
+
 @BACKBONE_REGISTRY.register()
 def build_resnet_backbone(cfg):
     """
@@ -246,13 +298,15 @@ def build_resnet_backbone(cfg):
     with_nl = cfg.MODEL.BACKBONE.WITH_NL
     depth = cfg.MODEL.BACKBONE.DEPTH
 
-    num_blocks_per_stage = {34: [3, 4, 6, 3], 50: [3, 4, 6, 3], 101: [3, 4, 23, 3], 152: [3, 8, 36, 3], }[depth]
-    nl_layers_per_stage = {34: [0, 2, 3, 0], 50: [0, 2, 3, 0], 101: [0, 2, 9, 0]}[depth]
-    block = {34: BasicBlock, 50: Bottleneck, 101: Bottleneck}[depth]
+    num_blocks_per_stage = {'18x': [2, 2, 2, 2], '34x': [3, 4, 6, 3], '50x': [3, 4, 6, 3],
+                            '101x': [3, 4, 23, 3],}[depth]
+    nl_layers_per_stage = {'18x': [0, 0, 0, 0], '34x': [0, 0, 0, 0], '50x': [0, 2, 3, 0], '101x': [0, 2, 9, 0]}[depth]
+    block = {'18x': BasicBlock, '34x': BasicBlock, '50x': Bottleneck, '101x': Bottleneck}[depth]
     model = ResNet(last_stride, bn_norm, num_splits, with_ibn, with_se, with_nl, block,
                    num_blocks_per_stage, nl_layers_per_stage)
     if pretrain:
-        if not with_ibn:
+        # Load pretrain path if specifically
+        if pretrain_path:
             try:
                 state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))['model']
                 # Remove module.encoder in name
@@ -263,20 +317,19 @@ def build_resnet_backbone(cfg):
                         new_state_dict[new_k] = state_dict[k]
                 state_dict = new_state_dict
                 logger.info(f"Loading pretrained model from {pretrain_path}")
-            except FileNotFoundError or KeyError:
-                # original resnet
-                state_dict = model_zoo.load_url(model_urls[depth])
-                logger.info("Loading pretrained model from torchvision")
+            except FileNotFoundError as e:
+                logger.info(f'{pretrain_path} is not found! Please check this path.')
+                raise e
+            except KeyError as e:
+                logger.info("State dict keys error! Please check the state dict.")
+                raise e
         else:
-            state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))['state_dict']  # ibn-net
-            # Remove module in name
-            new_state_dict = {}
-            for k in state_dict:
-                new_k = '.'.join(k.split('.')[1:])
-                if new_k in model.state_dict() and (model.state_dict()[new_k].shape == state_dict[k].shape):
-                    new_state_dict[new_k] = state_dict[k]
-            state_dict = new_state_dict
-            logger.info(f"Loading pretrained model from {pretrain_path}")
+            key = depth
+            if with_ibn: key = 'ibn_' + key
+            if with_se:  key = 'se_' + key
+
+            state_dict = init_pretrained_weights(key)
+
         incompatible = model.load_state_dict(state_dict, strict=False)
         if incompatible.missing_keys:
             logger.info(
@@ -286,4 +339,5 @@ def build_resnet_backbone(cfg):
             logger.info(
                 get_unexpected_parameters_message(incompatible.unexpected_keys)
             )
+
     return model

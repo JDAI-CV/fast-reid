@@ -10,7 +10,6 @@ from collections import OrderedDict
 import numpy as np
 import torch
 import torch.nn.functional as F
-from tabulate import tabulate
 
 from .evaluator import DatasetEvaluator
 from .query_expansion import aqe
@@ -101,6 +100,6 @@ class ReidEvaluator(DatasetEvaluator):
         tprs = evaluate_roc(dist, query_pids, gallery_pids, query_camids, gallery_camids)
         fprs = [1e-4, 1e-3, 1e-2]
         for i in range(len(fprs)):
-            self._results["TPR@FPR={}".format(fprs[i])] = tprs[i]
+            self._results["TPR@FPR={:.0e}".format(fprs[i])] = tprs[i]
 
         return copy.deepcopy(self._results)

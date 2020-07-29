@@ -28,7 +28,8 @@ class Baseline(nn.Module):
 
         # head
         pool_type = cfg.MODEL.HEADS.POOL_LAYER
-        if pool_type == 'avgpool':      pool_layer = FastGlobalAvgPool2d()
+        if pool_type == 'fastavgpool':  pool_layer = FastGlobalAvgPool2d()
+        elif pool_type == 'avgpool':    pool_layer = nn.AdaptiveAvgPool2d(1)
         elif pool_type == 'maxpool':    pool_layer = nn.AdaptiveMaxPool2d(1)
         elif pool_type == 'gempool':    pool_layer = GeneralizedMeanPoolingP()
         elif pool_type == "avgmaxpool": pool_layer = AdaptiveAvgMaxPool2d()
@@ -66,8 +67,10 @@ class Baseline(nn.Module):
         """
         Normalize and batch the input images.
         """
-        images = batched_inputs["images"].to(self.device)
-        # images = batched_inputs
+        if isinstance(batched_inputs, dict):
+            images = batched_inputs["images"].to(self.device)
+        elif isinstance(batched_inputs, torch.Tensor):
+            images = batched_inputs.to(self.device)
         images.sub_(self.pixel_mean).div_(self.pixel_std)
         return images
 
@@ -88,5 +91,8 @@ class Baseline(nn.Module):
 
         if "TripletLoss" in loss_names:
             loss_dict['loss_triplet'] = TripletLoss(self._cfg)(pred_features, gt_labels)
+
+        if "CircleLoss" in loss_names:
+            loss_dict['loss_circle'] = CircleLoss(self._cfg)(pred_features, gt_labels)
 
         return loss_dict

@@ -30,9 +30,7 @@ _C.MODEL.FREEZE_LAYERS = ['']
 _C.MODEL.BACKBONE = CN()
 
 _C.MODEL.BACKBONE.NAME = "build_resnet_backbone"
-_C.MODEL.BACKBONE.DEPTH = 50
-# RegNet volume
-_C.MODEL.BACKBONE.VOLUME = "800y"
+_C.MODEL.BACKBONE.DEPTH = "50x"
 _C.MODEL.BACKBONE.LAST_STRIDE = 1
 # Normalization method for the convolution layers.
 _C.MODEL.BACKBONE.NORM = "BN"
@@ -137,7 +135,13 @@ _C.INPUT.DO_PAD = True
 _C.INPUT.PADDING_MODE = 'constant'
 _C.INPUT.PADDING = 10
 # Random color jitter
-_C.INPUT.DO_CJ = False
+_C.INPUT.CJ = CN()
+_C.INPUT.CJ.ENABLED = False
+_C.INPUT.CJ.PROB = 0.8
+_C.INPUT.CJ.BRIGHTNESS = 0.15
+_C.INPUT.CJ.CONTRAST = 0.15
+_C.INPUT.CJ.SATURATION = 0.1
+_C.INPUT.CJ.HUE = 0.1
 # Auto augmentation
 _C.INPUT.DO_AUTOAUG = False
 # Augmix augmentation

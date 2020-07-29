@@ -58,5 +58,11 @@ class CrossEntropyLoss(object):
             targets *= smooth_param / (self._num_classes - 1)
             targets.scatter_(1, gt_classes.data.unsqueeze(1), (1 - smooth_param))
 
-        loss = (-targets * log_probs).mean(0).sum()
+        loss = (-targets * log_probs).sum(dim=1)
+
+        with torch.no_grad():
+            non_zero_cnt = max(loss.nonzero().size(0), 1)
+
+        loss = loss.sum() / non_zero_cnt
+
         return loss * self._scale

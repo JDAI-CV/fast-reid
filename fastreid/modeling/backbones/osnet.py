@@ -1,7 +1,7 @@
 # encoding: utf-8
 """
 @author:  xingyu liao
-@contact: liaoxingyu5@jd.com
+@contact: sherlockliao01@gmail.com
 """
 
 # based on:
@@ -9,7 +9,8 @@
 
 import torch
 from torch import nn
-from torch.nn import functional as F
+
+from fastreid.layers import get_norm
 from .build import BACKBONE_REGISTRY
 
 model_urls = {
@@ -37,6 +38,8 @@ class ConvLayer(nn.Module):
             in_channels,
             out_channels,
             kernel_size,
+            bn_norm,
+            num_splits,
             stride=1,
             padding=0,
             groups=1,
@@ -55,7 +58,7 @@ class ConvLayer(nn.Module):
         if IN:
             self.bn = nn.InstanceNorm2d(out_channels, affine=True)
         else:
-            self.bn = nn.BatchNorm2d(out_channels)
+            self.bn = get_norm(bn_norm, out_channels, num_splits)
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
@@ -68,7 +71,7 @@ class ConvLayer(nn.Module):
 class Conv1x1(nn.Module):
     """1x1 convolution + bn + relu."""
 
-    def __init__(self, in_channels, out_channels, stride=1, groups=1):
+    def __init__(self, in_channels, out_channels, bn_norm, num_splits, stride=1, groups=1):
         super(Conv1x1, self).__init__()
         self.conv = nn.Conv2d(
             in_channels,
@@ -79,7 +82,7 @@ class Conv1x1(nn.Module):
             bias=False,
             groups=groups
         )
-        self.bn = nn.BatchNorm2d(out_channels)
+        self.bn = get_norm(bn_norm, out_channels, num_splits)
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
@@ -92,12 +95,12 @@ class Conv1x1(nn.Module):
 class Conv1x1Linear(nn.Module):
     """1x1 convolution + bn (w/o non-linearity)."""
 
-    def __init__(self, in_channels, out_channels, stride=1):
+    def __init__(self, in_channels, out_channels, bn_norm, num_splits, stride=1):
         super(Conv1x1Linear, self).__init__()
         self.conv = nn.Conv2d(
             in_channels, out_channels, 1, stride=stride, padding=0, bias=False
         )
-        self.bn = nn.BatchNorm2d(out_channels)
+        self.bn = get_norm(bn_norm, out_channels, num_splits)
 
     def forward(self, x):
         x = self.conv(x)
@@ -108,7 +111,7 @@ class Conv1x1Linear(nn.Module):
 class Conv3x3(nn.Module):
     """3x3 convolution + bn + relu."""
 
-    def __init__(self, in_channels, out_channels, stride=1, groups=1):
+    def __init__(self, in_channels, out_channels, bn_norm, num_splits, stride=1, groups=1):
         super(Conv3x3, self).__init__()
         self.conv = nn.Conv2d(
             in_channels,
@@ -119,7 +122,7 @@ class Conv3x3(nn.Module):
             bias=False,
             groups=groups
         )
-        self.bn = nn.BatchNorm2d(out_channels)
+        self.bn = get_norm(bn_norm, out_channels, num_splits)
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
@@ -134,7 +137,7 @@ class LightConv3x3(nn.Module):
     1x1 (linear) + dw 3x3 (nonlinear).
     """
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, bn_norm, num_splits):
         super(LightConv3x3, self).__init__()
         self.conv1 = nn.Conv2d(
             in_channels, out_channels, 1, stride=1, padding=0, bias=False
@@ -148,7 +151,7 @@ class LightConv3x3(nn.Module):
             bias=False,
             groups=out_channels
         )
-        self.bn = nn.BatchNorm2d(out_channels)
+        self.bn = get_norm(bn_norm, out_channels, num_splits)
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
@@ -197,9 +200,12 @@ class ChannelGate(nn.Module):
             bias=True,
             padding=0
         )
-        if gate_activation == 'sigmoid':  self.gate_activation = nn.Sigmoid()
-        elif gate_activation == 'relu':   self.gate_activation = nn.ReLU(inplace=True)
-        elif gate_activation == 'linear': self.gate_activation = nn.Identity()
+        if gate_activation == 'sigmoid':
+            self.gate_activation = nn.Sigmoid()
+        elif gate_activation == 'relu':
+            self.gate_activation = nn.ReLU(inplace=True)
+        elif gate_activation == 'linear':
+            self.gate_activation = nn.Identity()
         else:
             raise RuntimeError(
                 "Unknown gate activation: {}".format(gate_activation)
@@ -224,34 +230,36 @@ class OSBlock(nn.Module):
             self,
             in_channels,
             out_channels,
+            bn_norm,
+            num_splits,
             IN=False,
             bottleneck_reduction=4,
             **kwargs
     ):
         super(OSBlock, self).__init__()
         mid_channels = out_channels // bottleneck_reduction
-        self.conv1 = Conv1x1(in_channels, mid_channels)
-        self.conv2a = LightConv3x3(mid_channels, mid_channels)
+        self.conv1 = Conv1x1(in_channels, mid_channels, bn_norm, num_splits)
+        self.conv2a = LightConv3x3(mid_channels, mid_channels, bn_norm, num_splits)
         self.conv2b = nn.Sequential(
-            LightConv3x3(mid_channels, mid_channels),
-            LightConv3x3(mid_channels, mid_channels),
+            LightConv3x3(mid_channels, mid_channels, bn_norm, num_splits),
+            LightConv3x3(mid_channels, mid_channels, bn_norm, num_splits),
         )
         self.conv2c = nn.Sequential(
-            LightConv3x3(mid_channels, mid_channels),
-            LightConv3x3(mid_channels, mid_channels),
-            LightConv3x3(mid_channels, mid_channels),
+            LightConv3x3(mid_channels, mid_channels, bn_norm, num_splits),
+            LightConv3x3(mid_channels, mid_channels, bn_norm, num_splits),
+            LightConv3x3(mid_channels, mid_channels, bn_norm, num_splits),
         )
         self.conv2d = nn.Sequential(
-            LightConv3x3(mid_channels, mid_channels),
-            LightConv3x3(mid_channels, mid_channels),
-            LightConv3x3(mid_channels, mid_channels),
-            LightConv3x3(mid_channels, mid_channels),
+            LightConv3x3(mid_channels, mid_channels, bn_norm, num_splits),
+            LightConv3x3(mid_channels, mid_channels, bn_norm, num_splits),
+            LightConv3x3(mid_channels, mid_channels, bn_norm, num_splits),
+            LightConv3x3(mid_channels, mid_channels, bn_norm, num_splits),
         )
         self.gate = ChannelGate(mid_channels)
-        self.conv3 = Conv1x1Linear(mid_channels, out_channels)
+        self.conv3 = Conv1x1Linear(mid_channels, out_channels, bn_norm, num_splits)
         self.downsample = None
         if in_channels != out_channels:
-            self.downsample = Conv1x1Linear(in_channels, out_channels)
+            self.downsample = Conv1x1Linear(in_channels, out_channels, bn_norm, num_splits)
         self.IN = None
         if IN: self.IN = nn.InstanceNorm2d(out_channels, affine=True)
         self.relu = nn.ReLU(True)
@@ -290,6 +298,8 @@ class OSNet(nn.Module):
             blocks,
             layers,
             channels,
+            bn_norm,
+            num_splits,
             IN=False,
             **kwargs
     ):
@@ -299,13 +309,15 @@ class OSNet(nn.Module):
         assert num_blocks == len(channels) - 1
 
         # convolutional backbone
-        self.conv1 = ConvLayer(3, channels[0], 7, stride=2, padding=3, IN=IN)
+        self.conv1 = ConvLayer(3, channels[0], 7, bn_norm, num_splits, stride=2, padding=3, IN=IN)
         self.maxpool = nn.MaxPool2d(3, stride=2, padding=1)
         self.conv2 = self._make_layer(
             blocks[0],
             layers[0],
             channels[0],
             channels[1],
+            bn_norm,
+            num_splits,
             reduce_spatial_size=True,
             IN=IN
         )
@@ -314,6 +326,8 @@ class OSNet(nn.Module):
             layers[1],
             channels[1],
             channels[2],
+            bn_norm,
+            num_splits,
             reduce_spatial_size=True
         )
         self.conv4 = self._make_layer(
@@ -321,9 +335,11 @@ class OSNet(nn.Module):
             layers[2],
             channels[2],
             channels[3],
+            bn_norm,
+            num_splits,
             reduce_spatial_size=False
         )
-        self.conv5 = Conv1x1(channels[3], channels[3])
+        self.conv5 = Conv1x1(channels[3], channels[3], bn_norm, num_splits)
 
         self._init_params()
 
@@ -333,19 +349,21 @@ class OSNet(nn.Module):
             layer,
             in_channels,
             out_channels,
+            bn_norm,
+            num_splits,
             reduce_spatial_size,
             IN=False
     ):
         layers = []
 
-        layers.append(block(in_channels, out_channels, IN=IN))
+        layers.append(block(in_channels, out_channels, bn_norm, num_splits, IN=IN))
         for i in range(1, layer):
-            layers.append(block(out_channels, out_channels, IN=IN))
+            layers.append(block(out_channels, out_channels, bn_norm, num_splits, IN=IN))
 
         if reduce_spatial_size:
             layers.append(
                 nn.Sequential(
-                    Conv1x1(out_channels, out_channels),
+                    Conv1x1(out_channels, out_channels, bn_norm, num_splits),
                     nn.AvgPool2d(2, stride=2),
                 )
             )
@@ -477,11 +495,19 @@ def build_osnet_backbone(cfg):
     # fmt: off
     pretrain = cfg.MODEL.BACKBONE.PRETRAIN
     with_ibn = cfg.MODEL.BACKBONE.WITH_IBN
+    bn_norm = cfg.MODEL.BACKBONE.NORM
+    num_splits = cfg.MODEL.BACKBONE.NORM_SPLIT
+    depth = cfg.MODEL.BACKBONE.DEPTH
 
     num_blocks_per_stage = [2, 2, 2]
-    num_channels_per_stage = [64, 256, 384, 512]
-    model = OSNet([OSBlock, OSBlock, OSBlock], num_blocks_per_stage, num_channels_per_stage, with_ibn)
-    pretrain_key = 'osnet_ibn_x1_0' if with_ibn else 'osnet_x1_0'
+    num_channels_per_stage = {"x1_0": [64, 256, 384, 512], "x0_75": [48, 192, 288, 384], "x0_5": [32, 128, 192, 256],
+                              "x0_25": [16, 64, 96, 128]}[depth]
+    model = OSNet([OSBlock, OSBlock, OSBlock], num_blocks_per_stage, num_channels_per_stage,
+                  bn_norm, num_splits, IN=with_ibn)
+
     if pretrain:
+        if with_ibn: pretrain_key = "osnet_ibn_" + depth
+        else:        pretrain_key = "osnet_" + depth
+
         init_pretrained_weights(model, pretrain_key)
     return model

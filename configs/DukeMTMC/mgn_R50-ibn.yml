@@ -3,7 +3,6 @@ _BASE_: "../Base-MGN.yml"
 MODEL:
   BACKBONE:
     WITH_IBN: True
-    PRETRAIN_PATH: "/home/liaoxingyu2/lxy/.cache/torch/checkpoints/resnet50_ibn_a.pth.tar"
 
 DATASETS:
   NAMES: ("DukeMTMC",)
