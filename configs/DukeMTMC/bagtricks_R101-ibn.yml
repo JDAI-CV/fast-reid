@@ -2,7 +2,7 @@ _BASE_: "../Base-bagtricks.yml"
 
 MODEL:
   BACKBONE:
-    DEPTH: 101
+    DEPTH: "101x"
     WITH_IBN: True
 
 DATASETS:
