@@ -11,8 +11,6 @@ In addition to these official baseline models, you can find more models in [proj
 
 - The "Name" column contains a link to the config file.
 Running `tools/train_net.py` with this config file and 1 GPU will reproduce the model.
-- The *model id* column is provided for ease of reference. To check downloaded file integrity, any model on this page contains tis md5 prefix in its file name.
-- Training curves and other statistics can be found in `metrics` for each model.
 
 ### Common Settings for all Person reid models
 
@@ -51,34 +49,34 @@ Bag of Specials(BoS):
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---: |
-| [BoT(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/bagtricks_R50.yml) | ImageNet | 94.4% | 86.1% | 59.4% | - |
-| [BoT(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/bagtricks_R50-ibn.yml) | ImageNet | 94.9% | 87.6% | 64.1% | - |
-| [BoT(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/bagtricks_S50.yml) | ImageNet | 95.1% | 88.5% | 66.0% | - |
-| [BoT(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/bagtricks_R101-ibn.yml) | ImageNet| 95.4% | 88.9% | 67.4% | - |
+| [BoT(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/bagtricks_R50.yml) | ImageNet | 94.4% | 86.1% | 59.4% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_bot_R50.pth) |
+| [BoT(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/bagtricks_R50-ibn.yml) | ImageNet | 94.9% | 87.6% | 64.1% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_bot_R50-ibn.pth) |
+| [BoT(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/bagtricks_S50.yml) | ImageNet | 95.2% | 88.7% | 66.9% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_bot_S50.pth) |
+| [BoT(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/bagtricks_R101-ibn.yml) | ImageNet| 95.4% | 88.9% | 67.4% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_bot_R101-ibn.pth) |
 
 **AGW**:
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: |:---: |
-| [AGW(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/AGW_R50.yml) | ImageNet | 95.3% | 88.2% | 66.3% | - |
-| [AGW(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/AGW_R50-ibn.yml) | ImageNet | 95.1% | 88.7% | 67.1% | -|
-| [AGW(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/AGW_S50.yml) | ImageNet | 94.7% | 87.1% | 62.2% | -|
-| [AGW(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/AGW_R101-ibn.yml) | ImageNet | 95.5% | 89.5% | 69.5% | - |
+| [AGW(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/AGW_R50.yml) | ImageNet | 95.3% | 88.2% | 66.3% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_agw_R50.pth) |
+| [AGW(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/AGW_R50-ibn.yml) | ImageNet | 95.1% | 88.7% | 67.1% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_agw_R50-ibn.pth) |
+| [AGW(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/AGW_S50.yml) | ImageNet | 94.7% | 87.1% | 62.2% | - |
+| [AGW(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/AGW_R101-ibn.yml) | ImageNet | 95.5% | 89.5% | 69.5% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_agw_R101-ibn.pth) |
 
 **SBS**:
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: |:---:|
-| [SBS(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/sbs_R50.yml) | ImageNet | 95.4% | 88.2% | 64.8% | - |
-| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/sbs_R50-ibn.yml) | ImageNet | 95.7% | 89.3% | 67.5% | -|
-| [SBS(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/sbs_S50.yml) | ImageNet | 95.0% | 87.0% | 60.6% | -|
-| [SBS(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/sbs_R101-ibn.yml) | ImageNet | 96.3% | 90.3% | 70.0% | -|
+| [SBS(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/sbs_R50.yml) | ImageNet | 95.4% | 88.2% | 64.8% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_sbs_R50.pth) |
+| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/sbs_R50-ibn.yml) | ImageNet | 95.7% | 89.3% | 67.5% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_sbs_R50-ibn.pth) |
+| [SBS(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/sbs_S50.yml) | ImageNet | 95.0% | 87.0% | 60.6% | - |
+| [SBS(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/sbs_R101-ibn.yml) | ImageNet | 96.3% | 90.3% | 70.0% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_sbs_R101-ibn.pth) |
 
 **MGN**:
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:|
-| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/mgn_R50-ibn.yml) | ImageNet | 95.8% | 89.7% | 67.0% | -|
+| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/Market1501/mgn_R50-ibn.yml) | ImageNet | 95.8% | 89.7% | 67.0% | - |
 
 ### DukeMTMC Baseline
 
@@ -86,34 +84,34 @@ Bag of Specials(BoS):
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---: |
-| [BoT(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/bagtricks_R50.yml) | ImageNet | 87.1% | 76.9% | 41.6% | - |
-| [BoT(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/bagtricks_R50-ibn.yml) | ImageNet | 89.6% | 79.1% | 44.4% | - |
-| [BoT(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/bagtricks_S50.yml) | ImageNet | 87.8% | 77.7% | 39.6% | - |
-| [BoT(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/bagtricks_R101-ibn.yml) | ImageNet| 91.1% | 81.3% | 47.7% | -|
+| [BoT(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/bagtricks_R50.yml) | ImageNet | 87.2% | 77.0% | 42.1% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_bot_R50.pth) |
+| [BoT(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/bagtricks_R50-ibn.yml) | ImageNet | 89.3% | 79.6% | 45.2% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_bot_R50-ibn.pth) |
+| [BoT(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/bagtricks_S50.yml) | ImageNet | 90.0% | 80.13% | 45.8% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_bot_S50.pth) |
+| [BoT(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/bagtricks_R101-ibn.yml) | ImageNet| 91.2% | 81.2% | 47.5% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_bot_R101-ibn.pth) |
 
 **AGW**:
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:|
-| [AGW(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/AGW_R50.yml) | ImageNet | 89.0% | 79.9% | 46.3% | - |
-| [AGW(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/AGW_R50-ibn.yml) | ImageNet | 89.8% | 80.7% | 47.7% | - |
-| [AGW(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/AGW_S50.yml) | ImageNet | 89.9% | 79.7% | 44.2% | -| 
-| [AGW(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/AGW_R101-ibn.yml) | ImageNet | 91.4% | 82.1% | 50.2% | -|
+| [AGW(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/AGW_R50.yml) | ImageNet | 89.0% | 79.9% | 46.1% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_agw_R50.pth) |
+| [AGW(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/AGW_R50-ibn.yml) | ImageNet | 90.5% | 80.8% | 47.6% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_agw_R50-ibn.pth) |
+| [AGW(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/AGW_S50.yml) | ImageNet | 89.9% | 79.7% | 44.2% | - |
+| [AGW(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/AGW_R101-ibn.yml) | ImageNet | 91.7% | 82.3% | 50.0% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_agw_R101-ibn.pth) |
 
 **SBS**:
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:|
-| [SBS(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/sbs_R50.yml) | ImageNet | 89.6% | 79.8% | 44.6% | -|
-| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/sbs_R50-ibn.yml) | ImageNet | 91.3% | 81.6% | 47.6% | -|
-| [SBS(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/sbs_S50.yml) | ImageNet | 90.5% | 79.1% | 42.7% | -|
-| [SBS(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/sbs_R101-ibn.yml) | ImageNet | 92.4% | 83.2% | 49.7% | -|
+| [SBS(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/sbs_R50.yml) | ImageNet | 90.3% | 80.3% | 46.5% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_sbs_R50.pth) |
+| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/sbs_R50-ibn.yml) | ImageNet | 90.8% | 81.2% | 47.0% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_sbs_R50-ibn.pth) |
+| [SBS(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/sbs_S50.yml) | ImageNet | 90.5% | 79.1% | 42.7% | - |
+| [SBS(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/sbs_R101-ibn.yml) | ImageNet | 91.9% | 83.6% | 51.5% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_sbs_R101-ibn.pth) |
 
 **MGN**:
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:|
-| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/mgn_R50-ibn.yml) | ImageNet | 91.6% | 82.1% | 46.7% | - |
+| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/DukeMTMC/mgn_R50-ibn.yml) | ImageNet | 91.1% | 82.0% | 46.8% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/duke_mgn_R50-ibn.pth) |
 
 ### MSMT17 Baseline
 
@@ -121,34 +119,34 @@ Bag of Specials(BoS):
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:|
-| [BoT(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_R50.yml) | ImageNet | 72.3%  | 48.3% | 9.7% | -|
-| [BoT(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_R50-ibn.yml) | ImageNet | 77.0% | 54.4% | 12.5% | -|
-| [BoT(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_S50.yml) | ImageNet | 80.4% | 59.2% | 15.9% | -|
-| [BoT(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_R101-ibn.yml) | ImageNet| 79.0% | 57.5% | 14.6% | -|
+| [BoT(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_R50.yml) | ImageNet | 74.1%  | 50.2% | 10.4% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_bot_R50.pth) |
+| [BoT(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_R50-ibn.yml) | ImageNet | 77.0% | 54.4% | 12.5% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_bot_R50-ibn.pth) |
+| [BoT(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_S50.yml) | ImageNet | 80.4% | 59.2% | 15.9% | - |
+| [BoT(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_R101-ibn.yml) | ImageNet| 81.0% | 59.4% | 15.6% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_bot_R101-ibn.pth) |
 
 **AGW**:
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:|
-| [AGW(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_R50.yml) | ImageNet | 76.7% | 53.6% | 12.2% | -|
-| [AGW(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_R50-ibn.yml) | ImageNet | 79.3% | 57.5% | 14.3% | -|
-| [AGW(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_S50.yml) | ImageNet | 77.3% | 54.7% | 12.6% | -|
-| [AGW(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_R101-ibn.yml) | ImageNet | 80.8% | 60.2% | 16.5% | -|
+| [AGW(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_R50.yml) | ImageNet | 78.3% | 55.6% | 12.9% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_agw_R50.pth) |
+| [AGW(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_R50-ibn.yml) | ImageNet | 81.2% | 59.7% | 15.3% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_agw_R50-ibn.pth) |
+| [AGW(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_S50.yml) | ImageNet | 77.3% | 54.7% | 12.6% | - |
+| [AGW(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_R101-ibn.yml) | ImageNet | 82.0% | 61.4% | 17.3% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_agw_R101-ibn.pth) |
 
 **SBS**:
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:|
-| [SBS(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_R50.yml) | ImageNet | 83.3% | 59.9% | 14.6% | -|
-| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_R50-ibn.yml) | ImageNet | 84.0% | 61.2% | 15.5% | -|
-| [SBS(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_S50.yml) | ImageNet | 82.6% | 58.2% | 13.2% | -|
-| [SBS(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_R101-ibn.yml) | ImageNet | 85.1% | 63.3% | 16.6% | -|
+| [SBS(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_R50.yml) | ImageNet | 81.8% | 58.4% | 13.9% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_sbs_R50.pth) |
+| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_R50-ibn.yml) | ImageNet | 83.9% | 60.6% | 15.2% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_sbs_R50-ibn.pth) |
+| [SBS(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_S50.yml) | ImageNet | 82.6% | 58.2% | 13.2% | - |
+| [SBS(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_R101-ibn.yml) | ImageNet | 85.1% | 63.3% | 16.6% | - |
 
 **MGN**:
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:|
-| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/mgn_R50-ibn.yml) | ImageNet | 85.1% | 65.4% | 18.4% | -|
+| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/mgn_R50-ibn.yml) | ImageNet | 85.1% | 65.4% | 18.4% | - |
 
 ### VeRi Baseline
 
