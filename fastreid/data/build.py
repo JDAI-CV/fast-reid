@@ -64,9 +64,9 @@ def build_reid_test_loader(cfg, dataset_name):
 
     test_set = CommDataset(test_items, test_transforms, relabel=False)
 
-    batch_size = cfg.TEST.IMS_PER_BATCH
+    mini_batch_size = cfg.TEST.IMS_PER_BATCH // comm.get_world_size()
     data_sampler = samplers.InferenceSampler(len(test_set))
-    batch_sampler = torch.utils.data.BatchSampler(data_sampler, batch_size, False)
+    batch_sampler = torch.utils.data.BatchSampler(data_sampler, mini_batch_size, False)
     test_loader = DataLoader(
         test_set,
         batch_sampler=batch_sampler,

@@ -16,6 +16,7 @@ from .query_expansion import aqe
 from .rank import evaluate_rank
 from .rerank import re_ranking
 from .roc import evaluate_roc
+from fastreid.utils import comm
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +37,8 @@ class ReidEvaluator(DatasetEvaluator):
         self.camids = []
 
     def process(self, inputs, outputs):
-        self.pids.extend(inputs["targets"].numpy())
-        self.camids.extend(inputs["camid"].numpy())
+        self.pids.extend(inputs["targets"])
+        self.camids.extend(inputs["camid"])
         self.features.append(outputs.cpu())
 
     @staticmethod
@@ -57,17 +58,34 @@ class ReidEvaluator(DatasetEvaluator):
         return dist.cpu().numpy()
 
     def evaluate(self):
-        features = torch.cat(self.features, dim=0)
+        if comm.get_world_size() > 1:
+            comm.synchronize()
+            features = comm.gather(self.features)
+            features = sum(features, [])
 
+            pids = comm.gather(self.pids)
+            pids = sum(pids, [])
+
+            camids = comm.gather(self.camids)
+            camids = sum(camids, [])
+
+            if not comm.is_main_process():
+                return {}
+        else:
+            features = self.features
+            pids = self.pids
+            camids = self.camids
+
+        features = torch.cat(features, dim=0)
         # query feature, person ids and camera ids
         query_features = features[:self._num_query]
-        query_pids = np.asarray(self.pids[:self._num_query])
-        query_camids = np.asarray(self.camids[:self._num_query])
+        query_pids = np.asarray(pids[:self._num_query])
+        query_camids = np.asarray(camids[:self._num_query])
 
         # gallery features, person ids and camera ids
         gallery_features = features[self._num_query:]
-        gallery_pids = np.asarray(self.pids[self._num_query:])
-        gallery_camids = np.asarray(self.camids[self._num_query:])
+        gallery_pids = np.asarray(pids[self._num_query:])
+        gallery_camids = np.asarray(camids[self._num_query:])
 
         self._results = OrderedDict()
 

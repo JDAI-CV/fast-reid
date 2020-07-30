@@ -7,6 +7,10 @@
 import copy
 import logging
 import os
+from tabulate import tabulate
+from termcolor import colored
+
+logger = logging.getLogger(__name__)
 
 
 class Dataset(object):
@@ -58,39 +62,6 @@ class Dataset(object):
 
     def __len__(self):
         return len(self.data)
-
-    # def __add__(self, other):
-    #     """Adds two datasets together (only the train set)."""
-    #     train = copy.deepcopy(self.train)
-    #
-    #     for img_path, pid, camid in other.train:
-    #         pid += self.num_train_pids
-    #         camid += self.num_train_cams
-    #         train.append((img_path, pid, camid))
-    #
-    #     ###################################
-    #     # Things to do beforehand:
-    #     # 1. set verbose=False to avoid unnecessary print
-    #     # 2. set combineall=False because combineall would have been applied
-    #     #    if it was True for a specific dataset, setting it to True will
-    #     #    create new IDs that should have been included
-    #     ###################################
-    #     if isinstance(train[0][0], str):
-    #         return ImageDataset(
-    #             train, self.query, self.gallery,
-    #             transform=self.transform,
-    #             mode=self.mode,
-    #             combineall=False,
-    #             verbose=False
-    #         )
-    #     else:
-    #         return VideoDataset(
-    #             train, self.query, self.gallery,
-    #             transform=self.transform,
-    #             mode=self.mode,
-    #             combineall=False,
-    #             verbose=False
-    #         )
 
     def __radd__(self, other):
         """Supports sum([dataset1, dataset2, dataset3])."""
@@ -153,26 +124,6 @@ class Dataset(object):
             if not os.path.exists(fpath):
                 raise RuntimeError('"{}" is not found'.format(fpath))
 
-    def __repr__(self):
-        num_train_pids, num_train_cams = self.parse_data(self.train)
-        num_query_pids, num_query_cams = self.parse_data(self.query)
-        num_gallery_pids, num_gallery_cams = self.parse_data(self.gallery)
-
-        msg = '  ----------------------------------------\n' \
-              '  subset   | # ids | # items | # cameras\n' \
-              '  ----------------------------------------\n' \
-              '  train    | {:5d} | {:7d} | {:9d}\n' \
-              '  query    | {:5d} | {:7d} | {:9d}\n' \
-              '  gallery  | {:5d} | {:7d} | {:9d}\n' \
-              '  ----------------------------------------\n' \
-              '  items: images/tracklets for image/video dataset\n'.format(
-            num_train_pids, len(self.train), num_train_cams,
-            num_query_pids, len(self.query), num_query_cams,
-            num_gallery_pids, len(self.gallery), num_gallery_cams
-        )
-
-        return msg
-
 
 class ImageDataset(Dataset):
     """A base class representing ImageDataset.
@@ -187,99 +138,35 @@ class ImageDataset(Dataset):
         super(ImageDataset, self).__init__(train, query, gallery, **kwargs)
 
     def show_train(self):
-        logger = logging.getLogger(__name__)
         num_train_pids, num_train_cams = self.parse_data(self.train)
-        logger.info('=> Loaded {}'.format(self.__class__.__name__))
-        logger.info('  ----------------------------------------')
-        logger.info('  subset   | # ids | # images | # cameras')
-        logger.info('  ----------------------------------------')
-        logger.info('  train    | {:5d} | {:8d} | {:9d}'.format(num_train_pids, len(self.train), num_train_cams))
-        logger.info('  ----------------------------------------')
+
+        headers = ['subset', '# ids', '# images', '# cameras']
+        csv_results = [['train', num_train_pids, len(self.train), num_train_cams]]
+
+        # tabulate it
+        table = tabulate(
+            csv_results,
+            tablefmt="pipe",
+            headers=headers,
+            numalign="left",
+        )
+        logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
 
     def show_test(self):
-        logger = logging.getLogger(__name__)
         num_query_pids, num_query_cams = self.parse_data(self.query)
         num_gallery_pids, num_gallery_cams = self.parse_data(self.gallery)
-        logger.info('=> Loaded {}'.format(self.__class__.__name__))
-        logger.info('  ----------------------------------------')
-        logger.info('  subset   | # ids | # images | # cameras')
-        logger.info('  ----------------------------------------')
-        logger.info('  query    | {:5d} | {:8d} | {:9d}'.format(num_query_pids, len(self.query), num_query_cams))
-        logger.info('  gallery  | {:5d} | {:8d} | {:9d}'.format(num_gallery_pids, len(self.gallery), num_gallery_cams))
-        logger.info('  ----------------------------------------')
 
-# class VideoDataset(Dataset):
-#     """A base class representing VideoDataset.
-#     All other video datasets should subclass it.
-#     ``__getitem__`` returns an image given index.
-#     It will return ``imgs``, ``pid`` and ``camid``
-#     where ``imgs`` has shape (seq_len, channel, height, width). As a result,
-#     data in each batch has shape (batch_size, seq_len, channel, height, width).
-#     """
-#
-#     def __init__(self, train, query, gallery, seq_len=15, sample_method='evenly', **kwargs):
-#         super(VideoDataset, self).__init__(train, query, gallery, **kwargs)
-#         self.seq_len = seq_len
-#         self.sample_method = sample_method
-#
-#         if self.transform is None:
-#             raise RuntimeError('transform must not be None')
-#
-#     def __getitem__(self, index):
-#         img_paths, pid, camid = self.data[index]
-#         num_imgs = len(img_paths)
-#
-#         if self.sample_method == 'random':
-#             # Randomly samples seq_len images from a tracklet of length num_imgs,
-#             # if num_imgs is smaller than seq_len, then replicates images
-#             indices = np.arange(num_imgs)
-#             replace = False if num_imgs >= self.seq_len else True
-#             indices = np.random.choice(indices, size=self.seq_len, replace=replace)
-#             # sort indices to keep temporal order (comment it to be order-agnostic)
-#             indices = np.sort(indices)
-#
-#         elif self.sample_method == 'evenly':
-#             # Evenly samples seq_len images from a tracklet
-#             if num_imgs >= self.seq_len:
-#                 num_imgs -= num_imgs % self.seq_len
-#                 indices = np.arange(0, num_imgs, num_imgs / self.seq_len)
-#             else:
-#                 # if num_imgs is smaller than seq_len, simply replicate the last image
-#                 # until the seq_len requirement is satisfied
-#                 indices = np.arange(0, num_imgs)
-#                 num_pads = self.seq_len - num_imgs
-#                 indices = np.concatenate([indices, np.ones(num_pads).astype(np.int32) * (num_imgs - 1)])
-#             assert len(indices) == self.seq_len
-#
-#         elif self.sample_method == 'all':
-#             # Samples all images in a tracklet. batch_size must be set to 1
-#             indices = np.arange(num_imgs)
-#
-#         else:
-#             raise ValueError('Unknown sample method: {}'.format(self.sample_method))
-#
-#         imgs = []
-#         for index in indices:
-#             img_path = img_paths[int(index)]
-#             img = read_image(img_path)
-#             if self.transform is not None:
-#                 img = self.transform(img)
-#             img = img.unsqueeze(0)  # img must be torch.Tensor
-#             imgs.append(img)
-#         imgs = torch.cat(imgs, dim=0)
-#
-#         return imgs, pid, camid
-#
-#     def show_summary(self):
-#         num_train_pids, num_train_cams = self.parse_data(self.train)
-#         num_query_pids, num_query_cams = self.parse_data(self.query)
-#         num_gallery_pids, num_gallery_cams = self.parse_data(self.gallery)
-#
-#         print('=> Loaded {}'.format(self.__class__.__name__))
-#         print('  -------------------------------------------')
-#         print('  subset   | # ids | # tracklets | # cameras')
-#         print('  -------------------------------------------')
-#         print('  train    | {:5d} | {:11d} | {:9d}'.format(num_train_pids, len(self.train), num_train_cams))
-#         print('  query    | {:5d} | {:11d} | {:9d}'.format(num_query_pids, len(self.query), num_query_cams))
-#         print('  gallery  | {:5d} | {:11d} | {:9d}'.format(num_gallery_pids, len(self.gallery), num_gallery_cams))
-#         print('  -------------------------------------------')
+        headers = ['subset', '# ids', '# images', '# cameras']
+        csv_results = [
+            ['query', num_query_pids, len(self.query), num_query_cams],
+            ['gallery', num_gallery_pids, len(self.gallery), num_gallery_cams],
+        ]
+
+        # tabulate it
+        table = tabulate(
+            csv_results,
+            tablefmt="pipe",
+            headers=headers,
+            numalign="left",
+        )
+        logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))

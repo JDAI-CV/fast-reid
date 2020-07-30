@@ -70,9 +70,12 @@ class InferenceSampler(Sampler):
         """
         self._size = size
         assert size > 0
+        self._rank = comm.get_rank()
+        self._world_size = comm.get_world_size()
 
-        begin = 0
-        end = self._size
+        shard_size = (self._size - 1) // self._world_size + 1
+        begin = shard_size * self._rank
+        end = min(shard_size * (self._rank + 1), self._size)
         self._local_indices = range(begin, end)
 
     def __iter__(self):
