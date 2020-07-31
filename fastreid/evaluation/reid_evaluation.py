@@ -53,7 +53,7 @@ class ReidEvaluator(DatasetEvaluator):
             xx = torch.pow(query_feat, 2).sum(1, keepdim=True).expand(m, n)
             yy = torch.pow(gallery_feat, 2).sum(1, keepdim=True).expand(n, m).t()
             dist = xx + yy
-            dist.addmm_(1, -2, query_feat, gallery_feat.t())
+            dist.addmm_(query_feat, gallery_feat.t(), beta=1, alpha=-2)
             dist = dist.clamp(min=1e-12).sqrt()  # for numerical stability
         return dist.cpu().numpy()
 
