@@ -6,6 +6,7 @@ import torch.nn as nn
 import numpy as np
 from fastreid.layers import get_norm
 from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
+from fastreid.utils import comm
 from ..build import BACKBONE_REGISTRY
 from .config import regnet_cfg
 
@@ -515,12 +516,16 @@ def init_pretrained_weights(key):
     cached_file = os.path.join(model_dir, filename)
 
     if not os.path.exists(cached_file):
-        gdown.download(model_urls[key], cached_file, quiet=False)
+        if comm.is_main_process():
+            gdown.download(model_urls[key], cached_file, quiet=False)
+        else:
+            comm.synchronize()
 
     logger.info(f"Loading pretrained model from {cached_file}")
-    state_dict = torch.load(cached_file)['model_state']
+    state_dict = torch.load(cached_file, map_location=torch.device('cpu'))['model_state']
 
     return state_dict
+
 
 @BACKBONE_REGISTRY.register()
 def build_regnet_backbone(cfg):

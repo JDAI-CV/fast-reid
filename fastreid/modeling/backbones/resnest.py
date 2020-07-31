@@ -17,6 +17,7 @@ from fastreid.layers import (
 )
 
 from fastreid.utils.checkpoint import get_unexpected_parameters_message, get_missing_parameters_message
+from fastreid.utils import comm
 
 from .build import BACKBONE_REGISTRY
 
@@ -383,7 +384,7 @@ def build_resnest_backbone(cfg):
                     avd=True, avd_first=False)
     if pretrain:
         state_dict = torch.hub.load_state_dict_from_url(
-            model_urls['resnest' + depth[:-1]], progress=True, check_hash=True)
+            model_urls['resnest' + depth[:-1]], progress=True, check_hash=True, map_location=torch.device('cpu'))
 
         incompatible = model.load_state_dict(state_dict, strict=False)
         logger = logging.getLogger(__name__)

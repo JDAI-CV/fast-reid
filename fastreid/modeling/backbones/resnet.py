@@ -18,6 +18,8 @@ from fastreid.layers import (
 )
 from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
 from .build import BACKBONE_REGISTRY
+from fastreid.utils import comm
+
 
 logger = logging.getLogger(__name__)
 model_urls = {
@@ -271,10 +273,13 @@ def init_pretrained_weights(key):
     cached_file = os.path.join(model_dir, filename)
 
     if not os.path.exists(cached_file):
-        gdown.download(model_urls[key], cached_file, quiet=False)
+        if comm.is_main_process():
+            gdown.download(model_urls[key], cached_file, quiet=False)
+        else:
+            comm.synchronize()
 
     logger.info(f"Loading pretrained model from {cached_file}")
-    state_dict = torch.load(cached_file)
+    state_dict = torch.load(cached_file, map_location=torch.device('cpu'))
 
     return state_dict
 

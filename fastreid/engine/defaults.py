@@ -311,11 +311,8 @@ class DefaultTrainer(SimpleTrainer):
             ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
 
         def test_and_save_results():
-            if comm.is_main_process():
-                self._last_eval_results = self.test(self.cfg, self.model)
-                return self._last_eval_results
-            else:
-                return None
+            self._last_eval_results = self.test(self.cfg, self.model)
+            return self._last_eval_results
 
         # Do evaluation after checkpointer, because then if it fails,
         # we can use the saved checkpoint to debug.
