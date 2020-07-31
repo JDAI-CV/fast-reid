@@ -121,7 +121,7 @@ Bag of Specials(BoS):
 | :---: | :---: | :---: |:---: | :---: | :---:|
 | [BoT(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_R50.yml) | ImageNet | 74.1%  | 50.2% | 10.4% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_bot_R50.pth) |
 | [BoT(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_R50-ibn.yml) | ImageNet | 77.0% | 54.4% | 12.5% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_bot_R50-ibn.pth) |
-| [BoT(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_S50.yml) | ImageNet | 80.8% | 59.9% | 16.3% | [-](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_bot_S50.pth) |
+| [BoT(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_S50.yml) | ImageNet | 80.8% | 59.9% | 16.3% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_bot_S50.pth) |
 | [BoT(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/bagtricks_R101-ibn.yml) | ImageNet| 81.0% | 59.4% | 15.6% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_bot_R101-ibn.pth) |
 
 **AGW**:
