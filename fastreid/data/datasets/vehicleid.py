@@ -88,8 +88,8 @@ class SmallVehicleID(VehicleID):
     """
 
     def __init__(self, root='datasets', **kwargs):
-        self.dataset_dir = osp.join(root, self.dataset_dir)
-        self.test_list = osp.join(self.dataset_dir, 'train_test_split/test_list_800.txt')
+        dataset_dir = osp.join(root, self.dataset_dir)
+        self.test_list = osp.join(dataset_dir, 'train_test_split/test_list_800.txt')
 
         super(SmallVehicleID, self).__init__(root, self.test_list, **kwargs)
 
@@ -103,8 +103,8 @@ class MediumVehicleID(VehicleID):
     """
 
     def __init__(self, root='datasets', **kwargs):
-        self.dataset_dir = osp.join(root, self.dataset_dir)
-        self.test_list = osp.join(self.dataset_dir, 'train_test_split/test_list_1600.txt')
+        dataset_dir = osp.join(root, self.dataset_dir)
+        self.test_list = osp.join(dataset_dir, 'train_test_split/test_list_1600.txt')
 
         super(MediumVehicleID, self).__init__(root, self.test_list, **kwargs)
 
@@ -118,7 +118,7 @@ class LargeVehicleID(VehicleID):
     """
 
     def __init__(self, root='datasets', **kwargs):
-        self.dataset_dir = osp.join(root, self.dataset_dir)
-        self.test_list = osp.join(self.dataset_dir, 'train_test_split/test_list_2400.txt')
+        dataset_dir = osp.join(root, self.dataset_dir)
+        self.test_list = osp.join(dataset_dir, 'train_test_split/test_list_2400.txt')
 
         super(LargeVehicleID, self).__init__(root, self.test_list, **kwargs)

@@ -99,9 +99,9 @@ class SmallVeRiWild(VeRiWild):
     """
 
     def __init__(self, root='datasets', **kwargs):
-        self.dataset_dir = osp.join(root, self.dataset_dir)
-        self.query_list = osp.join(self.dataset_dir, 'train_test_split/test_3000_query.txt')
-        self.gallery_list = osp.join(self.dataset_dir, 'train_test_split/test_3000.txt')
+        dataset_dir = osp.join(root, self.dataset_dir)
+        self.query_list = osp.join(dataset_dir, 'train_test_split/test_3000_query.txt')
+        self.gallery_list = osp.join(dataset_dir, 'train_test_split/test_3000.txt')
 
         super(SmallVeRiWild, self).__init__(root, self.query_list, self.gallery_list, **kwargs)
 
@@ -115,9 +115,9 @@ class MediumVeRiWild(VeRiWild):
     """
 
     def __init__(self, root='datasets', **kwargs):
-        self.dataset_dir = osp.join(root, self.dataset_dir)
-        self.query_list = osp.join(self.dataset_dir, 'train_test_split/test_5000_query.txt')
-        self.gallery_list = osp.join(self.dataset_dir, 'train_test_split/test_5000.txt')
+        dataset_dir = osp.join(root, self.dataset_dir)
+        self.query_list = osp.join(dataset_dir, 'train_test_split/test_5000_query.txt')
+        self.gallery_list = osp.join(dataset_dir, 'train_test_split/test_5000.txt')
 
         super(MediumVeRiWild, self).__init__(root, self.query_list, self.gallery_list, **kwargs)
 
@@ -131,8 +131,8 @@ class LargeVeRiWild(VeRiWild):
     """
 
     def __init__(self, root='datasets', **kwargs):
-        self.dataset_dir = osp.join(root, self.dataset_dir)
-        self.query_list = osp.join(self.dataset_dir, 'train_test_split/test_10000_query.txt')
-        self.gallery_list = osp.join(self.dataset_dir, 'train_test_split/test_10000.txt')
+        dataset_dir = osp.join(root, self.dataset_dir)
+        self.query_list = osp.join(dataset_dir, 'train_test_split/test_10000_query.txt')
+        self.gallery_list = osp.join(dataset_dir, 'train_test_split/test_10000.txt')
 
         super(LargeVeRiWild, self).__init__(root, self.query_list, self.gallery_list, **kwargs)
