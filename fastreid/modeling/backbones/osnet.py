@@ -448,8 +448,8 @@ def init_pretrained_weights(model, key=''):
     if not os.path.exists(cached_file):
         if comm.is_main_process():
             gdown.download(model_urls[key], cached_file, quiet=False)
-        else:
-            comm.synchronize()
+
+    comm.synchronize()
 
     state_dict = torch.load(cached_file, map_location=torch.device('cpu'))
     model_dict = model.state_dict()

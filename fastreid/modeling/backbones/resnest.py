@@ -17,7 +17,6 @@ from fastreid.layers import (
 )
 
 from fastreid.utils.checkpoint import get_unexpected_parameters_message, get_missing_parameters_message
-from fastreid.utils import comm
 
 from .build import BACKBONE_REGISTRY
 

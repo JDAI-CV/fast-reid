@@ -186,7 +186,7 @@ _C.SOLVER = CN()
 
 _C.SOLVER.OPT = "Adam"
 
-_C.SOLVER.MAX_ITER = 40000
+_C.SOLVER.MAX_ITER = 120
 
 _C.SOLVER.BASE_LR = 3e-4
 _C.SOLVER.BIAS_LR_FACTOR = 1.
@@ -222,7 +222,7 @@ _C.SOLVER.SWA.LR_FACTOR = 10.
 _C.SOLVER.SWA.ETA_MIN_LR = 3.5e-6
 _C.SOLVER.SWA.LR_SCHED = False
 
-_C.SOLVER.CHECKPOINT_PERIOD = 5000
+_C.SOLVER.CHECKPOINT_PERIOD = 20
 
 # Number of images per batch across all machines.
 # This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
@@ -233,7 +233,7 @@ _C.SOLVER.IMS_PER_BATCH = 64
 # see 2 images per batch
 _C.TEST = CN()
 
-_C.TEST.EVAL_PERIOD = 50
+_C.TEST.EVAL_PERIOD = 20
 
 # Number of images per batch in one process.
 _C.TEST.IMS_PER_BATCH = 64

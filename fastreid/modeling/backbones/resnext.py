@@ -209,13 +209,14 @@ def init_pretrained_weights(key):
     if not os.path.exists(cached_file):
         if comm.is_main_process():
             gdown.download(model_urls[key], cached_file, quiet=False)
-        else:
-            comm.synchronize()
+
+    comm.synchronize()
 
     logger.info(f"Loading pretrained model from {cached_file}")
     state_dict = torch.load(cached_file, map_location=torch.device('cpu'))
 
     return state_dict
+
 
 @BACKBONE_REGISTRY.register()
 def build_resnext_backbone(cfg):

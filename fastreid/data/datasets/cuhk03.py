@@ -31,8 +31,7 @@ class CUHK03(ImageDataset):
     dataset_url = None
     dataset_name = "cuhk03"
 
-    def __init__(self, root='datasets', split_id=0, cuhk03_labeled=False, cuhk03_classic_split=False, **kwargs):
-        # self.root = osp.abspath(osp.expanduser(root))
+    def __init__(self, root='datasets', split_id=0, cuhk03_labeled=True, cuhk03_classic_split=False, **kwargs):
         self.root = root
         self.dataset_dir = osp.join(self.root, self.dataset_dir)
 
@@ -82,7 +81,6 @@ class CUHK03(ImageDataset):
         del tmp_train
         query = split['query']
         gallery = split['gallery']
-        from ipdb import set_trace; set_trace()
 
         super(CUHK03, self).__init__(train, query, gallery, **kwargs)
 
@@ -271,5 +269,5 @@ class CUHK03(ImageDataset):
             'num_gallery_pids': gallery_info[1],
             'num_gallery_imgs': gallery_info[2]
         }]
-        with PathManager.open(self.split_new_lab_json_pat, 'w') as f:
+        with PathManager.open(self.split_new_lab_json_path, 'w') as f:
             json.dump(split, f, indent=4, separators=(',', ': '))
