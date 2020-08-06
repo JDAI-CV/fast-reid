@@ -37,10 +37,10 @@ CUDA_VISIBLE_DEVICES=$CUDA python ./projects/DistillReID/train_net.py --kd --con
   <tr>
     <td class="tg-hap0" rowspan="4">Teacher<br>(BagTricks)</td>
     <td class="tg-2oxo"><span style="font-weight:400;font-style:normal">IBN-101</span></td>
-    <td class="tg-2oxo"><span style="font-weight:bold">90.8(80.8)/0.3395s</span></td>
-    <td class="tg-2oxo"><span style="font-weight:bold">90.8(81.1)/0.1784s</span></td>
-    <td class="tg-2oxo"><span style="font-weight:bold">89.63(78.9)/0.1760s</span></td>
-    <td class="tg-2oxo"><span style="font-weight:bold">86.96(75.75)/0.0654s</span></td>
+    <td class="tg-2oxo"><span style="font-weight:bold;color:#9A0000">90.8(80.8)/0.3395s</span></td>
+    <td class="tg-2oxo"><span style="font-weight:bold;color:#9A0000">90.8(81.1)/0.1784s</span></td>
+    <td class="tg-2oxo"><span style="font-weight:bold;color:#9A0000">89.63(78.9)/0.1760s</span></td>
+    <td class="tg-2oxo"><span style="font-weight:bold;color:#9A0000">86.96(75.75)/0.0654s</span></td>
   </tr>
   <tr>
     <td class="tg-2oxo"><span style="font-weight:400;font-style:normal">IBN-50</span></td>
