@@ -1,0 +1,13 @@
+_BASE_: "../../../configs/Base-bagtricks.yml"
+
+MODEL:
+  BACKBONE:
+    DEPTH: 50
+    WITH_IBN: True
+    PRETRAIN_PATH: "/home/helingxiao3/guanan.wang/projects/20200616_channel_prune/fast-reid/pretrain-models/resnet50_ibn_a.pth.tar"
+
+DATASETS:
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
+
+OUTPUT_DIR: "logs/dukemtmc/bagtricks_R50-ibn"
