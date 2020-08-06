@@ -20,7 +20,7 @@ CUDA_VISIBLE_DEVICES=$CUDA python ./projects/DistillReID/train_net.py --kd --con
 ```
 
 ## Experimental Reuslts and Pre-trained Model
-table class="tg">
+<table class="tg">
 <thead>
   <tr>
     <th class="tg-hap0" colspan="2" rowspan="2">Rank-1 (mAP) / Q.Time</th>
