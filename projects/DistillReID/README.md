@@ -20,15 +20,6 @@ CUDA_VISIBLE_DEVICES=$CUDA python ./projects/DistillReID/train_net.py --kd --con
 
 ## Experimental Reuslts and Pre-trained Model
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-color:#ccc;border-spacing:0;}
-.tg td{background-color:#fff;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
-  font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{background-color:#f0f0f0;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
-  font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-2oxo{border-color:#000000;font-family:"Times New Roman", Times, serif !important;;text-align:center;vertical-align:top}
-.tg .tg-hap0{border-color:#000000;font-family:"Times New Roman", Times, serif !important;;text-align:center;vertical-align:middle}
-</style>
 <table class="tg">
 <thead>
   <tr>
