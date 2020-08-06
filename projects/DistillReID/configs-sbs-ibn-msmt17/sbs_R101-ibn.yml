@@ -1,0 +1,14 @@
+_BASE_: "../../../configs/Base-Strongerbaseline.yml"
+
+MODEL:
+  BACKBONE:
+    DEPTH: "101x"
+    WITH_IBN: True
+  HEADS:
+    CLS_LAYER: "circleSoftmax"
+
+DATASETS:
+  NAMES: ("MSMT17",)
+  TESTS: ("MSMT17",)
+
+OUTPUT_DIR: "logs/dukemtmcreid/sbs_R101-ibn"

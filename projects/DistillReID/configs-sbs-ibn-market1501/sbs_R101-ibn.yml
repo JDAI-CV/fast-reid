@@ -1,0 +1,14 @@
+_BASE_: "../../../configs/Base-Strongerbaseline.yml"
+
+MODEL:
+  BACKBONE:
+    DEPTH: "101x"
+    WITH_IBN: True
+  HEADS:
+    CLS_LAYER: "circleSoftmax"
+
+DATASETS:
+  NAMES: ("Market1501",)
+  TESTS: ("Market1501",)
+
+OUTPUT_DIR: "logs/market1501/sbs_R101-ibn"
