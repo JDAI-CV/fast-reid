@@ -12,7 +12,7 @@ This project provides a training script of small model
 
 ## Train and Evaluation
 ```shell script
-# On DukeMTMC-reID dataset
+# a demo on DukeMTMC-reID dataset
 # train BagTricksIBN50 as teacher model
 CUDA_VISIBLE_DEVICES=$CUDA python ./tools/train_net.py --config-file ./projects/DistillReID/configs-bagtricks-ibn-dukemtmcreid/bagtricks_R50-ibn.yml MODEL.DEVICE "cuda:0"
 # train BagTricksIBN18 as student model 
@@ -35,4 +35,4 @@ Comming Soon
 
 
 ## Contact
-If project is conducted by Guan'an Wang (guan.wang0706@gmail) and Liao Xingyu.
+This project is conducted by Guan'an Wang (guan.wang0706@gmail) and Liao Xingyu.
