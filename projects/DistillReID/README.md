@@ -36,4 +36,4 @@ Comming Soon
 
 
 ## Contact
-This project is conducted by Guan'an Wang (guan.wang0706@gmail) and Liao Xingyu.
+This project is conducted by [Guan'an Wang](https://wangguanan.github.io/) (guan.wang0706@gmail) and [Liao Xingyu](https://github.com/L1aoXingyu).
