@@ -13,6 +13,7 @@ This project provides a training script of small model
 ## Train and Evaluation
 ```shell script
 # a demo on DukeMTMC-reID dataset
+# please see more in ./configs
 # train BagTricksIBN50 as teacher model
 CUDA_VISIBLE_DEVICES=$CUDA python ./tools/train_net.py --config-file ./projects/DistillReID/configs-bagtricks-ibn-dukemtmcreid/bagtricks_R50-ibn.yml MODEL.DEVICE "cuda:0"
 # train BagTricksIBN18 as student model 
