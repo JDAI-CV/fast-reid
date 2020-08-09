@@ -19,8 +19,6 @@ _root = os.getenv("FASTREID_DATASETS", "datasets")
 
 
 def build_reid_train_loader(cfg):
-    train_transforms = build_transforms(cfg, is_train=True)
-
     train_items = list()
     for d in cfg.DATASETS.NAMES:
         dataset = DATASET_REGISTRY.get(d)(root=_root, combineall=cfg.DATASETS.COMBINEALL)
@@ -28,6 +26,10 @@ def build_reid_train_loader(cfg):
             dataset.show_train()
         train_items.extend(dataset.train)
 
+    cfg.defrost()
+    iters_per_epoch = len(train_items) // cfg.SOLVER.IMS_PER_BATCH
+    cfg.SOLVER.MAX_ITER *= iters_per_epoch
+    train_transforms = build_transforms(cfg, is_train=True)
     train_set = CommDataset(train_items, train_transforms, relabel=True)
 
     num_workers = cfg.DATALOADER.NUM_WORKERS
@@ -55,13 +57,12 @@ def build_reid_train_loader(cfg):
 
 
 def build_reid_test_loader(cfg, dataset_name):
-    test_transforms = build_transforms(cfg, is_train=False)
-
     dataset = DATASET_REGISTRY.get(dataset_name)(root=_root)
     if comm.is_main_process():
         dataset.show_test()
     test_items = dataset.query + dataset.gallery
 
+    test_transforms = build_transforms(cfg, is_train=False)
     test_set = CommDataset(test_items, test_transforms, relabel=False)
 
     mini_batch_size = cfg.TEST.IMS_PER_BATCH // comm.get_world_size()
