@@ -130,7 +130,7 @@ Bag of Specials(BoS):
 | :---: | :---: | :---: |:---: | :---: | :---:|
 | [AGW(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_R50.yml) | ImageNet | 78.3% | 55.6% | 12.9% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_agw_R50.pth) |
 | [AGW(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_R50-ibn.yml) | ImageNet | 81.2% | 59.7% | 15.3% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_agw_R50-ibn.pth) |
-| [AGW(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_S50.yml) | ImageNet | 77.3% | 54.7% | 12.6% | - |
+| [AGW(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_S50.yml) | ImageNet | 82.6% | 62.6% | 17.7% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_agw_S50.pth) |
 | [AGW(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/AGW_R101-ibn.yml) | ImageNet | 82.0% | 61.4% | 17.3% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_agw_R101-ibn.pth) |
 
 **SBS**:
@@ -139,7 +139,7 @@ Bag of Specials(BoS):
 | :---: | :---: | :---: |:---: | :---: | :---:|
 | [SBS(R50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_R50.yml) | ImageNet | 81.8% | 58.4% | 13.9% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_sbs_R50.pth) |
 | [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_R50-ibn.yml) | ImageNet | 83.9% | 60.6% | 15.2% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_sbs_R50-ibn.pth) |
-| [SBS(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_S50.yml) | ImageNet | 82.6% | 58.2% | 13.2% | - |
+| [SBS(S50)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_S50.yml) | ImageNet | 84.1% | 61.7% | 15.2% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/msmt_sbs_S50-ibn.pth) |
 | [SBS(R101-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/MSMT17/sbs_R101-ibn.yml) | ImageNet | 85.1% | 63.3% | 16.6% | - |
 
 **MGN**:

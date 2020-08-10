@@ -20,7 +20,7 @@ from fastreid.utils.checkpoint import get_unexpected_parameters_message, get_mis
 
 from .build import BACKBONE_REGISTRY
 
-_url_format = 'https://hangzh.s3.amazonaws.com/encoding/models/{}-{}.pth'
+_url_format = 'https://s3.us-west-1.wasabisys.com/resnest/torch/{}-{}.pth'
 
 _model_sha256 = {name: checksum for checksum, name in [
     ('528c19ca', 'resnest50'),
