@@ -26,7 +26,7 @@ CUDA_VISIBLE_DEVICES=$CUDA python ./projects/DistillReID/train_net.py --kd --con
 
 All the experiments are conducted with a P40 GPU and 
 - CPU: Intel(R) Xeon(R) CPU E5-2683 v4 @ 2.10GHz
-- GPU： Tesla P40 (Memory 22919MB)
+- GPU：Tesla P40 (Memory 22919MB)
 
 ### DukeMTMC-reID
 
@@ -34,7 +34,7 @@ All the experiments are conducted with a P40 GPU and
 
 ### Market-1501
 
-<table><thead><tr><th colspan="2" rowspan="2">Rank-1 (mAP) / <br>Q.Time/batch(128)</th><th colspan="4">Student (BagTricks)</th></tr><tr><td>IBN-101</td><td>IBN-50</td><td>IBN-34</td><td>IBN-18</td></tr></thead><tbody><tr><td rowspan="4">Teacher<br>(BagTricks)</td><td>IBN-101</td><td>95.43(88.95)/0.2698s</td><td>95.19(89.52)/0.1791s</td><td>94.51(87.82)/0.0869s</td><td>93.85(85.77)/0.0612s</td></tr><tr><td>IBN-50</td><td>-</td><td>95.25(88.16)/0.1823s</td><td>95.13(87.28)/0.0863s</td><td></td></tr><tr><td>IBN-34</td><td></td><td>-</td><td>94.63(84.91)/0.0860s</td><td>93.71(85.20)/0.0620s</td></tr><tr><td>IBN-18</td><td>-</td><td>-</td><td>-</td><td>92.87(81.22)/0.0615s</td></tr><tr><td colspan="2">Average Q.Time</td><td>0.2698s</td><td>0.1807s</td><td>0.0864s</td><td>0.0616s</td></tr></tbody></table>
+<table><thead><tr><th colspan="2" rowspan="2">Rank-1 (mAP) / <br>Q.Time/batch(128)</th><th colspan="4">Student (BagTricks)</th></tr><tr><td>IBN-101</td><td>IBN-50</td><td>IBN-34</td><td>IBN-18</td></tr></thead><tbody><tr><td rowspan="4">Teacher<br>(BagTricks)</td><td>IBN-101</td><td>95.43(88.95)/0.2698s</td><td>95.19(89.52)/0.1791s</td><td>94.51(87.82)/0.0869s</td><td>93.85(85.77)/0.0612s</td></tr><tr><td>IBN-50</td><td>-</td><td>95.25(88.16)/0.1823s</td><td>95.13(87.28)/0.0863s</td><td>94.18(85.81)/0.0614s</td></tr><tr><td>IBN-34</td><td></td><td>-</td><td>94.63(84.91)/0.0860s</td><td>93.71(85.20)/0.0620s</td></tr><tr><td>IBN-18</td><td>-</td><td>-</td><td>-</td><td>92.87(81.22)/0.0615s</td></tr><tr><td colspan="2">Average Q.Time</td><td>0.2698s</td><td>0.1807s</td><td>0.0864s</td><td>0.0616s</td></tr></tbody></table>
 
 ### MSMT17
 
