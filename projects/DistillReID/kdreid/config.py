@@ -24,7 +24,7 @@ def add_kdreid_config(cfg):
     _C.MODEL_TEACHER.BACKBONE = CN()
 
     _C.MODEL_TEACHER.BACKBONE.NAME = "build_resnet_backbone"
-    _C.MODEL_TEACHER.BACKBONE.DEPTH = 50
+    _C.MODEL_TEACHER.BACKBONE.DEPTH = "50x"
     _C.MODEL_TEACHER.BACKBONE.LAST_STRIDE = 1
     # If use IBN block in backbone
     _C.MODEL_TEACHER.BACKBONE.WITH_IBN = False
