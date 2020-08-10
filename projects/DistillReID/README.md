@@ -25,8 +25,8 @@ CUDA_VISIBLE_DEVICES=$CUDA python ./projects/DistillReID/train_net.py --kd --con
 ### Settings
 
 All the experiments are conducted with a P40 GPU and 
-- 56 logistic CPU: Intel(R) Xeon(R) CPU E5-2683 v4 @ 2.10GHz
-- 1 GPU： Tesla P40 (Memory 22919MB)
+- CPU: Intel(R) Xeon(R) CPU E5-2683 v4 @ 2.10GHz
+- GPU： Tesla P40 (Memory 22919MB)
 
 ### DukeMTMC-reID
 
