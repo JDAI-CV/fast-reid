@@ -12,3 +12,9 @@
 - sklearn
 - termcolor
 - tabulate
+
+## Install
+
+```
+python setup.py build develop
+```
