@@ -12,3 +12,4 @@
 - sklearn
 - termcolor
 - tabulate
+- [faiss](https://github.com/facebookresearch/faiss) `pip install faiss-cpu`

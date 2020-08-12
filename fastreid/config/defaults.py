@@ -238,6 +238,7 @@ _C.TEST.EVAL_PERIOD = 20
 # Number of images per batch in one process.
 _C.TEST.IMS_PER_BATCH = 64
 _C.TEST.METRIC = "cosine"
+_C.TEST.ROC_ENABLED = False
 
 # Average query expansion
 _C.TEST.AQE = CN()
