@@ -1,0 +1,14 @@
+_BASE_: "../../../configs/Base-bagtricks.yml"
+
+MODEL:
+  BACKBONE:
+    DEPTH: "34x"
+    WITH_IBN: True
+  HEADS:
+    IN_FEAT: 512
+
+DATASETS:
+  NAMES: ("Market1501",)
+  TESTS: ("Market1501",)
+
+OUTPUT_DIR: "logs/market1501/bagtricks_R34-ibn"

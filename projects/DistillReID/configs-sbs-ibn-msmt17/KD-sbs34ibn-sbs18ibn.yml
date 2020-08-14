@@ -1,0 +1,50 @@
+_BASE_: "../../../configs/Base-Strongerbaseline.yml"
+
+SOLVER:
+  IMS_PER_BATCH: 64
+
+MODEL_TEACHER:
+  META_ARCHITECTURE: "Baseline"
+
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+    NORM: "BN"
+    DEPTH: "34x"
+    LAST_STRIDE: 1
+    WITH_NL: True
+    WITH_IBN: True
+    PRETRAIN: False
+
+  HEADS:
+    NAME: "BNneckHead"
+    IN_FEAT: 512
+    NORM: "BN"
+    NECK_FEAT: "after"
+    POOL_LAYER: "gempool"
+    CLS_LAYER: "circle"
+    SCALE: 64
+    MARGIN: 0.35
+
+MODEL:
+  META_ARCHITECTURE: "Baseline"
+
+  BACKBONE:
+    WITH_NL: False
+    DEPTH: "18x"
+    WITH_IBN: True
+  HEADS:
+    IN_FEAT: 512
+    CLS_LAYER: "circleSoftmax"
+
+  STUDENT_WEIGHTS: ""
+  TEACHER_WEIGHTS: "./logs/dukemtmcreid/sbs_R34-ibn/model_final.pth"
+
+
+DATASETS:
+  NAMES: ("MSMT17",)
+  TESTS: ("MSMT17",)
+
+DATALOADER:
+  NUM_WORKERS: 8
+
+OUTPUT_DIR: "logs/dukemtmcreid/sbs34ibn-kd-sbs18ibn"

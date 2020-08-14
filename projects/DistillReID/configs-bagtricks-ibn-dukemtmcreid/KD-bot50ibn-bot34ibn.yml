@@ -1,0 +1,53 @@
+_BASE_: "../../../configs/Base-bagtricks.yml"
+
+SOLVER:
+  IMS_PER_BATCH: 64
+
+MODEL_TEACHER:
+  META_ARCHITECTURE: "Baseline"
+
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+    NORM: "BN"
+    DEPTH: "50x"
+    LAST_STRIDE: 1
+    WITH_IBN: True
+    PRETRAIN: True
+
+  HEADS:
+    NAME: "BNneckHead"
+    IN_FEAT: 2048
+    NORM: "BN"
+    POOL_LAYER: "avgpool"
+    NECK_FEAT: "before"
+    CLS_LAYER: "linear"
+
+MODEL:
+  META_ARCHITECTURE: "Baseline"
+
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+    NORM: "BN"
+    DEPTH: "34x"
+    LAST_STRIDE: 1
+    WITH_IBN: True
+    PRETRAIN: True
+
+  HEADS:
+    NAME: "BNneckHead"
+    IN_FEAT: 512
+    NORM: "BN"
+    POOL_LAYER: "avgpool"
+    NECK_FEAT: "before"
+    CLS_LAYER: "linear"
+
+  STUDENT_WEIGHTS: ""
+  TEACHER_WEIGHTS: "./logs/dukemtmc/bagtricks_R50-ibn/model_final.pth"
+DATASETS:
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
+
+DATALOADER:
+  NUM_WORKERS: 8
+
+OUTPUT_DIR: "logs/dukemtmc/bot50ibn-kd-bot34ibn"
