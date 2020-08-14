@@ -15,11 +15,10 @@ from fastreid.layers import (
     SplAtConv2d,
     get_norm,
 )
-
 from fastreid.utils.checkpoint import get_unexpected_parameters_message, get_missing_parameters_message
-
 from .build import BACKBONE_REGISTRY
 
+logger = logging.getLogger(__name__)
 _url_format = 'https://s3.us-west-1.wasabisys.com/resnest/torch/{}-{}.pth'
 
 _model_sha256 = {name: checksum for checksum, name in [
@@ -162,7 +161,8 @@ class ResNest(nn.Module):
     """
 
     # pylint: disable=unused-variable
-    def __init__(self, last_stride, bn_norm, num_splits, with_ibn, with_nl, block, layers, non_layers, radix=1, groups=1,
+    def __init__(self, last_stride, bn_norm, num_splits, with_ibn, with_nl, block, layers, non_layers, radix=1,
+                 groups=1,
                  bottleneck_width=64,
                  dilated=False, dilation=1,
                  deep_stem=False, stem_width=64, avg_down=False,
@@ -365,6 +365,7 @@ def build_resnest_backbone(cfg):
 
     # fmt: off
     pretrain = cfg.MODEL.BACKBONE.PRETRAIN
+    pretrain_path = cfg.MODEL.BACKBONE.PRETRAIN_PATH
     last_stride = cfg.MODEL.BACKBONE.LAST_STRIDE
     bn_norm = cfg.MODEL.BACKBONE.NORM
     num_splits = cfg.MODEL.BACKBONE.NORM_SPLIT
@@ -382,11 +383,22 @@ def build_resnest_backbone(cfg):
                     deep_stem=True, stem_width=stem_width, avg_down=True,
                     avd=True, avd_first=False)
     if pretrain:
-        state_dict = torch.hub.load_state_dict_from_url(
-            model_urls['resnest' + depth[:-1]], progress=True, check_hash=True, map_location=torch.device('cpu'))
+        # Load pretrain path if specifically
+        if pretrain_path:
+            try:
+                state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))
+                logger.info(f"Loading pretrained model from {pretrain_path}")
+            except FileNotFoundError as e:
+                logger.info(f'{pretrain_path} is not found! Please check this path.')
+                raise e
+            except KeyError as e:
+                logger.info("State dict keys error! Please check the state dict.")
+                raise e
+        else:
+            state_dict = torch.hub.load_state_dict_from_url(
+                model_urls['resnest' + depth[:-1]], progress=True, check_hash=True, map_location=torch.device('cpu'))
 
         incompatible = model.load_state_dict(state_dict, strict=False)
-        logger = logging.getLogger(__name__)
         if incompatible.missing_keys:
             logger.info(
                 get_missing_parameters_message(incompatible.missing_keys)

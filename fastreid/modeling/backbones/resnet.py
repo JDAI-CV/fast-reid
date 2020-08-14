@@ -132,6 +132,7 @@ class ResNet(nn.Module):
         self.bn1 = get_norm(bn_norm, 64, num_splits)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True)
         self.layer1 = self._make_layer(block, 64, layers[0], 1, bn_norm, num_splits, with_ibn, with_se)
         self.layer2 = self._make_layer(block, 128, layers[1], 2, bn_norm, num_splits, with_ibn, with_se)
         self.layer3 = self._make_layer(block, 256, layers[2], 2, bn_norm, num_splits, with_ibn, with_se)
@@ -313,14 +314,7 @@ def build_resnet_backbone(cfg):
         # Load pretrain path if specifically
         if pretrain_path:
             try:
-                state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))['model']
-                # Remove module.encoder in name
-                new_state_dict = {}
-                for k in state_dict:
-                    new_k = '.'.join(k.split('.')[2:])
-                    if new_k in model.state_dict() and (model.state_dict()[new_k].shape == state_dict[k].shape):
-                        new_state_dict[new_k] = state_dict[k]
-                state_dict = new_state_dict
+                state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))
                 logger.info(f"Loading pretrained model from {pretrain_path}")
             except FileNotFoundError as e:
                 logger.info(f'{pretrain_path} is not found! Please check this path.')
