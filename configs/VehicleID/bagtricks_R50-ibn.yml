@@ -1,5 +1,8 @@
 _BASE_: "../Base-bagtricks.yml"
 
+DATALOADER:
+  NAIVE_WAY: False
+
 INPUT:
   SIZE_TRAIN: [256, 256]
   SIZE_TEST: [256, 256]
@@ -9,6 +12,7 @@ MODEL:
     WITH_IBN: True
   HEADS:
     POOL_LAYER: gempool
+    NECK_FEAT: "after"
   LOSSES:
     TRI:
       HARD_MINING: False
@@ -20,16 +24,9 @@ DATASETS:
 
 SOLVER:
   BIAS_LR_FACTOR: 1.
-
   IMS_PER_BATCH: 512
-  MAX_ITER: 60
-  STEPS: [30, 50]
-  WARMUP_ITERS: 10
-
-  CHECKPOINT_PERIOD: 20
 
 TEST:
-  EVAL_PERIOD: 20
-  IMS_PER_BATCH: 128
+  IMS_PER_BATCH: 1024
 
 OUTPUT_DIR: "logs/vehicleid/bagtricks_R50-ibn_4gpu"
