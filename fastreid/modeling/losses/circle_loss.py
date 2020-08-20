@@ -29,21 +29,15 @@ class CircleLoss(object):
             all_embedding = embedding
             all_targets = targets
 
-        dist_mat = torch.matmul(embedding, all_embedding.t())
+        dist_mat = torch.matmul(all_embedding, all_embedding.t())
 
-        N, M = dist_mat.size()
-        is_pos = targets.view(N, 1).expand(N, M).eq(all_targets.view(M, 1).expand(M, N).t()).float()
+        N = dist_mat.size(0)
+        is_pos = targets.view(N, 1).expand(N, N).eq(all_targets.view(N, 1).expand(N, N).t()).float()
 
         # Compute the mask which ignores the relevance score of the query to itself
-        if M > N:
-            identity_indx = torch.eye(N, N, device=is_pos.device)
-            remain_indx = torch.zeros(N, M - N, device=is_pos.device)
-            identity_indx = torch.cat((identity_indx, remain_indx), dim=1)
-            is_pos = is_pos - identity_indx
-        else:
-            is_pos = is_pos - torch.eye(N, N, device=is_pos.device)
+        is_pos = is_pos - torch.eye(N, N, device=is_pos.device)
 
-        is_neg = targets.view(N, 1).expand(N, M).ne(all_targets.view(M, 1).expand(M, N).t())
+        is_neg = targets.view(N, 1).expand(N, N).ne(all_targets.view(N, 1).expand(N, N).t())
 
         s_p = dist_mat * is_pos
         s_n = dist_mat * is_neg

@@ -48,7 +48,7 @@ class CrossEntropyLoss(object):
         if self._eps >= 0:
             smooth_param = self._eps
         else:
-            # adaptive lsr
+            # Adaptive label smooth regularization
             soft_label = F.softmax(pred_class_logits, dim=1)
             smooth_param = self._alpha * soft_label[torch.arange(soft_label.size(0)), gt_classes].unsqueeze(1)
 
@@ -60,8 +60,16 @@ class CrossEntropyLoss(object):
 
         loss = (-targets * log_probs).sum(dim=1)
 
+        """
+        # confidence penalty
+        conf_penalty = 0.3
+        probs = F.softmax(pred_class_logits, dim=1)
+        entropy = torch.sum(-probs * log_probs, dim=1)
+        loss = torch.clamp_min(loss - conf_penalty * entropy, min=0.)
+        """
+
         with torch.no_grad():
-            non_zero_cnt = max(loss.nonzero().size(0), 1)
+            non_zero_cnt = max(loss.nonzero(as_tuple=False).size(0), 1)
 
         loss = loss.sum() / non_zero_cnt
 

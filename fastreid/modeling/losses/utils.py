@@ -7,7 +7,6 @@
 import torch
 
 
-@torch.no_grad()
 def concat_all_gather(tensor):
     """
     Performs all_gather operation on the provided tensors.

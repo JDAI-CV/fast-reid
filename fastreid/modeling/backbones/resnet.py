@@ -304,10 +304,27 @@ def build_resnet_backbone(cfg):
     with_nl = cfg.MODEL.BACKBONE.WITH_NL
     depth = cfg.MODEL.BACKBONE.DEPTH
 
-    num_blocks_per_stage = {'18x': [2, 2, 2, 2], '34x': [3, 4, 6, 3], '50x': [3, 4, 6, 3],
-                            '101x': [3, 4, 23, 3],}[depth]
-    nl_layers_per_stage = {'18x': [0, 0, 0, 0], '34x': [0, 0, 0, 0], '50x': [0, 2, 3, 0], '101x': [0, 2, 9, 0]}[depth]
-    block = {'18x': BasicBlock, '34x': BasicBlock, '50x': Bottleneck, '101x': Bottleneck}[depth]
+    num_blocks_per_stage = {
+        '18x': [2, 2, 2, 2],
+        '34x': [3, 4, 6, 3],
+        '50x': [3, 4, 6, 3],
+        '101x': [3, 4, 23, 3],
+    }[depth]
+
+    nl_layers_per_stage = {
+        '18x': [0, 0, 0, 0],
+        '34x': [0, 0, 0, 0],
+        '50x': [0, 2, 3, 0],
+        '101x': [0, 2, 9, 0]
+    }[depth]
+
+    block = {
+        '18x': BasicBlock,
+        '34x': BasicBlock,
+        '50x': Bottleneck,
+        '101x': Bottleneck
+    }[depth]
+
     model = ResNet(last_stride, bn_norm, num_splits, with_ibn, with_se, with_nl, block,
                    num_blocks_per_stage, nl_layers_per_stage)
     if pretrain:
