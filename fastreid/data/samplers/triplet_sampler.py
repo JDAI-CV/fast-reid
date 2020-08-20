@@ -142,7 +142,7 @@ class NaiveIdentitySampler(Sampler):
     def _infinite_indices(self):
         np.random.seed(self._seed)
         while True:
-            avai_pids = copy.deepcopy(self.pids)
+            avai_pids = set(copy.deepcopy(self.pids))
             batch_idxs_dict = {}
 
             batch_indices = []
