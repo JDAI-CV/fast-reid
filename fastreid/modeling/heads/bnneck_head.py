@@ -36,7 +36,6 @@ class BNneckHead(nn.Module):
         See :class:`ReIDHeads.forward`.
         """
         global_feat = self.pool_layer(features)
-        global_feat = torch.clamp(global_feat, min=0., max=1.)
         bn_feat = self.bnneck(global_feat)
         bn_feat = bn_feat[..., 0, 0]
 
