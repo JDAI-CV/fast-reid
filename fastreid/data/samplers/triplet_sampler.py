@@ -38,7 +38,7 @@ class BalancedIdentitySampler(Sampler):
             self.pid_cam[pid].append(camid)
             self.pid_index[pid].append(index)
 
-        self.pids = list(self.pid_index.keys())
+        self.pids = sorted(list(self.pid_index.keys()))
         self.num_identities = len(self.pids)
 
         if seed is None:
@@ -95,6 +95,7 @@ class BalancedIdentitySampler(Sampler):
 
                 if len(ret) == self.batch_size:
                     yield from ret
+                    del ret
                     ret = []
 
 
@@ -125,7 +126,7 @@ class NaiveIdentitySampler(Sampler):
             self.pid_cam[pid].append(camid)
             self.pid_index[pid].append(index)
 
-        self.pids = list(self.pid_index.keys())
+        self.pids = sorted(list(self.pid_index.keys()))
         self.num_identities = len(self.pids)
 
         if seed is None:
@@ -142,12 +143,12 @@ class NaiveIdentitySampler(Sampler):
     def _infinite_indices(self):
         np.random.seed(self._seed)
         while True:
-            avai_pids = set(copy.deepcopy(self.pids))
+            avai_pids = copy.deepcopy(self.pids)
             batch_idxs_dict = {}
 
             batch_indices = []
             while len(avai_pids) >= self.num_pids_per_batch:
-                selected_pids = np.random.choice(avai_pids, self.num_pids_per_batch, replace=False)
+                selected_pids = np.random.choice(avai_pids, self.num_pids_per_batch, replace=False).tolist()
                 for pid in selected_pids:
                     # Register pid in batch_idxs_dict if not
                     if pid not in batch_idxs_dict:
@@ -160,9 +161,11 @@ class NaiveIdentitySampler(Sampler):
                     avai_idxs = batch_idxs_dict[pid]
                     for _ in range(self.num_instances):
                         batch_indices.append(avai_idxs.pop(0))
+
                     if len(avai_idxs) < self.num_instances: avai_pids.remove(pid)
 
                 assert len(batch_indices) == self.batch_size, f"batch indices have wrong " \
                                                               f"length with {len(batch_indices)}!"
                 yield from batch_indices
+                del batch_indices
                 batch_indices = []
