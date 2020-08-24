@@ -6,6 +6,7 @@
 import copy
 import logging
 from collections import OrderedDict
+from sklearn import metrics
 
 import numpy as np
 import torch
@@ -45,8 +46,6 @@ class ReidEvaluator(DatasetEvaluator):
     def cal_dist(metric: str, query_feat: torch.tensor, gallery_feat: torch.tensor):
         assert metric in ["cosine", "euclidean"], "must choose from [cosine, euclidean], but got {}".format(metric)
         if metric == "cosine":
-            query_feat = F.normalize(query_feat, dim=1)
-            gallery_feat = F.normalize(gallery_feat, dim=1)
             dist = 1 - torch.mm(query_feat, gallery_feat.t())
         else:
             m, n = query_feat.size(0), gallery_feat.size(0)
@@ -96,6 +95,10 @@ class ReidEvaluator(DatasetEvaluator):
             alpha = self.cfg.TEST.AQE.ALPHA
             query_features, gallery_features = aqe(query_features, gallery_features, qe_time, qe_k, alpha)
 
+        if self.cfg.TEST.METRIC == "cosine":
+            query_features = F.normalize(query_features, dim=1)
+            gallery_features = F.normalize(gallery_features, dim=1)
+
         dist = self.cal_dist(self.cfg.TEST.METRIC, query_features, gallery_features)
 
         if self.cfg.TEST.RERANK.ENABLED:
@@ -105,9 +108,18 @@ class ReidEvaluator(DatasetEvaluator):
             lambda_value = self.cfg.TEST.RERANK.LAMBDA
             q_q_dist = self.cal_dist(self.cfg.TEST.METRIC, query_features, query_features)
             g_g_dist = self.cal_dist(self.cfg.TEST.METRIC, gallery_features, gallery_features)
-            dist = re_ranking(dist, q_q_dist, g_g_dist, k1, k2, lambda_value)
-
-        cmc, all_AP, all_INP = evaluate_rank(dist, query_pids, gallery_pids, query_camids, gallery_camids)
+            re_dist = re_ranking(dist, q_q_dist, g_g_dist, k1, k2, lambda_value)
+            query_features = query_features.numpy()
+            gallery_features = gallery_features.numpy()
+            cmc, all_AP, all_INP = evaluate_rank(re_dist, query_features, gallery_features,
+                                                 query_pids, gallery_pids, query_camids,
+                                                 gallery_camids, use_distmat=True)
+        else:
+            query_features = query_features.numpy()
+            gallery_features = gallery_features.numpy()
+            cmc, all_AP, all_INP = evaluate_rank(dist, query_features, gallery_features,
+                                                 query_pids, gallery_pids, query_camids, gallery_camids,
+                                                 use_distmat=False)
         mAP = np.mean(all_AP)
         mINP = np.mean(all_INP)
         for r in [1, 5, 10]:
@@ -115,9 +127,13 @@ class ReidEvaluator(DatasetEvaluator):
         self._results['mAP'] = mAP
         self._results['mINP'] = mINP
 
-        tprs = evaluate_roc(dist, query_pids, gallery_pids, query_camids, gallery_camids)
-        fprs = [1e-4, 1e-3, 1e-2]
-        for i in range(len(fprs)):
-            self._results["TPR@FPR={:.0e}".format(fprs[i])] = tprs[i]
+        if self.cfg.TEST.ROC_ENABLED:
+            scores, labels = evaluate_roc(dist, query_features, gallery_features,
+                                          query_pids, gallery_pids, query_camids, gallery_camids)
+            fprs, tprs, thres = metrics.roc_curve(labels, scores)
+
+            for fpr in [1e-4, 1e-3, 1e-2]:
+                ind = np.argmin(np.abs(fprs - fpr))
+                self._results["TPR@FPR={:.0e}".format(fpr)] = tprs[ind]
 
         return copy.deepcopy(self._results)

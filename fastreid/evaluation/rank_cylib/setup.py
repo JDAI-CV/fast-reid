@@ -18,6 +18,11 @@ ext_modules = [
         'rank_cy',
         ['rank_cy.pyx'],
         include_dirs=[numpy_include()],
+    ),
+    Extension(
+        'roc_cy',
+        ['roc_cy.pyx'],
+        include_dirs=[numpy_include()],
     )
 ]
 

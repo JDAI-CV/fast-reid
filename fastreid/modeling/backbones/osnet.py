@@ -7,6 +7,8 @@
 # based on:
 # https://github.com/KaiyangZhou/deep-person-reid/blob/master/torchreid/models/osnet.py
 
+import logging
+
 import torch
 from torch import nn
 
@@ -14,6 +16,7 @@ from fastreid.layers import get_norm
 from fastreid.utils import comm
 from .build import BACKBONE_REGISTRY
 
+logger = logging.getLogger(__name__)
 model_urls = {
     'osnet_x1_0':
         'https://drive.google.com/uc?id=1LaG1EJpHrxdAxKnSCJ_i0u-nbxSAeiFY',
@@ -498,6 +501,7 @@ def build_osnet_backbone(cfg):
 
     # fmt: off
     pretrain = cfg.MODEL.BACKBONE.PRETRAIN
+    pretrain_path = cfg.MODEL.BACKBONE.PRETRAIN_PATH
     with_ibn = cfg.MODEL.BACKBONE.WITH_IBN
     bn_norm = cfg.MODEL.BACKBONE.NORM
     num_splits = cfg.MODEL.BACKBONE.NORM_SPLIT
@@ -510,8 +514,23 @@ def build_osnet_backbone(cfg):
                   bn_norm, num_splits, IN=with_ibn)
 
     if pretrain:
-        if with_ibn: pretrain_key = "osnet_ibn_" + depth
-        else:        pretrain_key = "osnet_" + depth
+        # Load pretrain path if specifically
+        if pretrain_path:
+            try:
+                state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))
+                logger.info(f"Loading pretrained model from {pretrain_path}")
+                model.load_state_dict(state_dict)
+            except FileNotFoundError as e:
+                logger.info(f'{pretrain_path} is not found! Please check this path.')
+                raise e
+            except KeyError as e:
+                logger.info("State dict keys error! Please check the state dict.")
+                raise e
+        else:
+            if with_ibn:
+                pretrain_key = "osnet_ibn_" + depth
+            else:
+                pretrain_key = "osnet_" + depth
 
-        init_pretrained_weights(model, pretrain_key)
+            init_pretrained_weights(model, pretrain_key)
     return model

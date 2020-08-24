@@ -110,11 +110,11 @@ class TripletLoss(object):
             all_embedding = embedding
             all_targets = targets
 
-        dist_mat = euclidean_dist(embedding, all_embedding)
+        dist_mat = euclidean_dist(all_embedding, all_embedding)
 
-        N, M = dist_mat.size()
-        is_pos = targets.view(N, 1).expand(N, M).eq(all_targets.view(M, 1).expand(M, N).t())
-        is_neg = targets.view(N, 1).expand(N, M).ne(all_targets.view(M, 1).expand(M, N).t())
+        N = dist_mat.size(0)
+        is_pos = all_targets.view(N, 1).expand(N, N).eq(all_targets.view(N, 1).expand(N, N).t())
+        is_neg = all_targets.view(N, 1).expand(N, N).ne(all_targets.view(N, 1).expand(N, N).t())
 
         if self._hard_mining:
             dist_ap, dist_an = hard_example_mining(dist_mat, is_pos, is_neg)

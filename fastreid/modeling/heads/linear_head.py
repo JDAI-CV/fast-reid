@@ -38,8 +38,11 @@ class LinearHead(nn.Module):
         if not self.training: return global_feat
 
         # Training
-        try:              cls_outputs = self.classifier(global_feat)
-        except TypeError: cls_outputs = self.classifier(global_feat, targets)
+        if self.classifier.__class__.__name__ == 'Linear':
+            cls_outputs = self.classifier(global_feat)
+        else:
+            cls_outputs = self.classifier(global_feat, targets)
+
 
         pred_class_logits = F.linear(global_feat, self.classifier.weight)
 

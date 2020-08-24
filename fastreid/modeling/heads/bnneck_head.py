@@ -43,8 +43,10 @@ class BNneckHead(nn.Module):
         if not self.training: return bn_feat
 
         # Training
-        try:              cls_outputs = self.classifier(bn_feat)
-        except TypeError: cls_outputs = self.classifier(bn_feat, targets)
+        if self.classifier.__class__.__name__ == 'Linear':
+            cls_outputs = self.classifier(bn_feat)
+        else:
+            cls_outputs = self.classifier(bn_feat, targets)
 
         pred_class_logits = F.linear(bn_feat, self.classifier.weight)
 

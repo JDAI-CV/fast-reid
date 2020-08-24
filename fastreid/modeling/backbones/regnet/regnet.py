@@ -531,6 +531,7 @@ def init_pretrained_weights(key):
 def build_regnet_backbone(cfg):
     # fmt: off
     pretrain = cfg.MODEL.BACKBONE.PRETRAIN
+    pretrain_path = cfg.MODEL.BACKBONE.PRETRAIN_PATH
     last_stride = cfg.MODEL.BACKBONE.LAST_STRIDE
     bn_norm = cfg.MODEL.BACKBONE.NORM
     depth = cfg.MODEL.BACKBONE.DEPTH
@@ -552,8 +553,20 @@ def build_regnet_backbone(cfg):
     model = RegNet(last_stride, bn_norm)
 
     if pretrain:
-        key = depth
-        state_dict = init_pretrained_weights(key)
+        # Load pretrain path if specifically
+        if pretrain_path:
+            try:
+                state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))
+                logger.info(f"Loading pretrained model from {pretrain_path}")
+            except FileNotFoundError as e:
+                logger.info(f'{pretrain_path} is not found! Please check this path.')
+                raise e
+            except KeyError as e:
+                logger.info("State dict keys error! Please check the state dict.")
+                raise e
+        else:
+            key = depth
+            state_dict = init_pretrained_weights(key)
 
         incompatible = model.load_state_dict(state_dict, strict=False)
         if incompatible.missing_keys:

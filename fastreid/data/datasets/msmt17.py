@@ -46,8 +46,7 @@ class MSMT17(ImageDataset):
     dataset_name = 'msmt17'
 
     def __init__(self, root='datasets', **kwargs):
-        self.root = root
-        self.dataset_dir = self.root
+        self.dataset_dir = root
 
         has_main_dir = False
         for main_dir in VERSION_DICT:
@@ -94,7 +93,6 @@ class MSMT17(ImageDataset):
         #       do not add val images to the training set.
         if 'combineall' in kwargs and kwargs['combineall']:
             train += val
-
         super(MSMT17, self).__init__(train, query, gallery, **kwargs)
 
     def process_dir(self, dir_path, list_path, is_train=True):

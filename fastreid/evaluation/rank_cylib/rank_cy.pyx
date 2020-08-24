@@ -5,6 +5,7 @@ import cython
 import numpy as np
 cimport numpy as np
 from collections import defaultdict
+import faiss
 
 
 """
@@ -17,22 +18,35 @@ Credit to https://github.com/luzai
 
 
 # Main interface
-cpdef evaluate_cy(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03=False):
+cpdef evaluate_cy(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03=False,
+                  use_distmat=False):
     distmat = np.asarray(distmat, dtype=np.float32)
+    q_feats = np.asarray(q_feats, dtype=np.float32)
+    g_feats = np.asarray(g_feats, dtype=np.float32)
     q_pids = np.asarray(q_pids, dtype=np.int64)
     g_pids = np.asarray(g_pids, dtype=np.int64)
     q_camids = np.asarray(q_camids, dtype=np.int64)
     g_camids = np.asarray(g_camids, dtype=np.int64)
     if use_metric_cuhk03:
-        return eval_cuhk03_cy(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
-    return eval_market1501_cy(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
+        return eval_cuhk03_cy(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank, use_distmat)
+    return eval_market1501_cy(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank, use_distmat)
 
 
-cpdef eval_cuhk03_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
-                     long[:]q_camids, long[:]g_camids, long max_rank):
+cpdef eval_cuhk03_cy(float[:,:] distmat, float[:,:] q_feats, float[:,:] g_feats, long[:] q_pids, long[:]g_pids,
+                     long[:]q_camids, long[:]g_camids, long max_rank, bint use_distmat):
 
-    cdef long num_q = distmat.shape[0]
-    cdef long num_g = distmat.shape[1]
+    cdef long num_q = q_feats.shape[0]
+    cdef long num_g = g_feats.shape[0]
+    cdef long dim = q_feats.shape[1]
+
+    cdef long[:,:] indices
+    cdef index = faiss.IndexFlatL2(dim)
+    index.add(np.asarray(g_feats))
+
+    if use_distmat:
+        indices = np.argsort(distmat, axis=1)
+    else:
+        indices = index.search(np.asarray(q_feats), k=num_g)[1]
 
     if num_g < max_rank:
         max_rank = num_g
@@ -40,7 +54,6 @@ cpdef eval_cuhk03_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
 
     cdef:
         long num_repeats = 10
-        long[:,:] indices = np.argsort(distmat, axis=1)
         long[:,:] matches = (np.asarray(g_pids)[np.asarray(indices)] == np.asarray(q_pids)[:, np.newaxis]).astype(np.int64)
 
         float[:,:] all_cmc = np.zeros((num_q, max_rank), dtype=np.float32)
@@ -147,24 +160,34 @@ cpdef eval_cuhk03_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
     return np.asarray(avg_cmc).astype(np.float32), mAP
 
 
-cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
-                         long[:]q_camids, long[:]g_camids, long max_rank):
+cpdef eval_market1501_cy(float[:,:] distmat, float[:,:] q_feats, float[:,:] g_feats, long[:] q_pids, long[:]g_pids,
+                         long[:]q_camids, long[:]g_camids, long max_rank, bint use_distmat):
 
-    cdef long num_q = distmat.shape[0]
-    cdef long num_g = distmat.shape[1]
+    cdef long num_q = q_feats.shape[0]
+    cdef long num_g = g_feats.shape[0]
+    cdef long dim = q_feats.shape[1]
+
+    cdef long[:,:] indices
+    cdef index = faiss.IndexFlatL2(dim)
+    index.add(np.asarray(g_feats))
+
+    if use_distmat:
+        indices = np.argsort(distmat, axis=1)
+    else:
+        indices = index.search(np.asarray(q_feats), k=num_g)[1]
 
     if num_g < max_rank:
         max_rank = num_g
         print('Note: number of gallery samples is quite small, got {}'.format(num_g))
 
     cdef:
-        long[:,:] indices = np.argsort(distmat, axis=1)
         long[:,:] matches = (np.asarray(g_pids)[np.asarray(indices)] == np.asarray(q_pids)[:, np.newaxis]).astype(np.int64)
 
         float[:,:] all_cmc = np.zeros((num_q, max_rank), dtype=np.float32)
         float[:] all_AP = np.zeros(num_q, dtype=np.float32)
         float[:] all_INP = np.zeros(num_q, dtype=np.float32)
         float num_valid_q = 0. # number of valid query
+        long valid_index = 0
 
         long q_idx, q_pid, q_camid, g_idx
         long[:] order = np.zeros(num_g, dtype=np.int64)
@@ -181,7 +204,6 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
         float[:] tmp_cmc = np.zeros(num_g, dtype=np.float32)
         float tmp_cmc_sum
 
-        long valid_index = 0
 
     for q_idx in range(num_q):
         # get query pid and camid
@@ -234,7 +256,7 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
             tmp_cmc_sum += (tmp_cmc[g_idx] / (g_idx + 1.)) * raw_cmc[g_idx]
             num_rel += raw_cmc[g_idx]
         all_AP[valid_index] = tmp_cmc_sum / num_rel
-        valid_index+=1
+        valid_index += 1
 
     assert num_valid_q > 0, 'Error: all query identities do not appear in gallery'
 
@@ -245,7 +267,7 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
             avg_cmc[rank_idx] += all_cmc[q_idx, rank_idx]
         avg_cmc[rank_idx] /= num_valid_q
 
-    return np.asarray(avg_cmc).astype(np.float32), all_AP[:valid_index], all_INP[:valid_index]
+    return np.asarray(avg_cmc).astype(np.float32), np.asarray(all_AP[:valid_index]), np.asarray(all_INP[:valid_index])
 
 
 # Compute the cumulative sum

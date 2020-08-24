@@ -210,11 +210,6 @@ class SimpleTrainer(TrainerBase):
             loss_dict = self.model.losses(outputs, targets)
 
         losses = sum(loss_dict.values())
-        self._detect_anomaly(losses, loss_dict)
-
-        metrics_dict = loss_dict
-        metrics_dict["data_time"] = data_time
-        self._write_metrics(metrics_dict)
 
         """
         If you need accumulate gradients or something similar, you can
@@ -222,6 +217,12 @@ class SimpleTrainer(TrainerBase):
         """
         self.optimizer.zero_grad()
         losses.backward()
+
+        with torch.cuda.stream(torch.cuda.Stream()):
+            metrics_dict = loss_dict
+            metrics_dict["data_time"] = data_time
+            self._write_metrics(metrics_dict)
+            self._detect_anomaly(losses, loss_dict)
 
         """
         If you need gradient clipping/scaling or other processing, you can

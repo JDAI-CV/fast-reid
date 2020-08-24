@@ -1,8 +1,10 @@
 # credits: https://github.com/KaiyangZhou/deep-person-reid/blob/master/torchreid/metrics/rank.py
 
-import numpy as np
 import warnings
 from collections import defaultdict
+
+import faiss
+import numpy as np
 
 try:
     from .rank_cylib.rank_cy import evaluate_cy
@@ -11,18 +13,27 @@ try:
 except ImportError:
     IS_CYTHON_AVAI = False
     warnings.warn(
-        'Cython evaluation (very fast so highly recommended) is '
+        'Cython rank evaluation (very fast so highly recommended) is '
         'unavailable, now use python evaluation.'
     )
 
 
-def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
+def eval_cuhk03(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank, use_distmat):
     """Evaluation with cuhk03 metric
     Key: one image for each gallery identity is randomly sampled for each query identity.
     Random sampling is performed num_repeats times.
     """
     num_repeats = 10
+
     num_q, num_g = distmat.shape
+    dim = q_feats.shape[1]
+
+    index = faiss.IndexFlatL2(dim)
+    index.add(g_feats)
+    if use_distmat:
+        indices = np.argsort(distmat, axis=1)
+    else:
+        _, indices = index.search(q_feats, k=num_g)
 
     if num_g < max_rank:
         max_rank = num_g
@@ -31,7 +42,6 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
                 format(num_g)
         )
 
-    indices = np.argsort(distmat, axis=1)
     matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
 
     # compute cmc curve for each query
@@ -93,17 +103,24 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
     return all_cmc, mAP
 
 
-def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
+def eval_market1501(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank, use_distmat):
     """Evaluation with market1501 metric
     Key: for each query identity, its gallery images from the same camera view are discarded.
     """
     num_q, num_g = distmat.shape
+    dim = q_feats.shape[1]
+
+    index = faiss.IndexFlatL2(dim)
+    index.add(g_feats)
 
     if num_g < max_rank:
         max_rank = num_g
         print('Note: number of gallery samples is quite small, got {}'.format(num_g))
 
-    indices = np.argsort(distmat, axis=1)
+    if use_distmat:
+        indices = np.argsort(distmat, axis=1)
+    else:
+        _, indices = index.search(q_feats, k=num_g)
 
     matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
 
@@ -159,31 +176,36 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
 
 
 def evaluate_py(
-        distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03
+        distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03, use_distmat
 ):
     if use_metric_cuhk03:
         return eval_cuhk03(
-            distmat, q_pids, g_pids, q_camids, g_camids, max_rank
+            distmat, q_feats, g_feats, g_pids, q_camids, g_camids, max_rank, use_distmat
         )
     else:
         return eval_market1501(
-            distmat, q_pids, g_pids, q_camids, g_camids, max_rank
+            distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank, use_distmat
         )
 
 
 def evaluate_rank(
         distmat,
+        q_feats,
+        g_feats,
         q_pids,
         g_pids,
         q_camids,
         g_camids,
         max_rank=50,
         use_metric_cuhk03=False,
+        use_distmat=False,
         use_cython=True
 ):
     """Evaluates CMC rank.
     Args:
         distmat (numpy.ndarray): distance matrix of shape (num_query, num_gallery).
+        q_feats (numpy.ndarray): 2-D array containing query features.
+        g_feats (numpy.ndarray): 2-D array containing gallery features.
         q_pids (numpy.ndarray): 1-D array containing person identities
             of each query instance.
         g_pids (numpy.ndarray): 1-D array containing person identities
@@ -201,11 +223,11 @@ def evaluate_rank(
     """
     if use_cython and IS_CYTHON_AVAI:
         return evaluate_cy(
-            distmat, q_pids, g_pids, q_camids, g_camids, max_rank,
-            use_metric_cuhk03
+            distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank,
+            use_metric_cuhk03, use_distmat
         )
     else:
         return evaluate_py(
-            distmat, q_pids, g_pids, q_camids, g_camids, max_rank,
-            use_metric_cuhk03
+            distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank,
+            use_metric_cuhk03, use_distmat
         )

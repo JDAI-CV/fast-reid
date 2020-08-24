@@ -496,11 +496,13 @@ class DefaultTrainer(SimpleTrainer):
             cfg.SOLVER.STEPS[i] *= iters_per_epoch
         cfg.SOLVER.SWA.ITER *= iters_per_epoch
         cfg.SOLVER.SWA.PERIOD *= iters_per_epoch
-        cfg.SOLVER.CHECKPOINT_PERIOD *= iters_per_epoch
 
+        ckpt_multiple = cfg.SOLVER.CHECKPOINT_PERIOD / cfg.TEST.EVAL_PERIOD
         # Evaluation period must be divided by 200 for writing into tensorboard.
-        num_mod = (200 - cfg.TEST.EVAL_PERIOD * iters_per_epoch) % 200
-        cfg.TEST.EVAL_PERIOD = cfg.TEST.EVAL_PERIOD * iters_per_epoch + num_mod
+        eval_num_mod = (200 - cfg.TEST.EVAL_PERIOD * iters_per_epoch) % 200
+        cfg.TEST.EVAL_PERIOD = cfg.TEST.EVAL_PERIOD * iters_per_epoch + eval_num_mod
+        # Change checkpoint saving period consistent with evaluation period.
+        cfg.SOLVER.CHECKPOINT_PERIOD = int(cfg.TEST.EVAL_PERIOD * ckpt_multiple)
 
         logger = logging.getLogger(__name__)
         logger.info(

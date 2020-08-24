@@ -4,7 +4,6 @@
 @contact: sherlockliao01@gmail.com
 """
 
-import torch
 from torch.utils.data import Dataset
 
 from .data_utils import read_image
@@ -18,14 +17,10 @@ class CommDataset(Dataset):
         self.transform = transform
         self.relabel = relabel
 
-        self.pid_dict = {}
-        if self.relabel:
-            pids = list()
-            for i, item in enumerate(img_items):
-                if item[1] in pids: continue
-                pids.append(item[1])
-            self.pids = pids
-            self.pid_dict = dict([(p, i) for i, p in enumerate(self.pids)])
+        pid_set = set([i[1] for i in img_items])
+
+        self.pids = sorted(list(pid_set))
+        if relabel: self.pid_dict = dict([(p, i) for i, p in enumerate(self.pids)])
 
     def __len__(self):
         return len(self.img_items)

@@ -57,13 +57,14 @@ class GeneralizedMeanPoolingP(GeneralizedMeanPooling):
 class AdaptiveAvgMaxPool2d(nn.Module):
     def __init__(self):
         super(AdaptiveAvgMaxPool2d, self).__init__()
-        self.avgpool = FastGlobalAvgPool2d()
+        self.gap = FastGlobalAvgPool2d()
+        self.gmp = nn.AdaptiveMaxPool2d(1)
 
     def forward(self, x):
-        x_avg = self.avgpool(x, self.output_size)
-        x_max = F.adaptive_max_pool2d(x, 1)
-        x = x_max + x_avg
-        return x
+        avg_feat = self.gap(x)
+        max_feat = self.gmp(x)
+        feat = avg_feat + max_feat
+        return feat
 
 
 class FastGlobalAvgPool2d(nn.Module):
