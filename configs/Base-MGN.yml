@@ -7,19 +7,20 @@ MODEL:
 
   BACKBONE:
     WITH_NL: False
-
   HEADS:
-    IN_FEAT: 256
+    NAME: "ReductionHead"
+    POOL_LAYER: "maxpool"
+    REDUCTION_DIM: 256
 
   LOSSES:
     NAME: ("CrossEntropyLoss", "TripletLoss",)
     CE:
       EPSILON: 0.1
-      SCALE: 0.125
+      SCALE: 1.0
 
     TRI:
       MARGIN: 0.0
       HARD_MINING: True
       NORM_FEAT: False
-      SCALE: 0.20
+      SCALE: 1.0
 
