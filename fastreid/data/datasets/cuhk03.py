@@ -76,7 +76,8 @@ class CUHK03(ImageDataset):
         tmp_train = []
         for img_path, pid, camid in train:
             new_pid = self.dataset_name + "_" + str(pid)
-            tmp_train.append((img_path, new_pid, camid))
+            new_camid = self.dataset_name + "_" + str(camid)
+            tmp_train.append((img_path, new_pid, new_camid))
         train = tmp_train
         del tmp_train
         query = split['query']

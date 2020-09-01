@@ -108,6 +108,7 @@ class MSMT17(ImageDataset):
             img_path = osp.join(dir_path, img_path)
             if is_train:
                 pid = self.dataset_name + "_" + str(pid)
+                camid = self.dataset_name + "_" + str(camid)
             data.append((img_path, pid, camid))
 
         return data

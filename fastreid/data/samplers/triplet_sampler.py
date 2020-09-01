@@ -95,7 +95,6 @@ class BalancedIdentitySampler(Sampler):
 
                 if len(ret) == self.batch_size:
                     yield from ret
-                    del ret
                     ret = []
 
 
@@ -167,5 +166,4 @@ class NaiveIdentitySampler(Sampler):
                 assert len(batch_indices) == self.batch_size, f"batch indices have wrong " \
                                                               f"length with {len(batch_indices)}!"
                 yield from batch_indices
-                del batch_indices
                 batch_indices = []

@@ -17,10 +17,17 @@ class CommDataset(Dataset):
         self.transform = transform
         self.relabel = relabel
 
-        pid_set = set([i[1] for i in img_items])
+        pid_set = set()
+        cam_set = set()
+        for i in img_items:
+            pid_set.add(i[1])
+            cam_set.add(i[2])
 
         self.pids = sorted(list(pid_set))
-        if relabel: self.pid_dict = dict([(p, i) for i, p in enumerate(self.pids)])
+        self.cams = sorted(list(cam_set))
+        if relabel:
+            self.pid_dict = dict([(p, i) for i, p in enumerate(self.pids)])
+            self.cam_dict = dict([(p, i) for i, p in enumerate(self.cams)])
 
     def __len__(self):
         return len(self.img_items)
@@ -29,14 +36,20 @@ class CommDataset(Dataset):
         img_path, pid, camid = self.img_items[index]
         img = read_image(img_path)
         if self.transform is not None: img = self.transform(img)
-        if self.relabel: pid = self.pid_dict[pid]
+        if self.relabel:
+            pid = self.pid_dict[pid]
+            camid = self.cam_dict[camid]
         return {
             "images": img,
             "targets": pid,
-            "camid": camid,
-            "img_path": img_path
+            "camids": camid,
+            "img_paths": img_path,
         }
 
     @property
     def num_classes(self):
         return len(self.pids)
+
+    @property
+    def num_cameras(self):
+        return len(self.cams)

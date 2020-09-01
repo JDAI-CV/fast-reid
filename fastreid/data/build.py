@@ -54,6 +54,7 @@ def build_reid_train_loader(cfg):
         num_workers=num_workers,
         batch_sampler=batch_sampler,
         collate_fn=fast_batch_collator,
+        pin_memory=True,
     )
     return train_loader
 
@@ -61,7 +62,7 @@ def build_reid_train_loader(cfg):
 def build_reid_test_loader(cfg, dataset_name):
     cfg = cfg.clone()
     cfg.defrost()
-    
+
     dataset = DATASET_REGISTRY.get(dataset_name)(root=_root)
     if comm.is_main_process():
         dataset.show_test()
@@ -77,7 +78,9 @@ def build_reid_test_loader(cfg, dataset_name):
         test_set,
         batch_sampler=batch_sampler,
         num_workers=0,  # save some memory
-        collate_fn=fast_batch_collator)
+        collate_fn=fast_batch_collator,
+        pin_memory=True,
+    )
     return test_loader, len(dataset.query)
 
 

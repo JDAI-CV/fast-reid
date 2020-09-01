@@ -64,6 +64,7 @@ class DukeMTMC(ImageDataset):
             camid -= 1  # index starts from 0
             if is_train:
                 pid = self.dataset_name + "_" + str(pid)
+                camid = self.dataset_name + "_" + str(camid)
             data.append((img_path, pid, camid))
 
         return data
