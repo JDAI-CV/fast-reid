@@ -17,13 +17,13 @@ class ArcSoftmax(nn.Module):
         super().__init__()
         self.in_feat = in_feat
         self._num_classes = num_classes
-        self._s = cfg.MODEL.HEADS.SCALE
-        self._m = cfg.MODEL.HEADS.MARGIN
+        self.s = cfg.MODEL.HEADS.SCALE
+        self.m = cfg.MODEL.HEADS.MARGIN
 
-        self.cos_m = math.cos(self._m)
-        self.sin_m = math.sin(self._m)
-        self.threshold = math.cos(math.pi - self._m)
-        self.mm = math.sin(math.pi - self._m) * self._m
+        self.cos_m = math.cos(self.m)
+        self.sin_m = math.sin(self.m)
+        self.threshold = math.cos(math.pi - self.m)
+        self.mm = math.sin(math.pi - self.m) * self.m
 
         self.weight = Parameter(torch.Tensor(num_classes, in_feat))
         nn.init.xavier_uniform_(self.weight)
@@ -46,10 +46,10 @@ class ArcSoftmax(nn.Module):
             self.t = target_logit.mean() * 0.01 + (1 - 0.01) * self.t
         cos_theta[mask] = hard_example * (self.t + hard_example)
         cos_theta.scatter_(1, targets.view(-1, 1).long(), final_target_logit)
-        pred_class_logits = cos_theta * self._s
+        pred_class_logits = cos_theta * self.s
         return pred_class_logits
 
     def extra_repr(self):
         return 'in_features={}, num_classes={}, scale={}, margin={}'.format(
-            self.in_feat, self._num_classes, self._s, self._m
+            self.in_feat, self._num_classes, self.s, self.m
         )

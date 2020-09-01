@@ -16,9 +16,9 @@ The call is expected to return an :class:`ROIHeads`.
 """
 
 
-def build_reid_heads(cfg, in_feat, num_classes, pool_layer):
+def build_reid_heads(cfg):
     """
     Build REIDHeads defined by `cfg.MODEL.REID_HEADS.NAME`.
     """
     head = cfg.MODEL.HEADS.NAME
-    return REID_HEADS_REGISTRY.get(head)(cfg, in_feat, num_classes, pool_layer)
+    return REID_HEADS_REGISTRY.get(head)(cfg)

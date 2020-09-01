@@ -16,9 +16,35 @@ def focal_loss(
         target: torch.Tensor,
         alpha: float,
         gamma: float = 2.0,
-        reduction: str = 'mean', ) -> torch.Tensor:
-    r"""Function that computes Focal loss.
+        reduction: str = 'mean',
+        scale: float = 1.0) -> torch.Tensor:
+    r"""Criterion that computes Focal loss.
     See :class:`fastreid.modeling.losses.FocalLoss` for details.
+    According to [1], the Focal loss is computed as follows:
+    .. math::
+        \text{FL}(p_t) = -\alpha_t (1 - p_t)^{\gamma} \, \text{log}(p_t)
+    where:
+       - :math:`p_t` is the model's estimated probability for each class.
+    Arguments:
+        alpha (float): Weighting factor :math:`\alpha \in [0, 1]`.
+        gamma (float): Focusing parameter :math:`\gamma >= 0`.
+        reduction (str, optional): Specifies the reduction to apply to the
+         output: ‘none’ | ‘mean’ | ‘sum’. ‘none’: no reduction will be applied,
+         ‘mean’: the sum of the output will be divided by the number of elements
+         in the output, ‘sum’: the output will be summed. Default: ‘none’.
+    Shape:
+        - Input: :math:`(N, C, *)` where C = number of classes.
+        - Target: :math:`(N, *)` where each value is
+          :math:`0 ≤ targets[i] ≤ C−1`.
+    Examples:
+        >>> N = 5  # num_classes
+        >>> loss = FocalLoss(cfg)
+        >>> input = torch.randn(1, N, 3, 5, requires_grad=True)
+        >>> target = torch.empty(1, 3, 5, dtype=torch.long).random_(N)
+        >>> output = loss(input, target)
+        >>> output.backward()
+    References:
+        [1] https://arxiv.org/abs/1708.02002
     """
     if not torch.is_tensor(input):
         raise TypeError("Input type is not a torch.Tensor. Got {}"
@@ -64,47 +90,4 @@ def focal_loss(
     else:
         raise NotImplementedError("Invalid reduction mode: {}"
                                   .format(reduction))
-    return loss
-
-
-class FocalLoss(object):
-    r"""Criterion that computes Focal loss.
-    According to [1], the Focal loss is computed as follows:
-    .. math::
-        \text{FL}(p_t) = -\alpha_t (1 - p_t)^{\gamma} \, \text{log}(p_t)
-    where:
-       - :math:`p_t` is the model's estimated probability for each class.
-    Arguments:
-        alpha (float): Weighting factor :math:`\alpha \in [0, 1]`.
-        gamma (float): Focusing parameter :math:`\gamma >= 0`.
-        reduction (str, optional): Specifies the reduction to apply to the
-         output: ‘none’ | ‘mean’ | ‘sum’. ‘none’: no reduction will be applied,
-         ‘mean’: the sum of the output will be divided by the number of elements
-         in the output, ‘sum’: the output will be summed. Default: ‘none’.
-    Shape:
-        - Input: :math:`(N, C, *)` where C = number of classes.
-        - Target: :math:`(N, *)` where each value is
-          :math:`0 ≤ targets[i] ≤ C−1`.
-    Examples:
-        >>> N = 5  # num_classes
-        >>> loss = FocalLoss(cfg)
-        >>> input = torch.randn(1, N, 3, 5, requires_grad=True)
-        >>> target = torch.empty(1, 3, 5, dtype=torch.long).random_(N)
-        >>> output = loss(input, target)
-        >>> output.backward()
-    References:
-        [1] https://arxiv.org/abs/1708.02002
-    """
-
-    # def __init__(self, alpha: float, gamma: float = 2.0,
-    #              reduction: str = 'none') -> None:
-    def __init__(self, cfg):
-        self._alpha: float = cfg.MODEL.LOSSES.FL.ALPHA
-        self._gamma: float = cfg.MODEL.LOSSES.FL.GAMMA
-        self._scale: float = cfg.MODEL.LOSSES.FL.SCALE
-
-    def __call__(self, pred_class_logits: torch.Tensor, _, gt_classes: torch.Tensor) -> dict:
-        loss = focal_loss(pred_class_logits, gt_classes, self._alpha, self._gamma)
-        return {
-            'loss_focal': loss * self._scale,
-        }
+    return loss * scale

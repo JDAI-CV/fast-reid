@@ -480,14 +480,12 @@ def init_pretrained_weights(model, key=''):
         )
     else:
         logger.info(
-            'Successfully loaded imagenet pretrained weights from "{}"'.
-                format(cached_file)
+            'Successfully loaded imagenet pretrained weights from "{}"'.format(cached_file)
         )
         if len(discarded_layers) > 0:
             logger.info(
                 '** The following layers are discarded '
-                'due to unmatched keys or layer size: {}'.
-                    format(discarded_layers)
+                'due to unmatched keys or layer size: {}'.format(discarded_layers)
             )
 
 
@@ -506,10 +504,14 @@ def build_osnet_backbone(cfg):
     bn_norm = cfg.MODEL.BACKBONE.NORM
     num_splits = cfg.MODEL.BACKBONE.NORM_SPLIT
     depth = cfg.MODEL.BACKBONE.DEPTH
+    # fmt: on
 
     num_blocks_per_stage = [2, 2, 2]
-    num_channels_per_stage = {"x1_0": [64, 256, 384, 512], "x0_75": [48, 192, 288, 384], "x0_5": [32, 128, 192, 256],
-                              "x0_25": [16, 64, 96, 128]}[depth]
+    num_channels_per_stage = {
+        "x1_0": [64, 256, 384, 512],
+        "x0_75": [48, 192, 288, 384],
+        "x0_5": [32, 128, 192, 256],
+        "x0_25": [16, 64, 96, 128]}[depth]
     model = OSNet([OSBlock, OSBlock, OSBlock], num_blocks_per_stage, num_channels_per_stage,
                   bn_norm, num_splits, IN=with_ibn)
 

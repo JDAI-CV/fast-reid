@@ -7,7 +7,6 @@
 import torch
 from torch import nn
 
-from fastreid.layers import GeneralizedMeanPoolingP, AdaptiveAvgMaxPool2d, FastGlobalAvgPool2d
 from fastreid.modeling.backbones import build_backbone
 from fastreid.modeling.heads import build_reid_heads
 from fastreid.modeling.losses import *
@@ -27,20 +26,7 @@ class Baseline(nn.Module):
         self.backbone = build_backbone(cfg)
 
         # head
-        pool_type = cfg.MODEL.HEADS.POOL_LAYER
-        if pool_type == 'fastavgpool':  pool_layer = FastGlobalAvgPool2d()
-        elif pool_type == 'avgpool':    pool_layer = nn.AdaptiveAvgPool2d(1)
-        elif pool_type == 'maxpool':    pool_layer = nn.AdaptiveMaxPool2d(1)
-        elif pool_type == 'gempool':    pool_layer = GeneralizedMeanPoolingP()
-        elif pool_type == "avgmaxpool": pool_layer = AdaptiveAvgMaxPool2d()
-        elif pool_type == "identity":   pool_layer = nn.Identity()
-        else:
-            raise KeyError(f"{pool_type} is invalid, please choose from "
-                           f"'avgpool', 'maxpool', 'gempool', 'avgmaxpool' and 'identity'.")
-
-        in_feat = cfg.MODEL.HEADS.IN_FEAT
-        num_classes = cfg.MODEL.HEADS.NUM_CLASSES
-        self.heads = build_reid_heads(cfg, in_feat, num_classes, pool_layer)
+        self.heads = build_reid_heads(cfg)
 
     @property
     def device(self):
@@ -59,40 +45,72 @@ class Baseline(nn.Module):
             # throw an error. We just set all the targets to 0 to avoid this problem.
             if targets.sum() < 0: targets.zero_()
 
-            return self.heads(features, targets), targets
+            outputs = self.heads(features, targets)
+            return {
+                "outputs": outputs,
+                "targets": targets,
+            }
         else:
-            return self.heads(features)
+            outputs = self.heads(features)
+            return outputs
 
     def preprocess_image(self, batched_inputs):
-        """
+        r"""
         Normalize and batch the input images.
         """
         if isinstance(batched_inputs, dict):
             images = batched_inputs["images"].to(self.device)
         elif isinstance(batched_inputs, torch.Tensor):
             images = batched_inputs.to(self.device)
-        images.sub_(self.pixel_mean).div_(self.pixel_std)
+        else:
+            raise TypeError("batched_inputs must be dict or torch.Tensor, but get {}".format(type(batched_inputs)))
+
+        images = (images - self.pixel_mean) / self.pixel_std
         return images
 
-    def losses(self, outputs, gt_labels):
+    def losses(self, outs):
         r"""
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
         """
-        cls_outputs, pred_class_logits, pred_features = outputs
+        # fmt: off
+        outputs           = outs["outputs"]
+        gt_labels         = outs["targets"]
+        # model predictions
+        pred_class_logits = outputs['pred_class_logits'].detach()
+        cls_outputs       = outputs['cls_outputs']
+        pred_features     = outputs['features']
+        # fmt: on
+
+        # Log prediction accuracy
+        log_accuracy(pred_class_logits, gt_labels)
+
         loss_dict = {}
         loss_names = self._cfg.MODEL.LOSSES.NAME
 
-        # Log prediction accuracy
-        CrossEntropyLoss.log_accuracy(pred_class_logits.detach(), gt_labels)
-
         if "CrossEntropyLoss" in loss_names:
-            loss_dict['loss_cls'] = CrossEntropyLoss(self._cfg)(cls_outputs, gt_labels)
+            loss_dict['loss_cls'] = cross_entropy_loss(
+                cls_outputs,
+                gt_labels,
+                self._cfg.MODEL.LOSSES.CE.EPSILON,
+                self._cfg.MODEL.LOSSES.CE.ALPHA,
+            ) * self._cfg.MODEL.LOSSES.CE.SCALE
 
         if "TripletLoss" in loss_names:
-            loss_dict['loss_triplet'] = TripletLoss(self._cfg)(pred_features, gt_labels)
+            loss_dict['loss_triplet'] = triplet_loss(
+                pred_features,
+                gt_labels,
+                self._cfg.MODEL.LOSSES.TRI.MARGIN,
+                self._cfg.MODEL.LOSSES.TRI.NORM_FEAT,
+                self._cfg.MODEL.LOSSES.TRI.HARD_MINING,
+            ) * self._cfg.MODEL.LOSSES.TRI.SCALE
 
         if "CircleLoss" in loss_names:
-            loss_dict['loss_circle'] = CircleLoss(self._cfg)(pred_features, gt_labels)
+            loss_dict['loss_circle'] = circle_loss(
+                pred_features,
+                gt_labels,
+                self._cfg.MODEL.LOSSES.CIRCLE.MARGIN,
+                self._cfg.MODEL.LOSSES.CIRCLE.ALPHA,
+            ) * self._cfg.MODEL.LOSSES.CIRCLE.SCALE
 
         return loss_dict

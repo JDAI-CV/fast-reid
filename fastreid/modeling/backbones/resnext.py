@@ -13,9 +13,9 @@ import math
 import torch
 import torch.nn as nn
 
-from fastreid.layers import IBN, get_norm
-from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
+from fastreid.layers import *
 from fastreid.utils import comm
+from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
 from .build import BACKBONE_REGISTRY
 
 logger = logging.getLogger(__name__)
@@ -86,13 +86,13 @@ class ResNeXt(nn.Module):
     https://arxiv.org/pdf/1611.05431.pdf
     """
 
-    def __init__(self, last_stride, bn_norm, num_splits, with_ibn, block, layers, baseWidth=4, cardinality=32):
+    def __init__(self, last_stride, bn_norm, num_splits, with_ibn, with_nl, block, layers, non_layers,
+                 baseWidth=4, cardinality=32):
         """ Constructor
         Args:
             baseWidth: baseWidth for ResNeXt.
             cardinality: number of convolution groups.
             layers: config of layers, e.g., [3, 4, 6, 3]
-            num_classes: number of classes
         """
         super(ResNeXt, self).__init__()
 
@@ -111,6 +111,11 @@ class ResNeXt(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], last_stride, bn_norm, num_splits, with_ibn=with_ibn)
 
         self.random_init()
+
+        # fmt: off
+        if with_nl: self._build_nonlocal(layers, non_layers, bn_norm, num_splits)
+        else:       self.NL_1_idx = self.NL_2_idx = self.NL_3_idx = self.NL_4_idx = []
+        # fmt: on
 
     def _make_layer(self, block, planes, blocks, stride=1, bn_norm='BN', num_splits=1, with_ibn=False):
         """ Stack n bottleneck modules where n is inferred from the depth of the network.
@@ -141,16 +146,65 @@ class ResNeXt(nn.Module):
 
         return nn.Sequential(*layers)
 
+    def _build_nonlocal(self, layers, non_layers, bn_norm, num_splits):
+        self.NL_1 = nn.ModuleList(
+            [Non_local(256, bn_norm, num_splits) for _ in range(non_layers[0])])
+        self.NL_1_idx = sorted([layers[0] - (i + 1) for i in range(non_layers[0])])
+        self.NL_2 = nn.ModuleList(
+            [Non_local(512, bn_norm, num_splits) for _ in range(non_layers[1])])
+        self.NL_2_idx = sorted([layers[1] - (i + 1) for i in range(non_layers[1])])
+        self.NL_3 = nn.ModuleList(
+            [Non_local(1024, bn_norm, num_splits) for _ in range(non_layers[2])])
+        self.NL_3_idx = sorted([layers[2] - (i + 1) for i in range(non_layers[2])])
+        self.NL_4 = nn.ModuleList(
+            [Non_local(2048, bn_norm, num_splits) for _ in range(non_layers[3])])
+        self.NL_4_idx = sorted([layers[3] - (i + 1) for i in range(non_layers[3])])
+
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool1(x)
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
 
+        NL1_counter = 0
+        if len(self.NL_1_idx) == 0:
+            self.NL_1_idx = [-1]
+        for i in range(len(self.layer1)):
+            x = self.layer1[i](x)
+            if i == self.NL_1_idx[NL1_counter]:
+                _, C, H, W = x.shape
+                x = self.NL_1[NL1_counter](x)
+                NL1_counter += 1
+        # Layer 2
+        NL2_counter = 0
+        if len(self.NL_2_idx) == 0:
+            self.NL_2_idx = [-1]
+        for i in range(len(self.layer2)):
+            x = self.layer2[i](x)
+            if i == self.NL_2_idx[NL2_counter]:
+                _, C, H, W = x.shape
+                x = self.NL_2[NL2_counter](x)
+                NL2_counter += 1
+        # Layer 3
+        NL3_counter = 0
+        if len(self.NL_3_idx) == 0:
+            self.NL_3_idx = [-1]
+        for i in range(len(self.layer3)):
+            x = self.layer3[i](x)
+            if i == self.NL_3_idx[NL3_counter]:
+                _, C, H, W = x.shape
+                x = self.NL_3[NL3_counter](x)
+                NL3_counter += 1
+        # Layer 4
+        NL4_counter = 0
+        if len(self.NL_4_idx) == 0:
+            self.NL_4_idx = [-1]
+        for i in range(len(self.layer4)):
+            x = self.layer4[i](x)
+            if i == self.NL_4_idx[NL4_counter]:
+                _, C, H, W = x.shape
+                x = self.NL_4[NL4_counter](x)
+                NL4_counter += 1
         return x
 
     def random_init(self):
@@ -227,19 +281,25 @@ def build_resnext_backbone(cfg):
     """
 
     # fmt: off
-    pretrain = cfg.MODEL.BACKBONE.PRETRAIN
+    pretrain      = cfg.MODEL.BACKBONE.PRETRAIN
     pretrain_path = cfg.MODEL.BACKBONE.PRETRAIN_PATH
-    last_stride = cfg.MODEL.BACKBONE.LAST_STRIDE
-    bn_norm = cfg.MODEL.BACKBONE.NORM
-    num_splits = cfg.MODEL.BACKBONE.NORM_SPLIT
-    with_ibn = cfg.MODEL.BACKBONE.WITH_IBN
-    with_nl = cfg.MODEL.BACKBONE.WITH_NL
-    depth = cfg.MODEL.BACKBONE.DEPTH
+    last_stride   = cfg.MODEL.BACKBONE.LAST_STRIDE
+    bn_norm       = cfg.MODEL.BACKBONE.NORM
+    num_splits    = cfg.MODEL.BACKBONE.NORM_SPLIT
+    with_ibn      = cfg.MODEL.BACKBONE.WITH_IBN
+    with_nl       = cfg.MODEL.BACKBONE.WITH_NL
+    depth         = cfg.MODEL.BACKBONE.DEPTH
+    # fmt: on
 
-    num_blocks_per_stage = {'50x': [3, 4, 6, 3], '101x': [3, 4, 23, 3], '152x': [3, 8, 36, 3], }[depth]
-    nl_layers_per_stage = {'50x': [0, 2, 3, 0], '101x': [0, 2, 3, 0]}[depth]
-    model = ResNeXt(last_stride, bn_norm, num_splits, with_ibn, Bottleneck, num_blocks_per_stage)
-
+    num_blocks_per_stage = {
+        '50x': [3, 4, 6, 3],
+        '101x': [3, 4, 23, 3],
+        '152x': [3, 8, 36, 3], }[depth]
+    nl_layers_per_stage = {
+        '50x': [0, 2, 3, 0],
+        '101x': [0, 2, 3, 0]}[depth]
+    model = ResNeXt(last_stride, bn_norm, num_splits, with_ibn, with_nl, Bottleneck,
+                    num_blocks_per_stage, nl_layers_per_stage)
     if pretrain:
         if pretrain_path:
             try:

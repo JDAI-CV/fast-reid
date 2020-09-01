@@ -201,13 +201,13 @@ class SimpleTrainer(TrainerBase):
         """
         If your want to do something with the heads, you can wrap the model.
         """
-        outputs, targets = self.model(data)
+        outs = self.model(data)
 
         # Compute loss
         if isinstance(self.model, DistributedDataParallel):
-            loss_dict = self.model.module.losses(outputs, targets)
+            loss_dict = self.model.module.losses(outs)
         else:
-            loss_dict = self.model.losses(outputs, targets)
+            loss_dict = self.model.losses(outs)
 
         losses = sum(loss_dict.values())
 

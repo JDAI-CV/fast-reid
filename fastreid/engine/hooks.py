@@ -433,13 +433,15 @@ class FreezeLayer(HookBase):
             param_freeze[param_name] = param_group['freeze']
         self.param_freeze = param_freeze
 
+        self.is_frozen = False
+
     def before_step(self):
         # Freeze specific layers
-        if self.trainer.iter < self.freeze_iters:
+        if self.trainer.iter <= self.freeze_iters and not self.is_frozen:
             self.freeze_specific_layer()
 
         # Recover original layers status
-        elif self.trainer.iter == self.freeze_iters:
+        if self.trainer.iter > self.freeze_iters and self.is_frozen:
             self.open_all_layer()
 
     def freeze_specific_layer(self):
@@ -456,11 +458,15 @@ class FreezeLayer(HookBase):
         for name, module in self.model.named_children():
             if name in self.freeze_layers: module.eval()
 
+        self.is_frozen = True
+
     def open_all_layer(self):
         self.model.train()
         for param_group in self.optimizer.param_groups:
             param_name = param_group['name']
             param_group['freeze'] = self.param_freeze[param_name]
+
+        self.is_frozen = False
 
 
 class SWA(HookBase):
