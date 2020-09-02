@@ -10,6 +10,7 @@ import weakref
 
 import numpy as np
 import torch
+from torch.cuda import amp
 from torch.nn.parallel import DistributedDataParallel
 
 import fastreid.utils.comm as comm
@@ -163,7 +164,7 @@ class SimpleTrainer(TrainerBase):
     or write your own training loop.
     """
 
-    def __init__(self, model, data_loader, optimizer):
+    def __init__(self, model, data_loader, optimizer, amp_enabled):
         """
         Args:
             model: a torch Module. Takes a data from data_loader and returns a
@@ -185,6 +186,11 @@ class SimpleTrainer(TrainerBase):
         self.data_loader = data_loader
         self._data_loader_iter = iter(data_loader)
         self.optimizer = optimizer
+        self.amp_enabled = amp_enabled
+
+        if amp_enabled:
+            # Creates a GradScaler once at the beginning of training.
+            self.scaler = amp.GradScaler()
 
     def run_step(self):
         """
@@ -201,22 +207,17 @@ class SimpleTrainer(TrainerBase):
         """
         If your want to do something with the heads, you can wrap the model.
         """
-        outs = self.model(data)
 
-        # Compute loss
-        if isinstance(self.model, DistributedDataParallel):
-            loss_dict = self.model.module.losses(outs)
-        else:
-            loss_dict = self.model.losses(outs)
+        with amp.autocast(enabled=self.amp_enabled):
+            outs = self.model(data)
 
-        losses = sum(loss_dict.values())
+            # Compute loss
+            if isinstance(self.model, DistributedDataParallel):
+                loss_dict = self.model.module.losses(outs)
+            else:
+                loss_dict = self.model.losses(outs)
 
-        """
-        If you need accumulate gradients or something similar, you can
-        wrap the optimizer with your custom `zero_grad()` method.
-        """
-        self.optimizer.zero_grad()
-        losses.backward()
+            losses = sum(loss_dict.values())
 
         with torch.cuda.stream(torch.cuda.Stream()):
             metrics_dict = loss_dict
@@ -225,10 +226,22 @@ class SimpleTrainer(TrainerBase):
             self._detect_anomaly(losses, loss_dict)
 
         """
-        If you need gradient clipping/scaling or other processing, you can
-        wrap the optimizer with your custom `step()` method.
+        If you need accumulate gradients or something similar, you can
+        wrap the optimizer with your custom `zero_grad()` method.
         """
-        self.optimizer.step()
+        self.optimizer.zero_grad()
+
+        if self.amp_enabled:
+            self.scaler.scale(losses).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+        else:
+            losses.backward()
+            """
+            If you need gradient clipping/scaling or other processing, you can
+            wrap the optimizer with your custom `step()` method.
+            """
+            self.optimizer.step()
 
     def _detect_anomaly(self, losses, loss_dict):
         if not torch.isfinite(losses).all():

@@ -184,6 +184,10 @@ _C.DATALOADER.NUM_WORKERS = 8
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
 
+# AUTOMATIC MIXED PRECISION
+_C.SOLVER.AMP_ENABLED = False
+
+# Optimizer
 _C.SOLVER.OPT = "Adam"
 
 _C.SOLVER.MAX_ITER = 120

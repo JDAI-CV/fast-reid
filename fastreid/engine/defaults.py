@@ -24,9 +24,9 @@ from fastreid.evaluation import (DatasetEvaluator, ReidEvaluator,
 from fastreid.modeling.meta_arch import build_model
 from fastreid.solver import build_lr_scheduler, build_optimizer
 from fastreid.utils import comm
-from fastreid.utils.env import seed_all_rng
 from fastreid.utils.checkpoint import Checkpointer
 from fastreid.utils.collect_env import collect_env_info
+from fastreid.utils.env import seed_all_rng
 from fastreid.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
 from fastreid.utils.file_io import PathManager
 from fastreid.utils.logger import setup_logger
@@ -154,7 +154,7 @@ class DefaultPredictor:
             predictions = self.model(inputs)
             # Normalize feature to compute cosine distance
             features = F.normalize(predictions)
-            features = F.normalize(features).cpu().data
+            features = features.cpu().data
             return features
 
 
@@ -182,7 +182,7 @@ class DefaultTrainer(SimpleTrainer):
     To obtain more stable behavior, write your own training logic with other public APIs.
     Attributes:
         scheduler:
-        checkpointer (DetectionCheckpointer):
+        checkpointer:
         cfg (CfgNode):
     Examples:
     .. code-block:: python
@@ -214,7 +214,7 @@ class DefaultTrainer(SimpleTrainer):
                 model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
             )
 
-        super().__init__(model, data_loader, optimizer)
+        super().__init__(model, data_loader, optimizer, cfg.SOLVER.AMP_ENABLED)
 
         self.scheduler = self.build_lr_scheduler(cfg, optimizer)
         # Assume no other objects need to be checkpointed.
@@ -232,6 +232,7 @@ class DefaultTrainer(SimpleTrainer):
             self.max_iter = cfg.SOLVER.MAX_ITER + cfg.SOLVER.SWA.ITER
         else:
             self.max_iter = cfg.SOLVER.MAX_ITER
+
         self.cfg = cfg
 
         self.register_hooks(self.build_hooks())
