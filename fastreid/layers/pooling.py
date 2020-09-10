@@ -8,8 +8,13 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-__all__ = ["Flatten", "GeneralizedMeanPoolingP", "FastGlobalAvgPool2d", "AdaptiveAvgMaxPool2d",
-           "ClipGlobalAvgPool2d",]
+__all__ = ["Flatten",
+           "GeneralizedMeanPooling",
+           "GeneralizedMeanPoolingP",
+           "FastGlobalAvgPool2d",
+           "AdaptiveAvgMaxPool2d",
+           "ClipGlobalAvgPool2d",
+           ]
 
 
 class Flatten(nn.Module):
@@ -31,7 +36,7 @@ class GeneralizedMeanPooling(nn.Module):
                      be the same as that of the input.
     """
 
-    def __init__(self, norm, output_size=1, eps=1e-6):
+    def __init__(self, norm=3, output_size=1, eps=1e-6):
         super(GeneralizedMeanPooling, self).__init__()
         assert norm > 0
         self.p = float(norm)
