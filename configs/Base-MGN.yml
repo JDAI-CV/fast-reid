@@ -9,9 +9,7 @@ MODEL:
     WITH_NL: False
 
   HEADS:
-    NAME: "ReductionHead"
-    POOL_LAYER: "maxpool"
-    REDUCTION_DIM: 256
+    EMBEDDING_DIM: 256
 
   LOSSES:
     NAME: ("CrossEntropyLoss", "TripletLoss",)

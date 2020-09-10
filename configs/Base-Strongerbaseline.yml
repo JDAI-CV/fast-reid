@@ -8,7 +8,7 @@ MODEL:
 
   HEADS:
     NECK_FEAT: "after"
-    POOL_LAYER: "gempool"
+    POOL_LAYER: "gempoolP"
     CLS_LAYER: "circleSoftmax"
     SCALE: 64
     MARGIN: 0.35

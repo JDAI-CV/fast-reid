@@ -6,12 +6,15 @@ MODEL:
     NORM: "BN"
     DEPTH: "50x"
     LAST_STRIDE: 1
+    FEAT_DIM: 2048
     WITH_IBN: False
     PRETRAIN: True
+    PRETRAIN_PATH: "/export/home/lxy/.cache/torch/checkpoints/resnet50-19c8e357.pth"
 
   HEADS:
-    NAME: "BNneckHead"
+    NAME: "EmbeddingHead"
     NORM: "BN"
+    WITH_BNNECK: True
     POOL_LAYER: "avgpool"
     NECK_FEAT: "before"
     CLS_LAYER: "linear"
