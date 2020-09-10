@@ -59,8 +59,8 @@ class Visualizer:
             cmc, sort_idx = self.get_matched_result(q_idx)
             query_info = self.dataset[q_idx]
             query_img = query_info['images']
-            cam_id = query_info['camid']
-            query_name = query_info['img_path'].split('/')[-1]
+            cam_id = query_info['camids']
+            query_name = query_info['img_paths'].split('/')[-1]
             all_imgs.append(query_img)
             query_img = np.rollaxis(np.asarray(query_img.numpy(), dtype=np.uint8), 0, 3)
             plt.clf()
@@ -76,7 +76,7 @@ class Visualizer:
                 g_idx = self.num_query + sort_idx[i]
                 gallery_info = self.dataset[g_idx]
                 gallery_img = gallery_info['images']
-                cam_id = gallery_info['camid']
+                cam_id = gallery_info['camids']
                 all_imgs.append(gallery_img)
                 gallery_img = np.rollaxis(np.asarray(gallery_img, dtype=np.uint8), 0, 3)
                 if cmc[i] == 1:
@@ -120,7 +120,7 @@ class Visualizer:
                     g_idx = self.num_query + sort_idx[j]
                     gallery_info = self.dataset[g_idx]
                     gallery_img = gallery_info['images']
-                    cam_id = gallery_info['camid']
+                    cam_id = gallery_info['camids']
                     gallery_img = np.rollaxis(np.asarray(gallery_img, dtype=np.uint8), 0, 3)
                     ax = fig.add_subplot(2, max_rank + 1, max_rank + 3 + i)
                     ax.add_patch(plt.Rectangle(xy=(0, 0), width=gallery_img.shape[1] - 1,
