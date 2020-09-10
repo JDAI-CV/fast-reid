@@ -1,14 +1,15 @@
-import torch
-import os
 import logging
 import math
-import torch.nn as nn
+
 import numpy as np
+import torch
+import torch.nn as nn
+
 from fastreid.layers import get_norm
-from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
 from fastreid.utils import comm
+from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
+from .config import cfg as regnet_cfg
 from ..build import BACKBONE_REGISTRY
-from .config import regnet_cfg
 
 logger = logging.getLogger(__name__)
 model_urls = {
@@ -23,6 +24,7 @@ model_urls = {
     '6400x': 'https://dl.fbaipublicfiles.com/pycls/dds_baselines/161116590/RegNetX-6.4GF_dds_8gpu.pyth',
     '6400y': 'https://dl.fbaipublicfiles.com/pycls/dds_baselines/160907112/RegNetY-6.4GF_dds_8gpu.pyth',
 }
+
 
 def init_weights(m):
     """Performs ResNet-style weight initialization."""
@@ -66,6 +68,15 @@ def get_block_fun(block_type):
     )
     return block_funs[block_type]
 
+
+def drop_connect(x, drop_ratio):
+    """Drop connect (adapted from DARTS)."""
+    keep_ratio = 1.0 - drop_ratio
+    mask = torch.empty([x.shape[0], 1, 1, 1], dtype=x.dtype, device=x.device)
+    mask.bernoulli_(keep_ratio)
+    x.div_(keep_ratio)
+    x.mul_(mask)
+    return x
 
 class AnyHead(nn.Module):
     """AnyNet head."""
@@ -117,7 +128,7 @@ class BasicTransform(nn.Module):
         super(BasicTransform, self).__init__()
         self.construct(w_in, w_out, stride, bn_norm)
 
-    def construct(self, w_in, w_out, stride, bn_norm, num_split):
+    def construct(self, w_in, w_out, stride, bn_norm):
         # 3x3, BN, ReLU
         self.a = nn.Conv2d(
             w_in, w_out, kernel_size=3, stride=stride, padding=1, bias=False
@@ -269,7 +280,7 @@ class ResStemCifar(nn.Module):
         self.conv = nn.Conv2d(
             w_in, w_out, kernel_size=3, stride=1, padding=1, bias=False
         )
-        self.bn = get_norm(bn_norm, w_out, 1)
+        self.bn = get_norm(bn_norm, w_out)
         self.relu = nn.ReLU(regnet_cfg.MEM.RELU_INPLACE)
 
     def forward(self, x):
@@ -530,11 +541,12 @@ def init_pretrained_weights(key):
 @BACKBONE_REGISTRY.register()
 def build_regnet_backbone(cfg):
     # fmt: off
-    pretrain = cfg.MODEL.BACKBONE.PRETRAIN
+    pretrain      = cfg.MODEL.BACKBONE.PRETRAIN
     pretrain_path = cfg.MODEL.BACKBONE.PRETRAIN_PATH
-    last_stride = cfg.MODEL.BACKBONE.LAST_STRIDE
-    bn_norm = cfg.MODEL.BACKBONE.NORM
-    depth = cfg.MODEL.BACKBONE.DEPTH
+    last_stride   = cfg.MODEL.BACKBONE.LAST_STRIDE
+    bn_norm       = cfg.MODEL.BACKBONE.NORM
+    depth         = cfg.MODEL.BACKBONE.DEPTH
+    # fmt: on
 
     cfg_files = {
         '800x': 'fastreid/modeling/backbones/regnet/regnetx/RegNetX-800MF_dds_8gpu.yaml',
@@ -549,7 +561,7 @@ def build_regnet_backbone(cfg):
         '6400y': 'fastreid/modeling/backbones/regnet/regnety/RegNetY-6.4GF_dds_8gpu.yaml',
     }[depth]
 
-    regnet_cfg.merge_from_file(cfg_files)
+    cfg.merge_from_file(cfg_files)
     model = RegNet(last_stride, bn_norm)
 
     if pretrain:
