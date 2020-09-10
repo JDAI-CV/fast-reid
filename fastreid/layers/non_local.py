@@ -11,7 +11,7 @@ class Non_local(nn.Module):
         super(Non_local, self).__init__()
 
         self.in_channels = in_channels
-        self.inter_channels = reduc_ratio // reduc_ratio
+        self.inter_channels = in_channels // reduc_ratio
 
         self.g = nn.Conv2d(in_channels=self.in_channels, out_channels=self.inter_channels,
                            kernel_size=1, stride=1, padding=0)
