@@ -70,16 +70,16 @@ class FeatureExtractionDemo(object):
                 if cnt >= buffer_size:
                     batch = batch_data.popleft()
                     predictions = self.predictor.get()
-                    yield predictions, batch["targets"].numpy(), batch["camid"].numpy()
+                    yield predictions, batch["targets"].numpy(), batch["camids"].numpy()
 
             while len(batch_data):
                 batch = batch_data.popleft()
                 predictions = self.predictor.get()
-                yield predictions, batch["targets"].numpy(), batch["camid"].numpy()
+                yield predictions, batch["targets"].numpy(), batch["camids"].numpy()
         else:
             for batch in data_loader:
                 predictions = self.predictor(batch["images"])
-                yield predictions, batch["targets"].numpy(), batch["camid"].numpy()
+                yield predictions, batch["targets"].numpy(), batch["camids"].numpy()
 
 
 class AsyncPredictor:
