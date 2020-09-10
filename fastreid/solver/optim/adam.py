@@ -1,4 +1,5 @@
 import math
+
 import torch
 from torch.optim.optimizer import Optimizer
 
@@ -62,8 +63,10 @@ class Adam(Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
+            if group['freeze']: continue
+
             for p in group['params']:
-                if p.grad is None or group['freeze']:
+                if p.grad is None:
                     continue
                 grad = p.grad
                 if grad.is_sparse:
