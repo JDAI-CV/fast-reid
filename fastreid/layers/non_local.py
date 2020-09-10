@@ -7,7 +7,7 @@ from .batch_norm import get_norm
 
 
 class Non_local(nn.Module):
-    def __init__(self, in_channels, bn_norm, num_splits, reduc_ratio=2):
+    def __init__(self, in_channels, bn_norm, reduc_ratio=2):
         super(Non_local, self).__init__()
 
         self.in_channels = in_channels
@@ -19,7 +19,7 @@ class Non_local(nn.Module):
         self.W = nn.Sequential(
             nn.Conv2d(in_channels=self.inter_channels, out_channels=self.in_channels,
                       kernel_size=1, stride=1, padding=0),
-            get_norm(bn_norm, self.in_channels, num_splits),
+            get_norm(bn_norm, self.in_channels),
         )
         nn.init.constant_(self.W[1].weight, 0.0)
         nn.init.constant_(self.W[1].bias, 0.0)
@@ -31,10 +31,10 @@ class Non_local(nn.Module):
                              kernel_size=1, stride=1, padding=0)
 
     def forward(self, x):
-        '''
+        """
                 :param x: (b, t, h, w)
                 :return x: (b, t, h, w)
-        '''
+        """
         batch_size = x.size(0)
         g_x = self.g(x).view(batch_size, self.inter_channels, -1)
         g_x = g_x.permute(0, 2, 1)

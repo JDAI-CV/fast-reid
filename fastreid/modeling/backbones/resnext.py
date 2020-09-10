@@ -30,7 +30,7 @@ class Bottleneck(nn.Module):
     """
     expansion = 4
 
-    def __init__(self, inplanes, planes, bn_norm, num_splits, with_ibn, baseWidth, cardinality, stride=1,
+    def __init__(self, inplanes, planes, bn_norm, with_ibn, baseWidth, cardinality, stride=1,
                  downsample=None):
         """ Constructor
         Args:
@@ -46,13 +46,13 @@ class Bottleneck(nn.Module):
         C = cardinality
         self.conv1 = nn.Conv2d(inplanes, D * C, kernel_size=1, stride=1, padding=0, bias=False)
         if with_ibn:
-            self.bn1 = IBN(D * C, bn_norm, num_splits)
+            self.bn1 = IBN(D * C, bn_norm)
         else:
-            self.bn1 = get_norm(bn_norm, D * C, num_splits)
+            self.bn1 = get_norm(bn_norm, D * C)
         self.conv2 = nn.Conv2d(D * C, D * C, kernel_size=3, stride=stride, padding=1, groups=C, bias=False)
-        self.bn2 = get_norm(bn_norm, D * C, num_splits)
+        self.bn2 = get_norm(bn_norm, D * C)
         self.conv3 = nn.Conv2d(D * C, planes * 4, kernel_size=1, stride=1, padding=0, bias=False)
-        self.bn3 = get_norm(bn_norm, planes * 4, num_splits)
+        self.bn3 = get_norm(bn_norm, planes * 4)
         self.relu = nn.ReLU(inplace=True)
 
         self.downsample = downsample
@@ -86,7 +86,7 @@ class ResNeXt(nn.Module):
     https://arxiv.org/pdf/1611.05431.pdf
     """
 
-    def __init__(self, last_stride, bn_norm, num_splits, with_ibn, with_nl, block, layers, non_layers,
+    def __init__(self, last_stride, bn_norm, with_ibn, with_nl, block, layers, non_layers,
                  baseWidth=4, cardinality=32):
         """ Constructor
         Args:
@@ -102,22 +102,22 @@ class ResNeXt(nn.Module):
         self.output_size = 64
 
         self.conv1 = nn.Conv2d(3, 64, 7, 2, 3, bias=False)
-        self.bn1 = get_norm(bn_norm, 64, num_splits)
+        self.bn1 = get_norm(bn_norm, 64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0], 1, bn_norm, num_splits, with_ibn=with_ibn)
-        self.layer2 = self._make_layer(block, 128, layers[1], 2, bn_norm, num_splits, with_ibn=with_ibn)
-        self.layer3 = self._make_layer(block, 256, layers[2], 2, bn_norm, num_splits, with_ibn=with_ibn)
-        self.layer4 = self._make_layer(block, 512, layers[3], last_stride, bn_norm, num_splits, with_ibn=with_ibn)
+        self.layer1 = self._make_layer(block, 64, layers[0], 1, bn_norm, with_ibn=with_ibn)
+        self.layer2 = self._make_layer(block, 128, layers[1], 2, bn_norm, with_ibn=with_ibn)
+        self.layer3 = self._make_layer(block, 256, layers[2], 2, bn_norm, with_ibn=with_ibn)
+        self.layer4 = self._make_layer(block, 512, layers[3], last_stride, bn_norm, with_ibn=with_ibn)
 
         self.random_init()
 
         # fmt: off
-        if with_nl: self._build_nonlocal(layers, non_layers, bn_norm, num_splits)
+        if with_nl: self._build_nonlocal(layers, non_layers, bn_norm)
         else:       self.NL_1_idx = self.NL_2_idx = self.NL_3_idx = self.NL_4_idx = []
         # fmt: on
 
-    def _make_layer(self, block, planes, blocks, stride=1, bn_norm='BN', num_splits=1, with_ibn=False):
+    def _make_layer(self, block, planes, blocks, stride=1, bn_norm='BN', with_ibn=False):
         """ Stack n bottleneck modules where n is inferred from the depth of the network.
         Args:
             block: block type used to construct ResNext
@@ -131,33 +131,31 @@ class ResNeXt(nn.Module):
             downsample = nn.Sequential(
                 nn.Conv2d(self.inplanes, planes * block.expansion,
                           kernel_size=1, stride=stride, bias=False),
-                get_norm(bn_norm, planes * block.expansion, num_splits),
+                get_norm(bn_norm, planes * block.expansion),
             )
 
         layers = []
-        if planes == 512:
-            with_ibn = False
-        layers.append(block(self.inplanes, planes, bn_norm, num_splits, with_ibn,
+        layers.append(block(self.inplanes, planes, bn_norm, with_ibn,
                             self.baseWidth, self.cardinality, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(
-                block(self.inplanes, planes, bn_norm, num_splits, with_ibn, self.baseWidth, self.cardinality, 1, None))
+                block(self.inplanes, planes, bn_norm, with_ibn, self.baseWidth, self.cardinality, 1, None))
 
         return nn.Sequential(*layers)
 
-    def _build_nonlocal(self, layers, non_layers, bn_norm, num_splits):
+    def _build_nonlocal(self, layers, non_layers, bn_norm):
         self.NL_1 = nn.ModuleList(
-            [Non_local(256, bn_norm, num_splits) for _ in range(non_layers[0])])
+            [Non_local(256, bn_norm) for _ in range(non_layers[0])])
         self.NL_1_idx = sorted([layers[0] - (i + 1) for i in range(non_layers[0])])
         self.NL_2 = nn.ModuleList(
-            [Non_local(512, bn_norm, num_splits) for _ in range(non_layers[1])])
+            [Non_local(512, bn_norm) for _ in range(non_layers[1])])
         self.NL_2_idx = sorted([layers[1] - (i + 1) for i in range(non_layers[1])])
         self.NL_3 = nn.ModuleList(
-            [Non_local(1024, bn_norm, num_splits) for _ in range(non_layers[2])])
+            [Non_local(1024, bn_norm) for _ in range(non_layers[2])])
         self.NL_3_idx = sorted([layers[2] - (i + 1) for i in range(non_layers[2])])
         self.NL_4 = nn.ModuleList(
-            [Non_local(2048, bn_norm, num_splits) for _ in range(non_layers[3])])
+            [Non_local(2048, bn_norm) for _ in range(non_layers[3])])
         self.NL_4_idx = sorted([layers[3] - (i + 1) for i in range(non_layers[3])])
 
     def forward(self, x):
@@ -285,7 +283,6 @@ def build_resnext_backbone(cfg):
     pretrain_path = cfg.MODEL.BACKBONE.PRETRAIN_PATH
     last_stride   = cfg.MODEL.BACKBONE.LAST_STRIDE
     bn_norm       = cfg.MODEL.BACKBONE.NORM
-    num_splits    = cfg.MODEL.BACKBONE.NORM_SPLIT
     with_ibn      = cfg.MODEL.BACKBONE.WITH_IBN
     with_nl       = cfg.MODEL.BACKBONE.WITH_NL
     depth         = cfg.MODEL.BACKBONE.DEPTH
@@ -298,7 +295,7 @@ def build_resnext_backbone(cfg):
     nl_layers_per_stage = {
         '50x': [0, 2, 3, 0],
         '101x': [0, 2, 3, 0]}[depth]
-    model = ResNeXt(last_stride, bn_norm, num_splits, with_ibn, with_nl, Bottleneck,
+    model = ResNeXt(last_stride, bn_norm, with_ibn, with_nl, Bottleneck,
                     num_blocks_per_stage, nl_layers_per_stage)
     if pretrain:
         if pretrain_path:

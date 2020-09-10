@@ -22,7 +22,7 @@ __all__ = [
 
 class BatchNorm(nn.BatchNorm2d):
     def __init__(self, num_features, eps=1e-05, momentum=0.1, weight_freeze=False, bias_freeze=False, weight_init=1.0,
-                 bias_init=0.0):
+                 bias_init=0.0, **kwargs):
         super().__init__(num_features, eps=eps, momentum=momentum)
         if weight_init is not None: nn.init.constant_(self.weight, weight_init)
         if bias_init is not None: nn.init.constant_(self.bias, bias_init)
@@ -34,20 +34,20 @@ class SyncBatchNorm(nn.SyncBatchNorm):
     def __init__(self, num_features, eps=1e-05, momentum=0.1, weight_freeze=False, bias_freeze=False, weight_init=1.0,
                  bias_init=0.0):
         super().__init__(num_features, eps=eps, momentum=momentum)
-        if weight_init is not None: self.weight.data.fill_(weight_init)
-        if bias_init is not None: self.bias.data.fill_(bias_init)
+        if weight_init is not None: nn.init.constant_(self.weight, weight_init)
+        if bias_init is not None: nn.init.constant_(self.bias, bias_init)
         self.weight.requires_grad_(not weight_freeze)
         self.bias.requires_grad_(not bias_freeze)
 
 
 class IBN(nn.Module):
-    def __init__(self, planes, bn_norm, num_splits):
+    def __init__(self, planes, bn_norm, **kwargs):
         super(IBN, self).__init__()
         half1 = int(planes / 2)
         self.half = half1
         half2 = planes - half1
         self.IN = nn.InstanceNorm2d(half1, affine=True)
-        self.BN = get_norm(bn_norm, half2, num_splits)
+        self.BN = get_norm(bn_norm, half2, **kwargs)
 
     def forward(self, x):
         split = torch.split(x, self.half, 1)
@@ -100,8 +100,8 @@ class FrozenBatchNorm(BatchNorm):
 
     _version = 3
 
-    def __init__(self, num_features, eps=1e-5):
-        super().__init__(num_features, weight_freeze=True, bias_freeze=True)
+    def __init__(self, num_features, eps=1e-5, **kwargs):
+        super().__init__(num_features, weight_freeze=True, bias_freeze=True, **kwargs)
         self.num_features = num_features
         self.eps = eps
 
@@ -184,10 +184,14 @@ class FrozenBatchNorm(BatchNorm):
         return res
 
 
-def get_norm(norm, out_channels, num_splits=1, **kwargs):
+def get_norm(norm, out_channels, **kwargs):
     """
     Args:
-        norm (str or callable):
+        norm (str or callable): either one of BN, GhostBN, FrozenBN, GN or SyncBN;
+            or a callable that thakes a channel number and returns
+            the normalization layer as a nn.Module
+        out_channels: number of channels for normalization layer
+
     Returns:
         nn.Module or None: the normalization layer
     """
@@ -195,10 +199,10 @@ def get_norm(norm, out_channels, num_splits=1, **kwargs):
         if len(norm) == 0:
             return None
         norm = {
-            "BN": BatchNorm(out_channels, **kwargs),
-            "GhostBN": GhostBatchNorm(out_channels, num_splits, **kwargs),
-            "FrozenBN": FrozenBatchNorm(out_channels),
-            "GN": nn.GroupNorm(32, out_channels),
-            "syncBN": SyncBatchNorm(out_channels, **kwargs),
+            "BN": BatchNorm,
+            "GhostBN": GhostBatchNorm,
+            "FrozenBN": FrozenBatchNorm,
+            "GN": lambda channels, **args: nn.GroupNorm(32, channels),
+            "syncBN": SyncBatchNorm,
         }[norm]
-    return norm
+    return norm(out_channels, **kwargs)

@@ -38,16 +38,16 @@ model_urls = {
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, bn_norm, num_splits, with_ibn=False, with_se=False,
+    def __init__(self, inplanes, planes, bn_norm, with_ibn=False, with_se=False,
                  stride=1, downsample=None, reduction=16):
         super(BasicBlock, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         if with_ibn:
-            self.bn1 = IBN(planes, bn_norm, num_splits)
+            self.bn1 = IBN(planes, bn_norm)
         else:
-            self.bn1 = get_norm(bn_norm, planes, num_splits)
+            self.bn1 = get_norm(bn_norm, planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2 = get_norm(bn_norm, planes, num_splits)
+        self.bn2 = get_norm(bn_norm, planes)
         self.relu = nn.ReLU(inplace=True)
         if with_se:
             self.se = SELayer(planes, reduction)
@@ -78,19 +78,19 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, bn_norm, num_splits, with_ibn=False, with_se=False,
+    def __init__(self, inplanes, planes, bn_norm, with_ibn=False, with_se=False,
                  stride=1, downsample=None, reduction=16):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         if with_ibn:
-            self.bn1 = IBN(planes, bn_norm, num_splits)
+            self.bn1 = IBN(planes, bn_norm)
         else:
-            self.bn1 = get_norm(bn_norm, planes, num_splits)
+            self.bn1 = get_norm(bn_norm, planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
                                padding=1, bias=False)
-        self.bn2 = get_norm(bn_norm, planes, num_splits)
+        self.bn2 = get_norm(bn_norm, planes)
         self.conv3 = nn.Conv2d(planes, planes * self.expansion, kernel_size=1, bias=False)
-        self.bn3 = get_norm(bn_norm, planes * self.expansion, num_splits)
+        self.bn3 = get_norm(bn_norm, planes * self.expansion)
         self.relu = nn.ReLU(inplace=True)
         if with_se:
             self.se = SELayer(planes * self.expansion, reduction)
@@ -124,56 +124,56 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, last_stride, bn_norm, num_splits, with_ibn, with_se, with_nl, block, layers, non_layers):
+    def __init__(self, last_stride, bn_norm, with_ibn, with_se, with_nl, block, layers, non_layers):
         self.inplanes = 64
         super().__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
-        self.bn1 = get_norm(bn_norm, 64, num_splits)
+        self.bn1 = get_norm(bn_norm, 64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True)
-        self.layer1 = self._make_layer(block, 64, layers[0], 1, bn_norm, num_splits, with_ibn, with_se)
-        self.layer2 = self._make_layer(block, 128, layers[1], 2, bn_norm, num_splits, with_ibn, with_se)
-        self.layer3 = self._make_layer(block, 256, layers[2], 2, bn_norm, num_splits, with_ibn, with_se)
-        self.layer4 = self._make_layer(block, 512, layers[3], last_stride, bn_norm, num_splits, with_se=with_se)
+        self.layer1 = self._make_layer(block, 64, layers[0], 1, bn_norm, with_ibn, with_se)
+        self.layer2 = self._make_layer(block, 128, layers[1], 2, bn_norm, with_ibn, with_se)
+        self.layer3 = self._make_layer(block, 256, layers[2], 2, bn_norm, with_ibn, with_se)
+        self.layer4 = self._make_layer(block, 512, layers[3], last_stride, bn_norm, with_se=with_se)
 
         self.random_init()
 
         # fmt: off
-        if with_nl: self._build_nonlocal(layers, non_layers, bn_norm, num_splits)
+        if with_nl: self._build_nonlocal(layers, non_layers, bn_norm)
         else:       self.NL_1_idx = self.NL_2_idx = self.NL_3_idx = self.NL_4_idx = []
         # fmt: on
 
-    def _make_layer(self, block, planes, blocks, stride=1, bn_norm="BN", num_splits=1, with_ibn=False, with_se=False):
+    def _make_layer(self, block, planes, blocks, stride=1, bn_norm="BN", with_ibn=False, with_se=False):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
                 nn.Conv2d(self.inplanes, planes * block.expansion,
                           kernel_size=1, stride=stride, bias=False),
-                get_norm(bn_norm, planes * block.expansion, num_splits),
+                get_norm(bn_norm, planes * block.expansion),
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, bn_norm, num_splits, with_ibn, with_se, stride, downsample))
+        layers.append(block(self.inplanes, planes, bn_norm, with_ibn, with_se, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes, bn_norm, num_splits, with_ibn, with_se))
+            layers.append(block(self.inplanes, planes, bn_norm, with_ibn, with_se))
 
         return nn.Sequential(*layers)
 
-    def _build_nonlocal(self, layers, non_layers, bn_norm, num_splits):
+    def _build_nonlocal(self, layers, non_layers, bn_norm):
         self.NL_1 = nn.ModuleList(
-            [Non_local(256, bn_norm, num_splits) for _ in range(non_layers[0])])
+            [Non_local(256, bn_norm) for _ in range(non_layers[0])])
         self.NL_1_idx = sorted([layers[0] - (i + 1) for i in range(non_layers[0])])
         self.NL_2 = nn.ModuleList(
-            [Non_local(512, bn_norm, num_splits) for _ in range(non_layers[1])])
+            [Non_local(512, bn_norm) for _ in range(non_layers[1])])
         self.NL_2_idx = sorted([layers[1] - (i + 1) for i in range(non_layers[1])])
         self.NL_3 = nn.ModuleList(
-            [Non_local(1024, bn_norm, num_splits) for _ in range(non_layers[2])])
+            [Non_local(1024, bn_norm) for _ in range(non_layers[2])])
         self.NL_3_idx = sorted([layers[2] - (i + 1) for i in range(non_layers[2])])
         self.NL_4 = nn.ModuleList(
-            [Non_local(2048, bn_norm, num_splits) for _ in range(non_layers[3])])
+            [Non_local(2048, bn_norm) for _ in range(non_layers[3])])
         self.NL_4_idx = sorted([layers[3] - (i + 1) for i in range(non_layers[3])])
 
     def forward(self, x):
@@ -298,7 +298,6 @@ def build_resnet_backbone(cfg):
     pretrain_path = cfg.MODEL.BACKBONE.PRETRAIN_PATH
     last_stride   = cfg.MODEL.BACKBONE.LAST_STRIDE
     bn_norm       = cfg.MODEL.BACKBONE.NORM
-    num_splits    = cfg.MODEL.BACKBONE.NORM_SPLIT
     with_ibn      = cfg.MODEL.BACKBONE.WITH_IBN
     with_se       = cfg.MODEL.BACKBONE.WITH_SE
     with_nl       = cfg.MODEL.BACKBONE.WITH_NL
@@ -326,7 +325,7 @@ def build_resnet_backbone(cfg):
         '101x': Bottleneck
     }[depth]
 
-    model = ResNet(last_stride, bn_norm, num_splits, with_ibn, with_se, with_nl, block,
+    model = ResNet(last_stride, bn_norm, with_ibn, with_se, with_nl, block,
                    num_blocks_per_stage, nl_layers_per_stage)
     if pretrain:
         # Load pretrain path if specifically
