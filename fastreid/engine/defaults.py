@@ -373,8 +373,8 @@ class DefaultTrainer(SimpleTrainer):
         Overwrite it if you'd like a different model.
         """
         model = build_model(cfg)
-        # logger = logging.getLogger(__name__)
-        # logger.info("Model:\n{}".format(model))
+        logger = logging.getLogger(__name__)
+        logger.info("Model:\n{}".format(model))
         return model
 
     @classmethod

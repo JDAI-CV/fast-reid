@@ -280,7 +280,7 @@ class AutogradProfiler(HookBase):
             self._profiler.export_chrome_trace(out_file)
         else:
             # Support non-posix filesystems
-            with tempfile.TemporaryDirectory(prefix="detectron2_profiler") as d:
+            with tempfile.TemporaryDirectory(prefix="fastreid_profiler") as d:
                 tmp_file = os.path.join(d, "tmp.json")
                 self._profiler.export_chrome_trace(tmp_file)
                 with open(tmp_file) as f:

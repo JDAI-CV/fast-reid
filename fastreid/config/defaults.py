@@ -32,10 +32,10 @@ _C.MODEL.BACKBONE = CN()
 _C.MODEL.BACKBONE.NAME = "build_resnet_backbone"
 _C.MODEL.BACKBONE.DEPTH = "50x"
 _C.MODEL.BACKBONE.LAST_STRIDE = 1
+# Backbone feature dimension
+_C.MODEL.BACKBONE.FEAT_DIM = 2048
 # Normalization method for the convolution layers.
 _C.MODEL.BACKBONE.NORM = "BN"
-# Mini-batch split of Ghost BN
-_C.MODEL.BACKBONE.NORM_SPLIT = 1
 # If use IBN block in backbone
 _C.MODEL.BACKBONE.WITH_IBN = False
 # If use SE block in backbone
@@ -51,18 +51,15 @@ _C.MODEL.BACKBONE.PRETRAIN_PATH = ''
 # REID HEADS options
 # ---------------------------------------------------------------------------- #
 _C.MODEL.HEADS = CN()
-_C.MODEL.HEADS.NAME = "BNneckHead"
-
+_C.MODEL.HEADS.NAME = "EmbeddingHead"
 # Normalization method for the convolution layers.
 _C.MODEL.HEADS.NORM = "BN"
-# Mini-batch split of Ghost BN
-_C.MODEL.HEADS.NORM_SPLIT = 1
 # Number of identity
 _C.MODEL.HEADS.NUM_CLASSES = 0
-# Input feature dimension
-_C.MODEL.HEADS.IN_FEAT = 2048
-# Reduction dimension in head
-_C.MODEL.HEADS.REDUCTION_DIM = 512
+# Embedding dimension in head
+_C.MODEL.HEADS.EMBEDDING_DIM = 0
+# If use BNneck in embedding
+_C.MODEL.HEADS.WITH_BNNECK = True
 # Triplet feature using feature before(after) bnneck
 _C.MODEL.HEADS.NECK_FEAT = "before"  # options: before, after
 # Pooling layer type
@@ -274,4 +271,3 @@ _C.OUTPUT_DIR = "logs/"
 # for about 10k iterations. It usually hurts total time, but can benefit for certain models.
 # If input images have the same or similar sizes, benchmark is often helpful.
 _C.CUDNN_BENCHMARK = False
-
