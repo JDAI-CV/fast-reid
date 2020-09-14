@@ -346,7 +346,7 @@ class DefaultTrainer(SimpleTrainer):
         return [
             # It may not always print what you want to see, since it prints "common" metrics only.
             CommonMetricPrinter(self.max_iter),
-            JSONWriter(os.path.join(self.cfg.OUTPUT_DIR, "metrics.json")),
+            # JSONWriter(os.path.join(self.cfg.OUTPUT_DIR, "metrics.json")),
             TensorboardXWriter(self.cfg.OUTPUT_DIR),
         ]
 
@@ -429,7 +429,7 @@ class DefaultTrainer(SimpleTrainer):
             model (nn.Module):
             evaluators (list[DatasetEvaluator] or None): if None, will call
                 :meth:`build_evaluator`. Otherwise, must have the same length as
-                `cfg.DATASETS.TEST`.
+                `cfg.DATASETS.TESTS`.
         Returns:
             dict: a dict of result metrics
         """
@@ -438,8 +438,8 @@ class DefaultTrainer(SimpleTrainer):
             evaluators = [evaluators]
 
         if evaluators is not None:
-            assert len(cfg.DATASETS.TEST) == len(evaluators), "{} != {}".format(
-                len(cfg.DATASETS.TEST), len(evaluators)
+            assert len(cfg.DATASETS.TESTS) == len(evaluators), "{} != {}".format(
+                len(cfg.DATASETS.TESTS), len(evaluators)
             )
 
         results = OrderedDict()
