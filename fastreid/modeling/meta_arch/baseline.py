@@ -8,7 +8,7 @@ import torch
 from torch import nn
 
 from fastreid.modeling.backbones import build_backbone
-from fastreid.modeling.heads import build_reid_heads
+from fastreid.modeling.heads import build_heads
 from fastreid.modeling.losses import *
 from .build import META_ARCH_REGISTRY
 
@@ -26,7 +26,7 @@ class Baseline(nn.Module):
         self.backbone = build_backbone(cfg)
 
         # head
-        self.heads = build_reid_heads(cfg)
+        self.heads = build_heads(cfg)
 
     @property
     def device(self):

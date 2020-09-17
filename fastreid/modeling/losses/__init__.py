@@ -4,7 +4,7 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from .cross_entroy_loss import cross_entropy_loss, log_accuracy
+from .cross_entroy_loss import cross_entropy_loss, log_accuracy, cross_entropy_sigmoid_loss
 from .focal_loss import focal_loss
 from .triplet_loss import triplet_loss
 from .circle_loss import circle_loss

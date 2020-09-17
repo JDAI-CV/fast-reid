@@ -16,7 +16,7 @@ The call is expected to return an :class:`ROIHeads`.
 """
 
 
-def build_reid_heads(cfg):
+def build_heads(cfg):
     """
     Build REIDHeads defined by `cfg.MODEL.REID_HEADS.NAME`.
     """

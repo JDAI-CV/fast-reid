@@ -11,7 +11,7 @@ from torch import nn
 from fastreid.layers import get_norm
 from fastreid.modeling.backbones import build_backbone
 from fastreid.modeling.backbones.resnet import Bottleneck
-from fastreid.modeling.heads import build_reid_heads
+from fastreid.modeling.heads import build_heads
 from fastreid.modeling.losses import *
 from .build import META_ARCH_REGISTRY
 
@@ -28,7 +28,6 @@ class MGN(nn.Module):
         # fmt: off
         # backbone
         bn_norm    = cfg.MODEL.BACKBONE.NORM
-        num_splits = cfg.MODEL.BACKBONE.NORM_SPLIT
         with_se    = cfg.MODEL.BACKBONE.WITH_SE
         # fmt :on
 
@@ -46,10 +45,10 @@ class MGN(nn.Module):
         res_g_conv5 = backbone.layer4
 
         res_p_conv5 = nn.Sequential(
-            Bottleneck(1024, 512, bn_norm, num_splits, False, with_se, downsample=nn.Sequential(
-                nn.Conv2d(1024, 2048, 1, bias=False), get_norm(bn_norm, 2048, num_splits))),
-            Bottleneck(2048, 512, bn_norm, num_splits, False, with_se),
-            Bottleneck(2048, 512, bn_norm, num_splits, False, with_se))
+            Bottleneck(1024, 512, bn_norm, False, with_se, downsample=nn.Sequential(
+                nn.Conv2d(1024, 2048, 1, bias=False), get_norm(bn_norm, 2048))),
+            Bottleneck(2048, 512, bn_norm, False, with_se),
+            Bottleneck(2048, 512, bn_norm, False, with_se))
         res_p_conv5.load_state_dict(backbone.layer4.state_dict())
 
         # branch1
@@ -57,26 +56,26 @@ class MGN(nn.Module):
             copy.deepcopy(res_conv4),
             copy.deepcopy(res_g_conv5)
         )
-        self.b1_head = build_reid_heads(cfg)
+        self.b1_head = build_heads(cfg)
 
         # branch2
         self.b2 = nn.Sequential(
             copy.deepcopy(res_conv4),
             copy.deepcopy(res_p_conv5)
         )
-        self.b2_head = build_reid_heads(cfg)
-        self.b21_head = build_reid_heads(cfg)
-        self.b22_head = build_reid_heads(cfg)
+        self.b2_head = build_heads(cfg)
+        self.b21_head = build_heads(cfg)
+        self.b22_head = build_heads(cfg)
 
         # branch3
         self.b3 = nn.Sequential(
             copy.deepcopy(res_conv4),
             copy.deepcopy(res_p_conv5)
         )
-        self.b3_head = build_reid_heads(cfg)
-        self.b31_head = build_reid_heads(cfg)
-        self.b32_head = build_reid_heads(cfg)
-        self.b33_head = build_reid_heads(cfg)
+        self.b3_head = build_heads(cfg)
+        self.b31_head = build_heads(cfg)
+        self.b32_head = build_heads(cfg)
+        self.b33_head = build_heads(cfg)
 
     @property
     def device(self):
