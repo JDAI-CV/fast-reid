@@ -68,8 +68,9 @@ class ReidEvaluator(DatasetEvaluator):
             camids = comm.gather(self.camids)
             camids = sum(camids, [])
 
-            if not comm.is_main_process():
-                return {}
+            # fmt: off
+            if not comm.is_main_process(): return {}
+            # fmt: on
         else:
             features = self.features
             pids = self.pids

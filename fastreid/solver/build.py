@@ -11,8 +11,8 @@ from . import optim
 def build_optimizer(cfg, model):
     params = []
     for key, value in model.named_parameters():
-        if not value.requires_grad:
-            continue
+        if not value.requires_grad: continue
+
         lr = cfg.SOLVER.BASE_LR
         weight_decay = cfg.SOLVER.WEIGHT_DECAY
         if "heads" in key:
@@ -23,13 +23,10 @@ def build_optimizer(cfg, model):
         params += [{"name": key, "params": [value], "lr": lr, "weight_decay": weight_decay, "freeze": False}]
 
     solver_opt = cfg.SOLVER.OPT
-    if hasattr(optim, solver_opt):
-        if solver_opt == "SGD":
-            opt_fns = getattr(optim, solver_opt)(params, momentum=cfg.SOLVER.MOMENTUM)
-        else:
-            opt_fns = getattr(optim, solver_opt)(params)
-    else:
-        raise NameError("optimizer {} not support".format(cfg.SOLVER.OPT))
+    # fmt: off
+    if solver_opt == "SGD": opt_fns = getattr(optim, solver_opt)(params, momentum=cfg.SOLVER.MOMENTUM)
+    else:                   opt_fns = getattr(optim, solver_opt)(params)
+    # fmt: on
     return opt_fns
 
 
