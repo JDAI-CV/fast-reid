@@ -13,7 +13,7 @@ from ..build import BACKBONE_REGISTRY
 
 logger = logging.getLogger(__name__)
 model_urls = {
-    '800x': 'https://dl.fbaipublicfiles.com/pycls/dds_baselines/160906036/RegNetX-800MF_dds_8gpu.pyth',
+    '800x': 'https://dl.fbaipublicfiles.com/pycls/dds_baselines/160905981/RegNetX-200MF_dds_8gpu.pyth',
     '800y': 'https://dl.fbaipublicfiles.com/pycls/dds_baselines/160906567/RegNetY-800MF_dds_8gpu.pyth',
     '1600x': 'https://dl.fbaipublicfiles.com/pycls/dds_baselines/160990626/RegNetX-1.6GF_dds_8gpu.pyth',
     '1600y': 'https://dl.fbaipublicfiles.com/pycls/dds_baselines/160906681/RegNetY-1.6GF_dds_8gpu.pyth',
@@ -561,7 +561,7 @@ def build_regnet_backbone(cfg):
         '6400y': 'fastreid/modeling/backbones/regnet/regnety/RegNetY-6.4GF_dds_8gpu.yaml',
     }[depth]
 
-    cfg.merge_from_file(cfg_files)
+    regnet_cfg.merge_from_file(cfg_files)
     model = RegNet(last_stride, bn_norm)
 
     if pretrain:
