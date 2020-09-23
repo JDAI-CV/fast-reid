@@ -4,7 +4,7 @@
 @contact: sherlockliao01@gmail.com
 """
 
-import torch.nn.functional as F
+import torch
 from torch import nn
 
 from fastreid.layers import *
@@ -13,7 +13,7 @@ from .build import REID_HEADS_REGISTRY
 
 
 @REID_HEADS_REGISTRY.register()
-class CLSHead(nn.Module):
+class AttrHead(nn.Module):
     def __init__(self, cfg):
         super().__init__()
         # fmt: off
@@ -46,7 +46,7 @@ class CLSHead(nn.Module):
         # bottleneck = []
         # if with_bnneck:
         #     bottleneck.append(get_norm(norm_type, feat_dim, bias_freeze=True))
-        bottleneck = [nn.BatchNorm1d(feat_dim)]
+        bottleneck = [nn.BatchNorm1d(num_classes)]
 
         self.bottleneck = nn.Sequential(*bottleneck)
 
@@ -60,16 +60,18 @@ class CLSHead(nn.Module):
         global_feat = self.pool_layer(features)
         global_feat = global_feat[..., 0, 0]
 
-        if self.classifier.__class__.__name__ == 'Linear':
-            cls_outputs = self.classifier(global_feat)
-            pred_class_logits = F.linear(global_feat, self.classifier.weight)
-        else:
-            cls_outputs = self.classifier(global_feat, targets)
-            pred_class_logits = self.classifier.s * F.linear(F.normalize(global_feat),
-                                                             F.normalize(self.classifier.weight))
+        classifier_name = self.classifier.__class__.__name__
+        # fmt: off
+        if classifier_name == 'Linear': cls_outputs = self.classifier(global_feat)
+        else:                           cls_outputs = self.classifier(global_feat, targets)
+        # fmt: on
 
         cls_outputs = self.bottleneck(cls_outputs)
-        return {
-            "cls_outputs": cls_outputs,
-            "pred_class_logits": pred_class_logits,
-        }
+
+        if self.training:
+            return {
+                "cls_outputs": cls_outputs,
+            }
+        else:
+            cls_outputs = torch.sigmoid(cls_outputs)
+            return cls_outputs
