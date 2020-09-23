@@ -29,9 +29,11 @@ from .caviara import CAVIARa
 from .viper import VIPeR
 from .lpw import LPW
 from .shinpuhkan import Shinpuhkan
+
 # Vehicle re-id datasets
 from .veri import VeRi
 from .vehicleid import VehicleID, SmallVehicleID, MediumVehicleID, LargeVehicleID
 from .veriwild import VeRiWild, SmallVeRiWild, MediumVeRiWild, LargeVeRiWild
+
 
 __all__ = [k for k in globals().keys() if "builtin" not in k and not k.startswith("_")]

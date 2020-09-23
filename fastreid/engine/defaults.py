@@ -346,7 +346,7 @@ class DefaultTrainer(SimpleTrainer):
         return [
             # It may not always print what you want to see, since it prints "common" metrics only.
             CommonMetricPrinter(self.max_iter),
-            # JSONWriter(os.path.join(self.cfg.OUTPUT_DIR, "metrics.json")),
+            JSONWriter(os.path.join(self.cfg.OUTPUT_DIR, "metrics.json")),
             TensorboardXWriter(self.cfg.OUTPUT_DIR),
         ]
 
@@ -418,48 +418,32 @@ class DefaultTrainer(SimpleTrainer):
         return build_reid_test_loader(cfg, dataset_name)
 
     @classmethod
-    def build_evaluator(cls, cfg, num_query, output_dir=None):
-        return ReidEvaluator(cfg, num_query, output_dir)
+    def build_evaluator(cls, cfg, dataset_name, output_dir=None):
+        data_loader, num_query = cls.build_test_loader(cfg, dataset_name)
+        return data_loader, ReidEvaluator(cfg, num_query, output_dir)
 
     @classmethod
-    def test(cls, cfg, model, evaluators=None):
+    def test(cls, cfg, model):
         """
         Args:
             cfg (CfgNode):
             model (nn.Module):
-            evaluators (list[DatasetEvaluator] or None): if None, will call
-                :meth:`build_evaluator`. Otherwise, must have the same length as
-                `cfg.DATASETS.TESTS`.
         Returns:
             dict: a dict of result metrics
         """
         logger = logging.getLogger(__name__)
-        if isinstance(evaluators, DatasetEvaluator):
-            evaluators = [evaluators]
-
-        if evaluators is not None:
-            assert len(cfg.DATASETS.TESTS) == len(evaluators), "{} != {}".format(
-                len(cfg.DATASETS.TESTS), len(evaluators)
-            )
 
         results = OrderedDict()
         for idx, dataset_name in enumerate(cfg.DATASETS.TESTS):
             logger.info("Prepare testing set")
-            data_loader, num_query = cls.build_test_loader(cfg, dataset_name)
-            # When evaluators are passed in as arguments,
-            # implicitly assume that evaluators can be created before data_loader.
-            if evaluators is not None:
-                evaluator = evaluators[idx]
-            else:
-                try:
-                    evaluator = cls.build_evaluator(cfg, num_query)
-                except NotImplementedError:
-                    logger.warn(
-                        "No evaluator found. Use `DefaultTrainer.test(evaluators=)`, "
-                        "or implement its `build_evaluator` method."
-                    )
-                    results[dataset_name] = {}
-                    continue
+            try:
+                data_loader, evaluator = cls.build_evaluator(cfg, dataset_name)
+            except NotImplementedError:
+                logger.warn(
+                    "No evaluator found. implement its `build_evaluator` method."
+                )
+                results[dataset_name] = {}
+                continue
             results_i = inference_on_dataset(model, data_loader, evaluator)
             results[dataset_name] = results_i
 
