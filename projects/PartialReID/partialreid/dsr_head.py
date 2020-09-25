@@ -4,6 +4,10 @@
 @contact: helingxiao3@jd.com
 """
 
+import torch
+import torch.nn.functional as F
+from torch import nn
+
 from fastreid.layers import *
 from fastreid.modeling.heads.build import REID_HEADS_REGISTRY
 from fastreid.utils.weight_init import weights_init_classifier, weights_init_kaiming
@@ -48,34 +52,53 @@ class OcclusionUnit(nn.Module):
 
 @REID_HEADS_REGISTRY.register()
 class DSRHead(nn.Module):
-    def __init__(self, cfg, in_feat, num_classes, pool_layer=nn.AdaptiveAvgPool2d(1)):
+    def __init__(self, cfg):
         super().__init__()
 
-        self.pool_layer = pool_layer
+        # fmt: off
+        feat_dim      = cfg.MODEL.BACKBONE.FEAT_DIM
+        num_classes   = cfg.MODEL.HEADS.NUM_CLASSES
+        neck_feat     = cfg.MODEL.HEADS.NECK_FEAT
+        pool_type     = cfg.MODEL.HEADS.POOL_LAYER
+        cls_type      = cfg.MODEL.HEADS.CLS_LAYER
+        norm_type     = cfg.MODEL.HEADS.NORM
 
-        self.occ_unit = OcclusionUnit(in_planes=in_feat)
+        if pool_type == 'fastavgpool':   self.pool_layer = FastGlobalAvgPool2d()
+        elif pool_type == 'avgpool':     self.pool_layer = nn.AdaptiveAvgPool2d(1)
+        elif pool_type == 'maxpool':     self.pool_layer = nn.AdaptiveMaxPool2d(1)
+        elif pool_type == 'gempoolP':    self.pool_layer = GeneralizedMeanPoolingP()
+        elif pool_type == 'gempool':     self.pool_layer = GeneralizedMeanPooling()
+        elif pool_type == "avgmaxpool":  self.pool_layer = AdaptiveAvgMaxPool2d()
+        elif pool_type == 'clipavgpool': self.pool_layer = ClipGlobalAvgPool2d()
+        elif pool_type == "identity":    self.pool_layer = nn.Identity()
+        elif pool_type == "flatten":     self.pool_layer = Flatten()
+        else:                            raise KeyError(f"{pool_type} is not supported!")
+        # fmt: on
+
+        self.neck_feat = neck_feat
+
+        self.occ_unit = OcclusionUnit(in_planes=feat_dim)
         self.MaxPool1 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
         self.MaxPool2 = nn.MaxPool2d(kernel_size=4, stride=2, padding=0)
         self.MaxPool3 = nn.MaxPool2d(kernel_size=6, stride=2, padding=0)
         self.MaxPool4 = nn.MaxPool2d(kernel_size=8, stride=2, padding=0)
 
-        self.bnneck = get_norm(cfg.MODEL.HEADS.NORM, in_feat, cfg.MODEL.HEADS.NORM_SPLIT, bias_freeze=True)
+        self.bnneck = get_norm(norm_type, feat_dim, bias_freeze=True)
         self.bnneck.apply(weights_init_kaiming)
 
-        self.bnneck_occ = get_norm(cfg.MODEL.HEADS.NORM, in_feat, cfg.MODEL.HEADS.NORM_SPLIT, bias_freeze=True)
+        self.bnneck_occ = get_norm(norm_type, feat_dim, bias_freeze=True)
         self.bnneck_occ.apply(weights_init_kaiming)
 
         # identity classification layer
-        cls_type = cfg.MODEL.HEADS.CLS_LAYER
         if cls_type == 'linear':
-            self.classifier = nn.Linear(in_feat, num_classes, bias=False)
-            self.classifier_occ = nn.Linear(in_feat, num_classes, bias=False)
+            self.classifier = nn.Linear(feat_dim, num_classes, bias=False)
+            self.classifier_occ = nn.Linear(feat_dim, num_classes, bias=False)
         elif cls_type == 'arcSoftmax':
-            self.classifier = ArcSoftmax(cfg, in_feat, num_classes)
-            self.classifier_occ = ArcSoftmax(cfg, in_feat, num_classes)
+            self.classifier = ArcSoftmax(cfg, feat_dim, num_classes)
+            self.classifier_occ = ArcSoftmax(cfg, feat_dim, num_classes)
         elif cls_type == 'circleSoftmax':
-            self.classifier = CircleSoftmax(cfg, in_feat, num_classes)
-            self.classifier_occ = CircleSoftmax(cfg, in_feat, num_classes)
+            self.classifier = CircleSoftmax(cfg, feat_dim, num_classes)
+            self.classifier_occ = CircleSoftmax(cfg, feat_dim, num_classes)
         else:
             raise KeyError(f"{cls_type} is invalid, please choose from "
                            f"'linear', 'arcSoftmax' and 'circleSoftmax'.")
@@ -111,13 +134,20 @@ class DSRHead(nn.Module):
         bn_feat = self.bnneck(global_feat)
         bn_feat = bn_feat[..., 0, 0]
 
-        try:
+        if self.classifier.__class__.__name__ == 'Linear':
             cls_outputs = self.classifier(bn_feat)
             fore_cls_outputs = self.classifier_occ(bn_foreground_feat)
-        except TypeError:
+            pred_class_logits = F.linear(bn_feat, self.classifier.weight)
+        else:
             cls_outputs = self.classifier(bn_feat, targets)
             fore_cls_outputs = self.classifier_occ(bn_foreground_feat, targets)
+            pred_class_logits = self.classifier.s * F.linear(F.normalize(bn_feat),
+                                                             F.normalize(self.classifier.weight))
 
-        pred_class_logits = F.linear(bn_foreground_feat, self.classifier.weight)
-
-        return cls_outputs, fore_cls_outputs, pred_class_logits, global_feat[..., 0, 0], foreground_feat[..., 0, 0]
+        return {
+            "cls_outputs": cls_outputs,
+            "fore_cls_outputs": fore_cls_outputs,
+            "pred_class_logits": pred_class_logits,
+            "global_features": global_feat[..., 0, 0],
+            "foreground_features": foreground_feat[..., 0, 0],
+        }

@@ -10,10 +10,12 @@ from collections import OrderedDict
 import numpy as np
 import torch
 import torch.nn.functional as F
+from sklearn import metrics
 
 from fastreid.evaluation.evaluator import DatasetEvaluator
 from fastreid.evaluation.rank import evaluate_rank
 from fastreid.evaluation.roc import evaluate_roc
+from fastreid.utils import comm
 from .dsr_distance import compute_dsr_dist
 
 logger = logging.getLogger('fastreid.partialreid.dsr_evaluation')
@@ -39,37 +41,73 @@ class DsrEvaluator(DatasetEvaluator):
         self.camids = []
 
     def process(self, inputs, outputs):
-        self.pids.extend(inputs["targets"].numpy())
-        self.camids.extend(inputs["camid"].numpy())
+        self.pids.extend(inputs["targets"])
+        self.camids.extend(inputs["camids"])
         self.features.append(F.normalize(outputs[0]).cpu())
-        outputs1 = F.normalize(outputs[1].data).cpu().numpy()
+        outputs1 = F.normalize(outputs[1].data).cpu()
         self.spatial_features.append(outputs1)
         self.scores.append(outputs[2])
 
     def evaluate(self):
-        features = torch.cat(self.features, dim=0)
-        spatial_features = np.vstack(self.spatial_features)
-        scores = torch.cat(self.scores, dim=0)
+        if comm.get_world_size() > 1:
+            comm.synchronize()
+            features = comm.gather(self.features)
+            features = sum(features, [])
+
+            spatial_features = comm.gather(self.spatial_features)
+            spatial_features = sum(spatial_features, [])
+
+            scores = comm.gather(self.scores)
+            scores = sum(scores, [])
+
+            pids = comm.gather(self.pids)
+            pids = sum(pids, [])
+
+            camids = comm.gather(self.camids)
+            camids = sum(camids, [])
+
+            # fmt: off
+            if not comm.is_main_process(): return {}
+            # fmt: on
+        else:
+            features = self.features
+            spatial_features = self.spatial_features
+            scores = self.scores
+            pids = self.pids
+            camids = self.camids
+
+        features = torch.cat(features, dim=0)
+        spatial_features = torch.cat(spatial_features, dim=0).numpy()
+        scores = torch.cat(scores, dim=0)
 
         # query feature, person ids and camera ids
         query_features = features[:self._num_query]
-        query_pids = np.asarray(self.pids[:self._num_query])
-        query_camids = np.asarray(self.camids[:self._num_query])
+        query_pids = np.asarray(pids[:self._num_query])
+        query_camids = np.asarray(camids[:self._num_query])
 
         # gallery features, person ids and camera ids
         gallery_features = features[self._num_query:]
-        gallery_pids = np.asarray(self.pids[self._num_query:])
-        gallery_camids = np.asarray(self.camids[self._num_query:])
+        gallery_pids = np.asarray(pids[self._num_query:])
+        gallery_camids = np.asarray(camids[self._num_query:])
+
+        if self.cfg.TEST.METRIC == "cosine":
+            query_features = F.normalize(query_features, dim=1)
+            gallery_features = F.normalize(gallery_features, dim=1)
 
         dist = 1 - torch.mm(query_features, gallery_features.t()).numpy()
         self._results = OrderedDict()
 
+        query_features = query_features.numpy()
+        gallery_features = gallery_features.numpy()
         if self.cfg.TEST.DSR.ENABLED:
+            logger.info("Testing with DSR setting")
             dist = compute_dsr_dist(spatial_features[:self._num_query], spatial_features[self._num_query:], dist,
                                     scores[:self._num_query])
-            logger.info("Testing with DSR setting")
-
-        cmc, all_AP, all_INP = evaluate_rank(dist, query_pids, gallery_pids, query_camids, gallery_camids)
+            cmc, all_AP, all_INP = evaluate_rank(dist, query_features, gallery_features, query_pids, gallery_pids,
+                                                 query_camids, gallery_camids, use_distmat=True)
+        else:
+            cmc, all_AP, all_INP = evaluate_rank(dist, query_features, gallery_features, query_pids, gallery_pids,
+                                                 query_camids, gallery_camids, use_distmat=False)
         mAP = np.mean(all_AP)
         mINP = np.mean(all_INP)
 
@@ -78,9 +116,13 @@ class DsrEvaluator(DatasetEvaluator):
         self._results['mAP'] = mAP
         self._results['mINP'] = mINP
 
-        tprs = evaluate_roc(dist, query_pids, gallery_pids, query_camids, gallery_camids)
-        fprs = [1e-4, 1e-3, 1e-2]
-        for i in range(len(fprs)):
-            self._results["TPR@FPR={}".format(fprs[i])] = tprs[i]
+        if self.cfg.TEST.ROC_ENABLED:
+            scores, labels = evaluate_roc(dist, query_features, gallery_features,
+                                          query_pids, gallery_pids, query_camids, gallery_camids)
+            fprs, tprs, thres = metrics.roc_curve(labels, scores)
+
+            for fpr in [1e-4, 1e-3, 1e-2]:
+                ind = np.argmin(np.abs(fprs - fpr))
+                self._results["TPR@FPR={:.0e}".format(fpr)] = tprs[ind]
 
         return copy.deepcopy(self._results)

@@ -21,10 +21,9 @@ from partialreid import *
 
 class Trainer(DefaultTrainer):
     @classmethod
-    def build_evaluator(cls, cfg, num_query, output_folder=None):
-        if output_folder is None:
-            output_folder = os.path.join(cfg.OUTPUT_DIR, "inference")
-        return DsrEvaluator(cfg, num_query)
+    def build_evaluator(cls, cfg, dataset_name, output_dir=None):
+        data_loader, num_query = cls.build_test_loader(cfg, dataset_name)
+        return data_loader, DsrEvaluator(cfg, num_query, output_dir)
 
 
 def setup(args):

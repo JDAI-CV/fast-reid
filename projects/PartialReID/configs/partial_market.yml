@@ -7,6 +7,7 @@ MODEL:
     NORM: "BN"
     LAST_STRIDE: 1
     WITH_IBN: True
+    PRETRAIN_PATH: "/export/home/lxy/.cache/torch/checkpoints/resnet50_ibn_a-d9d0bb7b.pth"
 
   HEADS:
     NAME: "DSRHead"
@@ -38,7 +39,7 @@ INPUT:
 
 DATALOADER:
   PK_SAMPLER: True
-  NAIVE_WAY: True
+  NAIVE_WAY: False
   NUM_INSTANCE: 4
   NUM_WORKERS: 8
   
