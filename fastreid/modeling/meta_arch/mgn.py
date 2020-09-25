@@ -147,7 +147,7 @@ class MGN(nn.Module):
         else:
             raise TypeError("batched_inputs must be dict or torch.Tensor, but get {}".format(type(batched_inputs)))
 
-        images = (images - self.pixel_mean) / self.pixel_std
+        images.sub_(self.pixel_mean).div_(self.pixel_std)
         return images
 
     def losses(self, outs):
