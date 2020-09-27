@@ -4,7 +4,7 @@ FastReID is a research platform that implements state-of-the-art re-identificati
 
 ## What's New
 
-- [Sep 2020] Added the person attribute recognition code based fastreid. See `projects/attribute_recognition`.
+- [Sep 2020] Added the [person attribute recognition](https://github.com/JDAI-CV/fast-reid/tree/master/projects/attribute_recognition) based on fastreid. See `projects/attribute_recognition`.
 - [Sep 2020] Automatic Mixed Precision training is supported with pytorch1.6 built-in `torch.cuda.amp`. Set `cfg.SOLVER.AMP_ENABLED=True` to switch it on.
 - [Aug 2020] [Model Distillation](https://github.com/JDAI-CV/fast-reid/tree/master/projects/DistillReID) is supported, thanks for [guan'an wang](https://github.com/wangguanan)'s contribution.
 - [Aug 2020] ONNX/TensorRT converter is supported.
