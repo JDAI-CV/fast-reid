@@ -8,6 +8,7 @@ import torch
 import torch.nn.functional as F
 
 from fastreid.utils import comm
+from fastreid.layers import GatherLayer
 from .utils import concat_all_gather, euclidean_dist, normalize
 
 
@@ -90,17 +91,17 @@ def triplet_loss(embedding, targets, margin, norm_feat, hard_mining):
 
     # For distributed training, gather all features from different process.
     if comm.get_world_size() > 1:
-        all_embedding = concat_all_gather(embedding)
+        all_embedding = torch.cat(GatherLayer.apply(embedding), dim=0)
         all_targets = concat_all_gather(targets)
     else:
         all_embedding = embedding
         all_targets = targets
 
-    dist_mat = euclidean_dist(all_embedding, all_embedding)
+    dist_mat = euclidean_dist(embedding, all_embedding)
 
-    N = dist_mat.size(0)
-    is_pos = all_targets.view(N, 1).expand(N, N).eq(all_targets.view(N, 1).expand(N, N).t())
-    is_neg = all_targets.view(N, 1).expand(N, N).ne(all_targets.view(N, 1).expand(N, N).t())
+    N, M = dist_mat.size()
+    is_pos = targets.view(N, 1).expand(N, M).eq(all_targets.view(M, 1).expand(M, N).t())
+    is_neg = targets.view(N, 1).expand(N, M).ne(all_targets.view(M, 1).expand(M, N).t())
 
     if hard_mining:
         dist_ap, dist_an = hard_example_mining(dist_mat, is_pos, is_neg)

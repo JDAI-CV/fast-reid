@@ -16,3 +16,4 @@ from .non_local import Non_local
 from .pooling import *
 from .se_layer import SELayer
 from .splat import SplAtConv2d
+from .gather_layer import GatherLayer
