@@ -45,6 +45,11 @@ def default_argument_parser():
     parser = argparse.ArgumentParser(description="fastreid Training")
     parser.add_argument("--config-file", default="", metavar="FILE", help="path to config file")
     parser.add_argument(
+        "--finetune",
+        action="store_true",
+        help="whether to attempt to finetune from the trained model",
+    )
+    parser.add_argument(
         "--resume",
         action="store_true",
         help="whether to attempt to resume from the checkpoint directory",
@@ -248,9 +253,6 @@ class DefaultTrainer(SimpleTrainer):
         # at the next iteration (or iter zero if there's no checkpoint).
         checkpoint = self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume)
 
-        # Reinitialize dataloader iter because when we update dataset person identity dict
-        # to resume training, DataLoader won't update this dictionary when using multiprocess
-        # because of the function scope.
         if resume and self.checkpointer.has_checkpoint():
             self.start_iter = checkpoint.get("iteration", -1) + 1
             # The checkpoint stores the training iteration that just finished, thus we start

@@ -40,6 +40,8 @@ def main(args):
         return res
 
     trainer = DefaultTrainer(cfg)
+    if args.finetune: Checkpointer(trainer.model).load(cfg.MODEL.WEIGHTS)  # load trained model to funetune
+
     trainer.resume_or_load(resume=args.resume)
     return trainer.train()
 
