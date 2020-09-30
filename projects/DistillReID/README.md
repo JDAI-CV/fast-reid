@@ -17,7 +17,7 @@ This project provides a training script of small model
 # train BagTricksIBN50 as teacher model
 python3 projects/DistillReID/train_net.py --config-file projects/DistillReID/configs/DukeMTMC/bot50ibn.yml 
 # train BagTricksIBN18 as student model 
-python3 projects/DistillReID/train_net.py --kd --config-file projects/DistillReID/configs/DukeMTMC/KD-bot50ibn-bot18ibn.yml 
+python3 projects/DistillReID/train_net.py --config-file projects/DistillReID/configs/DukeMTMC/KD-bot50ibn-bot18ibn.yml --kd
 ```
 
 ## Experimental Results and Trained Models

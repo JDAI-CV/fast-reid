@@ -3,7 +3,7 @@ _BASE_: "../Base-bot-kd.yml"
 MODEL_TEACHER:
   BACKBONE:
     DEPTH: "50x"
-    FEAT_DIM: 512
+    FEAT_DIM: 2048
 
 MODEL:
   BACKBONE:

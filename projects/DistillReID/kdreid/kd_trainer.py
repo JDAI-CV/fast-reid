@@ -13,6 +13,7 @@ from torch import nn
 from torch.nn.parallel import DistributedDataParallel
 
 from fastreid.engine import DefaultTrainer
+from fastreid.utils.file_io import PathManager
 from fastreid.modeling.meta_arch import build_model
 from fastreid.utils.checkpoint import Checkpointer
 from .config import update_model_teacher_config
@@ -40,7 +41,11 @@ class KDTrainer(DefaultTrainer):
         logger.info("Loading teacher model ...")
         Checkpointer(model_t).load(cfg.MODEL.TEACHER_WEIGHTS)
 
-        model_t.eval()
+        if PathManager.exists(cfg.MODEL.STUDENT_WEIGHTS):
+            logger.info("Loading student model ...")
+            Checkpointer(self.model).load(cfg.MODEL.STUDENT_WEIGHTS)
+        else:
+            logger.info("No student model checkpoints")
 
         self.model_t = model_t
 
@@ -70,7 +75,6 @@ class KDTrainer(DefaultTrainer):
 
         q_logits = outs["outputs"]["pred_class_logits"]
         t_logits = outs_t["outputs"]["pred_class_logits"].detach()
-        # k_logits = outs_k["outputs"]["pred_class_logits"].detach()
         loss_dict['loss_kl'] = self.distill_loss(q_logits, t_logits, t=16)
 
         losses = sum(loss_dict.values())
