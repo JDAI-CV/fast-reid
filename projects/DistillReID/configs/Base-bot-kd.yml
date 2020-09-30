@@ -1,0 +1,30 @@
+_BASE_: "../../../configs/Base-bagtricks.yml"
+
+MODEL_TEACHER:
+  META_ARCHITECTURE: "Baseline"
+
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+    NORM: "BN"
+    DEPTH: "101x"
+    FEAT_DIM: 2048
+    LAST_STRIDE: 1
+    WITH_IBN: True
+    PRETRAIN: True
+
+  HEADS:
+    NAME: "EmbeddingHead"
+    NORM: "BN"
+    POOL_LAYER: "avgpool"
+    NECK_FEAT: "before"
+    CLS_LAYER: "linear"
+
+MODEL:
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+    DEPTH: "50x"
+    FEAT_DIM: 2048
+    WITH_IBN: True
+
+  STUDENT_WEIGHTS: ""
+  TEACHER_WEIGHTS: "logs/dukemtmc/bagtricks_R34-ibn/model_final.pth"

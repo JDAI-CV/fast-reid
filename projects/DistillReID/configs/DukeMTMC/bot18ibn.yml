@@ -1,0 +1,13 @@
+_BASE_: "../../../../configs/Base-bagtricks.yml"
+
+MODEL:
+  BACKBONE:
+    DEPTH: "18x"
+    WITH_IBN: True
+    FEAT_DIM: 512
+
+DATASETS:
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
+
+OUTPUT_DIR: "projects/DistillReID/logs/dukemtmc/bagtricks_R18-ibn"

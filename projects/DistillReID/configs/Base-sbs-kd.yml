@@ -1,0 +1,37 @@
+_BASE_: "../../../configs/Base-Strongerbaseline.yml"
+
+MODEL_TEACHER:
+  META_ARCHITECTURE: "Baseline"
+
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+    NORM: "BN"
+    DEPTH: "101x"
+    FEAT_DIM: 2048
+    LAST_STRIDE: 1
+    WITH_NL: False
+    WITH_IBN: True
+    PRETRAIN: True
+
+  HEADS:
+    NAME: "EmbeddingHead"
+    NORM: "BN"
+    NECK_FEAT: "after"
+    POOL_LAYER: "gempoolP"
+    CLS_LAYER: "circleSoftmax"
+    SCALE: 64
+    MARGIN: 0.35
+
+MODEL:
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+    DEPTH: "50x"
+    FEAT_DIM: 2048
+    WITH_IBN: True
+
+  STUDENT_WEIGHTS: ""
+  TEACHER_WEIGHTS: "logs/dukemtmc/bagtricks_R34-ibn/model_final.pth"
+
+INPUT:
+  SIZE_TRAIN: [ 256, 128 ]
+  SIZE_TEST: [ 256, 128 ]

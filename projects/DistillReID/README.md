@@ -15,9 +15,9 @@ This project provides a training script of small model
 # a demo on DukeMTMC-reID dataset
 # please see more in ./configs
 # train BagTricksIBN50 as teacher model
-CUDA_VISIBLE_DEVICES=$CUDA python ./tools/train_net.py --config-file ./projects/DistillReID/configs-bagtricks-ibn-dukemtmcreid/bagtricks_R50-ibn.yml MODEL.DEVICE "cuda:0"
+python3 projects/DistillReID/train_net.py --config-file projects/DistillReID/configs/DukeMTMC/bot50ibn.yml 
 # train BagTricksIBN18 as student model 
-CUDA_VISIBLE_DEVICES=$CUDA python ./projects/DistillReID/train_net.py --kd --config-file ./projects/DistillReID/configs-bagtricks-ibn-dukemtmcreid/KD-bot50ibn-bot18ibn.yml MODEL.DEVICE "cuda:0"
+python3 projects/DistillReID/train_net.py --kd --config-file projects/DistillReID/configs/DukeMTMC/KD-bot50ibn-bot18ibn.yml 
 ```
 
 ## Experimental Results and Trained Models
@@ -42,6 +42,6 @@ All the experiments are conducted with a P40 GPU and
 
 
 ## Contact
-This project is conducted by [Guan'an Wang](https://wangguanan.github.io/) (guan.wang0706@gmail) and [Liao Xingyu](https://github.com/L1aoXingyu).
+This project is conducted by [Guan'an Wang](https://wangguanan.github.io/) (guan.wang0706@gmail) and [Xingyu Liao](https://github.com/L1aoXingyu).
 
 

@@ -1,0 +1,13 @@
+_BASE_: "../../../configs/Base-Strongerbaseline.yml"
+
+MODEL:
+  BACKBONE:
+    DEPTH: "101x"
+    WITH_IBN: True
+    FEAT_DIM: 2048
+
+DATASETS:
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
+
+OUTPUT_DIR: "projects/DistillReID/logs/dukemtmc/sbs_R101-ibn"

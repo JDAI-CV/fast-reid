@@ -34,23 +34,13 @@ class KDTrainer(DefaultTrainer):
         for param in model_t.parameters():
             param.requires_grad = False
 
-        logger = logging.getLogger('fastreid.'+__name__)
+        logger = logging.getLogger('fastreid.' + __name__)
 
         # Load pre-trained teacher model
-        print('88888\n'*10)
         logger.info("Loading teacher model ...")
         Checkpointer(model_t).load(cfg.MODEL.TEACHER_WEIGHTS)
 
-        # Load pre-trained student model
-        # logger.info("Loading student model ...")
-        # Checkpointer(self.model, self.data_loader.dataset).load(cfg.MODEL.STUDENT_WEIGHTS)
-
-        def set_bn_eval(m):
-            classname = m.__class__.__name__
-            if classname.find('BatchNorm') != -1:
-                m.eval()
-
-        model_t.apply(set_bn_eval)
+        model_t.eval()
 
         self.model_t = model_t
 
@@ -67,26 +57,29 @@ class KDTrainer(DefaultTrainer):
 
         data_time = time.perf_counter() - start
 
-        outputs, targets = self.model(data)
+        outs = self.model(data)
 
         # Compute reid loss
         if isinstance(self.model, DistributedDataParallel):
-            loss_dict = self.model.module.losses(outputs, targets)
+            loss_dict = self.model.module.losses(outs)
         else:
-            loss_dict = self.model.losses(outputs, targets)
+            loss_dict = self.model.losses(outs)
 
         with torch.no_grad():
-            outputs_t, _ = self.model_t(data)
+            outs_t = self.model_t(data)
 
-        loss_dict['loss_kl'] = self.distill_loss(outputs[1], outputs_t[1].detach())
-        # loss_dict['loss_pkt'] = 1e4 * self.pkt_loss(outputs[1], outputs_t[1].detach())
+        q_logits = outs["outputs"]["pred_class_logits"]
+        t_logits = outs_t["outputs"]["pred_class_logits"].detach()
+        # k_logits = outs_k["outputs"]["pred_class_logits"].detach()
+        loss_dict['loss_kl'] = self.distill_loss(q_logits, t_logits, t=16)
 
-        losses = sum(loss for loss in loss_dict.values())
-        self._detect_anomaly(losses, loss_dict)
+        losses = sum(loss_dict.values())
 
-        metrics_dict = loss_dict
-        metrics_dict["data_time"] = data_time
-        self._write_metrics(metrics_dict)
+        with torch.cuda.stream(torch.cuda.Stream()):
+            metrics_dict = loss_dict
+            metrics_dict["data_time"] = data_time
+            self._write_metrics(metrics_dict)
+            self._detect_anomaly(losses, loss_dict)
 
         """
         If you need accumulate gradients or something similar, you can

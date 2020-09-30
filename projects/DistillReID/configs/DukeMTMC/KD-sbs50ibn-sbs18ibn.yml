@@ -1,0 +1,20 @@
+_BASE_: "../Base-sbs-kd.yml"
+
+MODEL_TEACHER:
+  BACKBONE:
+    DEPTH: "50x"
+    FEAT_DIM: 2048
+
+MODEL:
+  BACKBONE:
+    DEPTH: "18x"
+    FEAT_DIM: 512
+
+  STUDENT_WEIGHTS: ""
+  TEACHER_WEIGHTS: "projects/DistillReID/logs/dukemtmc/sbs_R50-ibn/model_final.pth"
+
+DATASETS:
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
+
+OUTPUT_DIR: "projects/DistillReID/logs/dukemtmc/sbs50ibn-kd-sbs18ibn"

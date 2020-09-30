@@ -7,11 +7,13 @@ import torch
 import torch.nn as nn
 from .blocks import ShuffleV2Block
 
+
 class ShuffleNetV2(nn.Module):
     """
     Reference:
         https://github.com/megvii-model/ShuffleNet-Series/tree/master/ShuffleNetV2
     """
+
     def __init__(self, input_size=224, n_class=1000, model_size='1.5x'):
         super(ShuffleNetV2, self).__init__()
         print('model size is ', model_size)

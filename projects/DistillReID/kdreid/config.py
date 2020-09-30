@@ -32,6 +32,8 @@ def add_kdreid_config(cfg):
     _C.MODEL_TEACHER.BACKBONE.WITH_SE = False
     # If use Non-local block in backbone
     _C.MODEL_TEACHER.BACKBONE.WITH_NL = False
+    # Input feature dimension
+    _C.MODEL_TEACHER.BACKBONE.FEAT_DIM = 2048
 
     # for shufflenet
     _C.MODEL_TEACHER.BACKBONE.MODEL_SIZE = '1.0x'
@@ -44,10 +46,8 @@ def add_kdreid_config(cfg):
     # teacher model HEADS options
     # ---------------------------------------------------------------------------- #
     _C.MODEL_TEACHER.HEADS = CN()
-    _C.MODEL_TEACHER.HEADS.NAME = "BNneckHead"
+    _C.MODEL_TEACHER.HEADS.NAME = "EmbeddingHead"
 
-    # Input feature dimension
-    _C.MODEL_TEACHER.HEADS.IN_FEAT = 2048
     # Pooling layer type
     _C.MODEL_TEACHER.HEADS.POOL_LAYER = "avgpool"
     _C.MODEL_TEACHER.HEADS.NECK_FEAT = "before"
@@ -82,23 +82,21 @@ def update_model_teacher_config(cfg):
     cfg.MODEL.BACKBONE.WITH_SE = cfg.MODEL_TEACHER.BACKBONE.WITH_SE
     # If use Non-local block in backbone
     cfg.MODEL.BACKBONE.WITH_NL = cfg.MODEL_TEACHER.BACKBONE.WITH_NL
+    # Input feature dimension
+    cfg.MODEL.BACKBONE.FEAT_DIM = cfg.MODEL_TEACHER.BACKBONE.FEAT_DIM
     cfg.MODEL.BACKBONE.PRETRAIN = False
 
     # for shufflenet
     cfg.MODEL.BACKBONE.MODEL_SIZE = cfg.MODEL_TEACHER.BACKBONE.MODEL_SIZE
-
 
     # ---------------------------------------------------------------------------- #
     # teacher model HEADS options
     # ---------------------------------------------------------------------------- #
     cfg.MODEL.HEADS.NAME = cfg.MODEL_TEACHER.HEADS.NAME
 
-    # Input feature dimension
-    cfg.MODEL.HEADS.IN_FEAT = cfg.MODEL_TEACHER.HEADS.IN_FEAT
     # Pooling layer type
     cfg.MODEL.HEADS.POOL_LAYER = cfg.MODEL_TEACHER.HEADS.POOL_LAYER
 
-    #
     cfg.MODEL.HEADS.SCALE = cfg.MODEL_TEACHER.HEADS.SCALE
     cfg.MODEL.HEADS.MARGIN = cfg.MODEL_TEACHER.HEADS.MARGIN
 
