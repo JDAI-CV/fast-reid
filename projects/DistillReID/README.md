@@ -1,4 +1,4 @@
-# Distillation ReID
+# Model Distillation in FastReID
 
 This project provides a training script of small model
  for both fast inference and high accuracy.
