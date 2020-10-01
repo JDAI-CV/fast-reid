@@ -3,13 +3,19 @@
 @author:  xingyu liao
 @contact: sherlockliao01@gmail.com
 """
+
 import torch
 from ray import tune
 
 from fastreid.engine.hooks import EvalHook, flatten_results_dict
+from fastreid.utils.checkpoint import Checkpointer
 
 
 class TuneReportHook(EvalHook):
+    def __init__(self, eval_period, eval_function):
+        super().__init__(eval_period, eval_function)
+        self.step = 0
+
     def _do_eval(self):
         results = self._func()
 
@@ -30,5 +36,19 @@ class TuneReportHook(EvalHook):
 
         # Remove extra memory cache of main process due to evaluation
         torch.cuda.empty_cache()
+
+        self.step += 1
+        # Here we save a checkpoint. It is automatically registered with
+        # Ray Tuen and will potentially be passed as the `checkpoint_dir`
+        # parameter in future iterations.
+        with tune.checkpoint_dir(step=self.step) as checkpoint_dir:
+            Checkpointer(
+                # Assume you want to save checkpoints together with logs/statistics
+                self.trainer.model,
+                checkpoint_dir,
+                save_to_disk=True,
+                optimizer=self.trainer.optimizer,
+                scheduler=self.trainer.scheduler,
+            ).save(name="checkpoint")
 
         tune.report(r1=results['Rank-1'], map=results['mAP'], score=(results['Rank-1'] + results['mAP']) / 2)
