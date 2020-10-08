@@ -180,7 +180,7 @@ def evaluate_py(
 ):
     if use_metric_cuhk03:
         return eval_cuhk03(
-            distmat, q_feats, g_feats, g_pids, q_camids, g_camids, max_rank, use_distmat
+            distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank, use_distmat
         )
     else:
         return eval_market1501(
