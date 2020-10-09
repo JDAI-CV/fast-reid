@@ -39,11 +39,11 @@ class SplAtConv2d(nn.Module):
                                groups=groups * radix, bias=bias, **kwargs)
         self.use_bn = norm_layer is not None
         if self.use_bn:
-            self.bn0 = get_norm(norm_layer, channels * radix, num_splits)
+            self.bn0 = get_norm(norm_layer, channels * radix)
         self.relu = ReLU(inplace=True)
         self.fc1 = Conv2d(channels, inter_channels, 1, groups=self.cardinality)
         if self.use_bn:
-            self.bn1 = get_norm(norm_layer, inter_channels, num_splits)
+            self.bn1 = get_norm(norm_layer, inter_channels)
         self.fc2 = Conv2d(inter_channels, channels * radix, 1, groups=self.cardinality)
 
         self.rsoftmax = rSoftMax(radix, groups)
