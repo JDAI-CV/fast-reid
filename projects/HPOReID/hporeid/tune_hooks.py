@@ -38,10 +38,12 @@ class TuneReportHook(EvalHook):
         torch.cuda.empty_cache()
 
         self.step += 1
+
         # Here we save a checkpoint. It is automatically registered with
-        # Ray Tuen and will potentially be passed as the `checkpoint_dir`
+        # Ray Tune and will potentially be passed as the `checkpoint_dir`
         # parameter in future iterations.
         with tune.checkpoint_dir(step=self.step) as checkpoint_dir:
+            additional_state = {"iteration": int(self.trainer.iter)}
             Checkpointer(
                 # Assume you want to save checkpoints together with logs/statistics
                 self.trainer.model,
@@ -49,6 +51,7 @@ class TuneReportHook(EvalHook):
                 save_to_disk=True,
                 optimizer=self.trainer.optimizer,
                 scheduler=self.trainer.scheduler,
-            ).save(name="checkpoint")
+            ).save(name="checkpoint", **additional_state)
 
-        tune.report(r1=results['Rank-1'], map=results['mAP'], score=(results['Rank-1'] + results['mAP']) / 2)
+        metrics = dict(r1=results['Rank-1'], map=results['mAP'], score=(results['Rank-1'] + results['mAP']) / 2)
+        tune.report(**metrics)

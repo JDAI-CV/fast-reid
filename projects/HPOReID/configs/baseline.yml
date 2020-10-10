@@ -90,4 +90,4 @@ DATASETS:
 
 CUDNN_BENCHMARK: True
 
-OUTPUT_DIR: "projects/HPOReID/logs/dukemtmc/r34-ibn_bohb"
+OUTPUT_DIR: "projects/HPOReID/logs/dukemtmc/r34-ibn_bohb_bsz_num_"

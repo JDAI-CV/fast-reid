@@ -6,15 +6,17 @@ Install the following
 
 ```bash
 pip install 'ray[tune]'
-pip install hpbandster ConfigSpace
+pip install hpbandster ConfigSpace hyperopt
 ```
 
-## Training
+## Example
 
-To train a model with `BOHB`, run
+This is an example for tuning `batch_size` and `num_instance` automatically.
+
+To train hyperparameter optimization with BOHB(Bayesian Optimization with HyperBand) search algorithm, run
 
 ```bash
-python3 projects/HPOReID/train_hpo.py --config-file projects/HPOReID/configs/baseline.yml
+python3 projects/HPOReID/train_hpo.py --config-file projects/HPOReID/configs/baseline.yml --srch-algo "bohb"
 ```
 
 ## Known issues
