@@ -140,7 +140,7 @@ def main(args):
     if args.srch_algo == "hyperopt":
         # Create a HyperOpt search space
         search_space = {
-            # "lr": hp.uniform("lr", 1e-6, 1e-3),
+            # "lr": hp.loguniform("lr", 1e-6, 1e-3),
             # "delay_iters": hp.randint("delay_iters", 40) + 10,
             # "wd": hp.uniform("wd", 0, 1e-3),
             # "wd_bias": hp.uniform("wd_bias", 0, 1e-3),
@@ -176,16 +176,15 @@ def main(args):
     elif args.srch_algo == "bohb":
         search_space = CS.ConfigurationSpace()
         search_space.add_hyperparameters([
-            # CS.UniformFloatHyperparameter(name="lr", lower=1e-6, upper=1e-3),
+            # CS.UniformFloatHyperparameter(name="lr", lower=1e-6, upper=1e-2, log=True),
             # CS.UniformIntegerHyperparameter(name="delay_iters", lower=20, upper=60),
-            # CS.UniformFloatHyperparameter(name="wd", lower=0, upper=1e-3),
-            # CS.UniformFloatHyperparameter(name="wd_bias", lower=0, upper=1e-3),
-            # CS.CategoricalHyperparameter(name="bsz", choices=[64, 96, 128, 160, 224, 256]),
-            CS.CategoricalHyperparameter(name="bsz", choices=[32, 64]),
-            CS.CategoricalHyperparameter(name="num_inst", choices=[2, 4, 8, 16, 32]),
             # CS.UniformFloatHyperparameter(name="ce_scale", lower=0.1, upper=1.0),
             # CS.UniformIntegerHyperparameter(name="circle_scale", lower=8, upper=256),
             # CS.UniformFloatHyperparameter(name="circle_margin", lower=0.1, upper=0.5),
+            # CS.UniformFloatHyperparameter(name="wd", lower=0, upper=1e-3),
+            # CS.UniformFloatHyperparameter(name="wd_bias", lower=0, upper=1e-3),
+            CS.CategoricalHyperparameter(name="bsz", choices=[64, 96, 128, 160, 224, 256]),
+            CS.CategoricalHyperparameter(name="num_inst", choices=[2, 4, 8, 16, 32]),
             # CS.CategoricalHyperparameter(name="autoaug_enabled", choices=[True, False]),
             # CS.CategoricalHyperparameter(name="cj_enabled", choices=[True, False]),
         ])
@@ -195,7 +194,7 @@ def main(args):
 
         scheduler = HyperBandForBOHB(
             time_attr="training_iteration",
-            reduction_factor=2,
+            reduction_factor=3,
             max_t=9,
             **exp_metrics,
         )
@@ -225,7 +224,7 @@ def main(args):
     logger.info("Best trial final validation mAP: {}, Rank-1: {}".format(
         best_trial.last_result["map"], best_trial.last_result["r1"]))
 
-    save_dict = dict(R1=best_trial.last_result["r1"], mAP=best_trial.last_result["map"])
+    save_dict = dict(R1=best_trial.last_result["r1"].item(), mAP=best_trial.last_result["map"].item())
     save_dict.update(best_trial.config)
     path = os.path.join(cfg.OUTPUT_DIR, "best_config.yaml")
     with PathManager.open(path, "w") as f:
