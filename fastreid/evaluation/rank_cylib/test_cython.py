@@ -43,12 +43,12 @@ g_camids = np.random.randint(0, 5, size=num_g)
 
 print('=> Using CMC metric')
 pytime = timeit.timeit(
-    'evaluate_rank(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank, use_distmat=True, use_cython=False)',
+    'evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)',
     setup=setup,
     number=20
 )
 cytime = timeit.timeit(
-    'evaluate_rank(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank, use_distmat=True, use_cython=True)',
+    'evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True)',
     setup=setup,
     number=20
 )
@@ -58,12 +58,12 @@ print('CMC Cython is {} times faster than python\n'.format(pytime / cytime))
 
 print('=> Using ROC metric')
 pytime = timeit.timeit(
-    'evaluate_roc(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, use_cython=False)',
+    'evaluate_roc(distmat, q_pids, g_pids, q_camids, g_camids, use_cython=False)',
     setup=setup,
     number=20
 )
 cytime = timeit.timeit(
-    'evaluate_roc(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, use_cython=True)',
+    'evaluate_roc(distmat, q_pids, g_pids, q_camids, g_camids, use_cython=True)',
     setup=setup,
     number=20
 )
@@ -85,32 +85,18 @@ q_pids = np.random.randint(0, num_q, size=num_q)
 g_pids = np.random.randint(0, num_g, size=num_g)
 q_camids = np.random.randint(0, 5, size=num_q)
 g_camids = np.random.randint(0, 5, size=num_g)
-cmc_py_d, mAP_py_d, mINP_py_d = evaluate_rank(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank,
-                                              use_distmat=True, use_cython=False)
-cmc_py, mAP_py, mINP_py = evaluate_rank(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank,
-                                        use_distmat=False, use_cython=False)
-np.testing.assert_allclose(cmc_py_d, cmc_py, rtol=1e-3, atol=1e-6)
-np.testing.assert_allclose(mAP_py_d, mAP_py, rtol=1e-3, atol=1e-6)
-np.testing.assert_allclose(mINP_py_d, mINP_py, rtol=1e-3, atol=1e-6)
-print('Results between distmat and features are the same in python!')
 
-cmc_cy_d, mAP_cy_d, mINP_cy_d = evaluate_rank(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank,
-                                              use_distmat=True, use_cython=True)
-cmc_cy, mAP_cy, mINP_cy = evaluate_rank(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids, max_rank,
-                                        use_distmat=False, use_cython=True)
-np.testing.assert_allclose(cmc_cy_d, cmc_cy, rtol=1e-3, atol=1e-6)
-np.testing.assert_allclose(mAP_cy_d, mAP_cy, rtol=1e-3, atol=1e-6)
-np.testing.assert_allclose(mINP_cy_d, mINP_cy, rtol=1e-3, atol=1e-6)
-print('Results between distmat and features are the same in cython!')
+cmc_py, mAP_py, mINP_py = evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=False)
+
+cmc_cy, mAP_cy, mINP_cy = evaluate_rank(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_cython=True)
 
 np.testing.assert_allclose(cmc_py, cmc_cy, rtol=1e-3, atol=1e-6)
 np.testing.assert_allclose(mAP_py, mAP_cy, rtol=1e-3, atol=1e-6)
 np.testing.assert_allclose(mINP_py, mINP_cy, rtol=1e-3, atol=1e-6)
 print('Rank results between python and cython are the same!')
 
-scores_cy, labels_cy = evaluate_roc(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids)
-scores_py, labels_py = evaluate_roc(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids,
-                                            use_cython=False)
+scores_cy, labels_cy = evaluate_roc(distmat, q_pids, g_pids, q_camids, g_camids, use_cython=True)
+scores_py, labels_py = evaluate_roc(distmat, q_pids, g_pids, q_camids, g_camids, use_cython=False)
 
 np.testing.assert_allclose(scores_cy, scores_py, rtol=1e-3, atol=1e-6)
 np.testing.assert_allclose(labels_cy, labels_py, rtol=1e-3, atol=1e-6)

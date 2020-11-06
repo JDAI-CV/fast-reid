@@ -18,6 +18,7 @@ from .rank import evaluate_rank
 from .rerank import re_ranking
 from .roc import evaluate_roc
 from fastreid.utils import comm
+from fastreid.utils.compute_dist import build_dist
 
 logger = logging.getLogger(__name__)
 
@@ -41,20 +42,6 @@ class ReidEvaluator(DatasetEvaluator):
         self.pids.extend(inputs["targets"])
         self.camids.extend(inputs["camids"])
         self.features.append(outputs.cpu())
-
-    @staticmethod
-    def cal_dist(metric: str, query_feat: torch.tensor, gallery_feat: torch.tensor):
-        assert metric in ["cosine", "euclidean"], "must choose from [cosine, euclidean], but got {}".format(metric)
-        if metric == "cosine":
-            dist = 1 - torch.mm(query_feat, gallery_feat.t())
-        else:
-            m, n = query_feat.size(0), gallery_feat.size(0)
-            xx = torch.pow(query_feat, 2).sum(1, keepdim=True).expand(m, n)
-            yy = torch.pow(gallery_feat, 2).sum(1, keepdim=True).expand(n, m).t()
-            dist = xx + yy
-            dist.addmm_(query_feat, gallery_feat.t(), beta=1, alpha=-2)
-            dist = dist.clamp(min=1e-12).sqrt()  # for numerical stability
-        return dist.cpu().numpy()
 
     def evaluate(self):
         if comm.get_world_size() > 1:
@@ -96,31 +83,23 @@ class ReidEvaluator(DatasetEvaluator):
             alpha = self.cfg.TEST.AQE.ALPHA
             query_features, gallery_features = aqe(query_features, gallery_features, qe_time, qe_k, alpha)
 
-        if self.cfg.TEST.METRIC == "cosine":
-            query_features = F.normalize(query_features, dim=1)
-            gallery_features = F.normalize(gallery_features, dim=1)
-
-        dist = self.cal_dist(self.cfg.TEST.METRIC, query_features, gallery_features)
+        dist = build_dist(query_features, gallery_features, self.cfg.TEST.METRIC)
 
         if self.cfg.TEST.RERANK.ENABLED:
             logger.info("Test with rerank setting")
             k1 = self.cfg.TEST.RERANK.K1
             k2 = self.cfg.TEST.RERANK.K2
             lambda_value = self.cfg.TEST.RERANK.LAMBDA
-            q_q_dist = self.cal_dist(self.cfg.TEST.METRIC, query_features, query_features)
-            g_g_dist = self.cal_dist(self.cfg.TEST.METRIC, gallery_features, gallery_features)
-            re_dist = re_ranking(dist, q_q_dist, g_g_dist, k1, k2, lambda_value)
-            query_features = query_features.numpy()
-            gallery_features = gallery_features.numpy()
-            cmc, all_AP, all_INP = evaluate_rank(re_dist, query_features, gallery_features,
-                                                 query_pids, gallery_pids, query_camids,
-                                                 gallery_camids, use_distmat=True)
-        else:
-            query_features = query_features.numpy()
-            gallery_features = gallery_features.numpy()
-            cmc, all_AP, all_INP = evaluate_rank(dist, query_features, gallery_features,
-                                                 query_pids, gallery_pids, query_camids, gallery_camids,
-                                                 use_distmat=False)
+
+            if self.cfg.TEST.METRIC == "cosine":
+                query_features = F.normalize(query_features, dim=1)
+                gallery_features = F.normalize(gallery_features, dim=1)
+
+            rerank_dist = build_dist(query_features, gallery_features, metric="jaccard", k1=k1, k2=k2)
+            dist = rerank_dist * (1 - lambda_value) + dist * lambda_value
+
+        cmc, all_AP, all_INP = evaluate_rank(dist, query_pids, gallery_pids, query_camids, gallery_camids)
+
         mAP = np.mean(all_AP)
         mINP = np.mean(all_INP)
         for r in [1, 5, 10]:
@@ -129,8 +108,7 @@ class ReidEvaluator(DatasetEvaluator):
         self._results['mINP'] = mINP
 
         if self.cfg.TEST.ROC_ENABLED:
-            scores, labels = evaluate_roc(dist, query_features, gallery_features,
-                                          query_pids, gallery_pids, query_camids, gallery_camids)
+            scores, labels = evaluate_roc(dist, query_pids, gallery_pids, query_camids, gallery_camids)
             fprs, tprs, thres = metrics.roc_curve(labels, scores)
 
             for fpr in [1e-4, 1e-3, 1e-2]:

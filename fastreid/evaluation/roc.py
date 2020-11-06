@@ -21,7 +21,7 @@ except ImportError:
     )
 
 
-def evaluate_roc_py(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids):
+def evaluate_roc_py(distmat, q_pids, g_pids, q_camids, g_camids):
     r"""Evaluation with ROC curve.
     Key: for each query identity, its gallery images from the same camera view are discarded.
 
@@ -29,12 +29,8 @@ def evaluate_roc_py(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camid
         distmat (np.ndarray): cosine distance matrix
     """
     num_q, num_g = distmat.shape
-    dim = q_feats.shape[1]
 
-    index = faiss.IndexFlatL2(dim)
-    index.add(g_feats)
-
-    _, indices = index.search(q_feats, k=num_g)
+    indices = np.argsort(distmat, axis=1)
     matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
 
     pos = []
@@ -67,8 +63,6 @@ def evaluate_roc_py(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camid
 
 def evaluate_roc(
         distmat,
-        q_feats,
-        g_feats,
         q_pids,
         g_pids,
         q_camids,
@@ -91,6 +85,6 @@ def evaluate_roc(
             by more than 10x. This requires Cython to be installed.
     """
     if use_cython and IS_CYTHON_AVAI:
-        return evaluate_roc_cy(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids)
+        return evaluate_roc_cy(distmat, q_pids, g_pids, q_camids, g_camids)
     else:
-        return evaluate_roc_py(distmat, q_feats, g_feats, q_pids, g_pids, q_camids, g_camids)
+        return evaluate_roc_py(distmat, q_pids, g_pids, q_camids, g_camids)

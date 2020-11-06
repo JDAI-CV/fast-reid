@@ -17,12 +17,10 @@ Credit to https://github.com/luzai
 
 
 # Main interface
-cpdef evaluate_roc_cy(float[:,:] distmat, float[:,:] q_feats, float[:,:] g_feats, long[:] q_pids, long[:]g_pids,
+cpdef evaluate_roc_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
                   long[:]q_camids, long[:]g_camids):
 
     distmat = np.asarray(distmat, dtype=np.float32)
-    q_feats = np.asarray(q_feats, dtype=np.float32)
-    g_feats = np.asarray(g_feats, dtype=np.float32)
     q_pids = np.asarray(q_pids, dtype=np.int64)
     g_pids = np.asarray(g_pids, dtype=np.int64)
     q_camids = np.asarray(q_camids, dtype=np.int64)
@@ -30,15 +28,9 @@ cpdef evaluate_roc_cy(float[:,:] distmat, float[:,:] q_feats, float[:,:] g_feats
 
     cdef long num_q = distmat.shape[0]
     cdef long num_g = distmat.shape[1]
-    cdef long dim = q_feats.shape[1]
-
-    cdef long[:,:] indices
-    cdef index = faiss.IndexFlatL2(dim)
-    index.add(np.asarray(g_feats))
-
-    indices = index.search(np.asarray(q_feats), k=num_g)[1]
 
     cdef:
+        long[:,:] indices = np.argsort(distmat, axis=1)
         long[:,:] matches = (np.asarray(g_pids)[np.asarray(indices)] == np.asarray(q_pids)[:, np.newaxis]).astype(np.int64)
 
         float[:] pos = np.zeros(num_q*num_g, dtype=np.float32)
