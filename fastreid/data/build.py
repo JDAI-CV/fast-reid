@@ -77,7 +77,7 @@ def build_reid_test_loader(cfg, dataset_name):
     test_loader = DataLoader(
         test_set,
         batch_sampler=batch_sampler,
-        num_workers=0,  # save some memory
+        num_workers=2,  # save some memory
         collate_fn=fast_batch_collator,
         pin_memory=True,
     )
