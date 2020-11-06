@@ -45,11 +45,6 @@ def default_argument_parser():
     parser = argparse.ArgumentParser(description="fastreid Training")
     parser.add_argument("--config-file", default="", metavar="FILE", help="path to config file")
     parser.add_argument(
-        "--finetune",
-        action="store_true",
-        help="whether to attempt to finetune from the trained model",
-    )
-    parser.add_argument(
         "--resume",
         action="store_true",
         help="whether to attempt to resume from the checkpoint directory",
@@ -244,8 +239,13 @@ class DefaultTrainer(SimpleTrainer):
 
     def resume_or_load(self, resume=True):
         """
-        If `resume==True`, and last checkpoint exists, resume from it.
-        Otherwise, load a model specified by the config.
+        If `resume==True` and `cfg.OUTPUT_DIR` contains the last checkpoint (defined by
+        a `last_checkpoint` file), resume from the file. Resuming means loading all
+        available states (eg. optimizer and scheduler) and update iteration counter
+        from the checkpoint. ``cfg.MODEL.WEIGHTS`` will not be used.
+        Otherwise, this is considered as an independent training. The method will load model
+        weights from the file `cfg.MODEL.WEIGHTS` (but will not load other states) and start
+        from iteration 0.
         Args:
             resume (bool): whether to do resume or not
         """
@@ -468,7 +468,6 @@ class DefaultTrainer(SimpleTrainer):
         because some hyper-param, such as MAX_ITER, means training epochs rather than iters,
         so we need to convert specific hyper-param to training iterations.
         """
-
         cfg = cfg.clone()
         frozen = cfg.is_frozen()
         cfg.defrost()
