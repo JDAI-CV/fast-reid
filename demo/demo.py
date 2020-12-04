@@ -17,13 +17,15 @@ from torch.backends import cudnn
 sys.path.append('..')
 
 from fastreid.config import get_cfg
+from fastreid.utils.logger import setup_logger
 from fastreid.utils.file_io import PathManager
-from predictor import FeatureExtractionDemo
 
+from predictor import FeatureExtractionDemo
 # import some modules added in project like this below
 # from projects.PartialReID.partialreid import *
 
 cudnn.benchmark = True
+setup_logger(name="fastreid")
 
 
 def setup_cfg(args):
