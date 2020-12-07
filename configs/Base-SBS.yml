@@ -25,11 +25,6 @@ MODEL:
       NORM_FEAT: False
       SCALE: 1.0
 
-    COSFACE:
-      MARGIN: 0.35
-      GAMMA: 64
-      SCALE: 1.
-
 INPUT:
   SIZE_TRAIN: [384, 128]
   SIZE_TEST: [384, 128]
