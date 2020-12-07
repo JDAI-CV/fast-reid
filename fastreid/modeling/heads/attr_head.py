@@ -39,7 +39,7 @@ class AttrHead(nn.Module):
         if cls_type == 'linear':          self.classifier = nn.Linear(feat_dim, num_classes, bias=False)
         elif cls_type == 'arcSoftmax':    self.classifier = ArcSoftmax(cfg, feat_dim, num_classes)
         elif cls_type == 'circleSoftmax': self.classifier = CircleSoftmax(cfg, feat_dim, num_classes)
-        elif cls_type == 'amSoftmax':     self.classifier = AMSoftmax(cfg, feat_dim, num_classes)
+        elif cls_type == 'amSoftmax':     self.classifier = CosSoftmax(cfg, feat_dim, num_classes)
         else:                             raise KeyError(f"{cls_type} is not supported!")
         # fmt: on
 

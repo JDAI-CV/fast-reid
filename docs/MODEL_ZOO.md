@@ -2,8 +2,8 @@
 
 ## Introduction
 
-This file documents collection of baselines trained with fastreid. All numbers were obtained with 1 NVIDIA P40 GPU.
-The software in use were PyTorch 1.4, CUDA 10.1.
+This file documents collection of baselines trained with fastreid. All numbers were obtained with 1 NVIDIA V100 GPU.
+The software in use were PyTorch 1.6, CUDA 10.1.
 
 In addition to these official baseline models, you can find more models in [projects/](https://github.com/JDAI-CV/fast-reid/tree/master/projects).
 

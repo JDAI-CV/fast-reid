@@ -11,15 +11,15 @@ since they are meant to represent the "common default behavior" people need in t
 import argparse
 import logging
 import os
+import math
 import sys
 from collections import OrderedDict
 
 import torch
 import torch.nn.functional as F
-from torch.nn.parallel import DistributedDataParallel
 
 from fastreid.data import build_reid_test_loader, build_reid_train_loader
-from fastreid.evaluation import (DatasetEvaluator, ReidEvaluator,
+from fastreid.evaluation import (ReidEvaluator,
                                  inference_on_dataset, print_csv_format)
 from fastreid.modeling.meta_arch import build_model
 from fastreid.solver import build_lr_scheduler, build_optimizer
@@ -31,7 +31,15 @@ from fastreid.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXW
 from fastreid.utils.file_io import PathManager
 from fastreid.utils.logger import setup_logger
 from . import hooks
-from .train_loop import SimpleTrainer
+from .train_loop import TrainerBase, AMPTrainer, SimpleTrainer
+
+try:
+    import apex
+    from apex import amp
+    from apex.parallel import DistributedDataParallel
+except ImportError:
+    raise ImportError("Please install apex from https://www.github.com/nvidia/apex to run this example if you want to"
+                      "train with DDP")
 
 __all__ = ["default_argument_parser", "default_setup", "DefaultPredictor", "DefaultTrainer"]
 
@@ -158,7 +166,7 @@ class DefaultPredictor:
             return features
 
 
-class DefaultTrainer(SimpleTrainer):
+class DefaultTrainer(TrainerBase):
     """
     A trainer with default training logic. Compared to `SimpleTrainer`, it
     contains the following logic in addition:
@@ -196,27 +204,38 @@ class DefaultTrainer(SimpleTrainer):
         Args:
             cfg (CfgNode):
         """
+        super().__init__()
         logger = logging.getLogger("fastreid")
         if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for fastreid
             setup_logger()
 
         # Assume these objects must be constructed in this order.
         data_loader = self.build_train_loader(cfg)
-        cfg = self.auto_scale_hyperparams(cfg, data_loader)
+        cfg = self.auto_scale_hyperparams(cfg, data_loader.dataset.num_classes)
         model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)
+
+        optimizer_ckpt = dict(optimizer=optimizer)
+        if cfg.SOLVER.FP16_ENABLED:
+            model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
+            optimizer_ckpt.update(dict(amp=amp))
 
         # For training, wrap with DDP. But don't need this for inference.
         if comm.get_world_size() > 1:
             # ref to https://github.com/pytorch/pytorch/issues/22049 to set `find_unused_parameters=True`
             # for part of the parameters is not updated.
-            model = DistributedDataParallel(
-                model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
-            )
+            # model = DistributedDataParallel(
+            #     model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
+            # )
+            model = DistributedDataParallel(model, delay_allreduce=True)
 
-        super().__init__(model, data_loader, optimizer, cfg.SOLVER.AMP_ENABLED)
+        self._trainer = (AMPTrainer if cfg.SOLVER.FP16_ENABLED else SimpleTrainer)(
+            model, data_loader, optimizer
+        )
 
-        self.scheduler = self.build_lr_scheduler(cfg, optimizer)
+        self.iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
+        self.scheduler = self.build_lr_scheduler(cfg, optimizer, self.iters_per_epoch)
+
         # Assume no other objects need to be checkpointed.
         # We can later make it checkpoint the stateful hooks
         self.checkpointer = Checkpointer(
@@ -224,15 +243,20 @@ class DefaultTrainer(SimpleTrainer):
             model,
             cfg.OUTPUT_DIR,
             save_to_disk=comm.is_main_process(),
-            optimizer=optimizer,
-            scheduler=self.scheduler,
+            **optimizer_ckpt,
+            **self.scheduler,
         )
-        self.start_iter = 0
-        if cfg.SOLVER.SWA.ENABLED:
-            self.max_iter = cfg.SOLVER.MAX_ITER + cfg.SOLVER.SWA.ITER
-        else:
-            self.max_iter = cfg.SOLVER.MAX_ITER
+        self.start_epoch = 0
 
+        # if cfg.SOLVER.SWA.ENABLED:
+        #     self.max_iter = cfg.SOLVER.MAX_ITER + cfg.SOLVER.SWA.ITER
+        # else:
+        #     self.max_iter = cfg.SOLVER.MAX_ITER
+
+        self.max_epoch = cfg.SOLVER.MAX_EPOCH
+        self.max_iter = self.max_epoch * self.iters_per_epoch
+        self.warmup_iters = cfg.SOLVER.WARMUP_ITERS
+        self.delay_epochs = cfg.SOLVER.DELAY_EPOCHS
         self.cfg = cfg
 
         self.register_hooks(self.build_hooks())
@@ -254,7 +278,7 @@ class DefaultTrainer(SimpleTrainer):
         checkpoint = self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume)
 
         if resume and self.checkpointer.has_checkpoint():
-            self.start_iter = checkpoint.get("iteration", -1) + 1
+            self.start_epoch = checkpoint.get("epoch", -1) + 1
             # The checkpoint stores the training iteration that just finished, thus we start
             # at the next iteration (or iter zero if there's no checkpoint).
 
@@ -276,16 +300,16 @@ class DefaultTrainer(SimpleTrainer):
             hooks.LRScheduler(self.optimizer, self.scheduler),
         ]
 
-        if cfg.SOLVER.SWA.ENABLED:
-            ret.append(
-                hooks.SWA(
-                    cfg.SOLVER.MAX_ITER,
-                    cfg.SOLVER.SWA.PERIOD,
-                    cfg.SOLVER.SWA.LR_FACTOR,
-                    cfg.SOLVER.SWA.ETA_MIN_LR,
-                    cfg.SOLVER.SWA.LR_SCHED,
-                )
-            )
+        # if cfg.SOLVER.SWA.ENABLED:
+        #     ret.append(
+        #         hooks.SWA(
+        #             cfg.SOLVER.MAX_ITER,
+        #             cfg.SOLVER.SWA.PERIOD,
+        #             cfg.SOLVER.SWA.LR_FACTOR,
+        #             cfg.SOLVER.SWA.ETA_MIN_LR,
+        #             cfg.SOLVER.SWA.LR_SCHED,
+        #         )
+        #     )
 
         if cfg.TEST.PRECISE_BN.ENABLED and hooks.get_bn_modules(self.model):
             logger.info("Prepare precise BN dataset")
@@ -298,11 +322,8 @@ class DefaultTrainer(SimpleTrainer):
             ))
 
         if cfg.MODEL.FREEZE_LAYERS != [''] and cfg.SOLVER.FREEZE_ITERS > 0:
-            freeze_layers = ",".join(cfg.MODEL.FREEZE_LAYERS)
-            logger.info(f'Freeze layer group "{freeze_layers}" training for {cfg.SOLVER.FREEZE_ITERS:d} iterations')
-            ret.append(hooks.FreezeLayer(
+            ret.append(hooks.LayerFreeze(
                 self.model,
-                self.optimizer,
                 cfg.MODEL.FREEZE_LAYERS,
                 cfg.SOLVER.FREEZE_ITERS,
             ))
@@ -358,13 +379,16 @@ class DefaultTrainer(SimpleTrainer):
         Returns:
             OrderedDict of results, if evaluation is enabled. Otherwise None.
         """
-        super().train(self.start_iter, self.max_iter)
+        super().train(self.start_epoch, self.max_epoch, self.iters_per_epoch)
         if comm.is_main_process():
             assert hasattr(
                 self, "_last_eval_results"
             ), "No evaluation results obtained during training!"
-            # verify_results(self.cfg, self._last_eval_results)
             return self._last_eval_results
+
+    def run_step(self):
+        self._trainer.iter = self.iter
+        self._trainer.run_step()
 
     @classmethod
     def build_model(cls, cfg):
@@ -390,11 +414,15 @@ class DefaultTrainer(SimpleTrainer):
         return build_optimizer(cfg, model)
 
     @classmethod
-    def build_lr_scheduler(cls, cfg, optimizer):
+    def build_lr_scheduler(cls, cfg, optimizer, iters_per_epoch):
         """
         It now calls :func:`fastreid.solver.build_lr_scheduler`.
         Overwrite it if you'd like a different scheduler.
         """
+        cfg = cfg.clone()
+        cfg.defrost()
+        cfg.SOLVER.MAX_EPOCH = cfg.SOLVER.MAX_EPOCH - max(
+            math.ceil(cfg.SOLVER.WARMUP_ITERS / iters_per_epoch), cfg.SOLVER.DELAY_EPOCHS)
         return build_lr_scheduler(cfg, optimizer)
 
     @classmethod
@@ -462,7 +490,7 @@ class DefaultTrainer(SimpleTrainer):
         return results
 
     @staticmethod
-    def auto_scale_hyperparams(cfg, data_loader):
+    def auto_scale_hyperparams(cfg, num_classes):
         r"""
         This is used for auto-computation actual training iterations,
         because some hyper-param, such as MAX_ITER, means training epochs rather than iters,
@@ -475,7 +503,10 @@ class DefaultTrainer(SimpleTrainer):
         # If you don't hard-code the number of classes, it will compute the number automatically
         if cfg.MODEL.HEADS.NUM_CLASSES == 0:
             output_dir = cfg.OUTPUT_DIR
-            cfg.MODEL.HEADS.NUM_CLASSES = data_loader.dataset.num_classes
+            cfg.MODEL.HEADS.NUM_CLASSES = num_classes
+            logger = logging.getLogger(__name__)
+            logger.info(f"Auto-scaling the num_classes={cfg.MODEL.HEADS.NUM_CLASSES}")
+
             # Update the saved config file to make the number of classes valid
             if comm.is_main_process() and output_dir:
                 # Note: some of our scripts may expect the existence of
@@ -484,32 +515,11 @@ class DefaultTrainer(SimpleTrainer):
                 with PathManager.open(path, "w") as f:
                     f.write(cfg.dump())
 
-        iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
-        cfg.SOLVER.MAX_ITER *= iters_per_epoch
-        cfg.SOLVER.WARMUP_ITERS *= iters_per_epoch
-        cfg.SOLVER.FREEZE_ITERS *= iters_per_epoch
-        cfg.SOLVER.DELAY_ITERS *= iters_per_epoch
-        for i in range(len(cfg.SOLVER.STEPS)):
-            cfg.SOLVER.STEPS[i] *= iters_per_epoch
-        cfg.SOLVER.SWA.ITER *= iters_per_epoch
-        cfg.SOLVER.SWA.PERIOD *= iters_per_epoch
-
-        ckpt_multiple = cfg.SOLVER.CHECKPOINT_PERIOD / cfg.TEST.EVAL_PERIOD
-        # Evaluation period must be divided by 200 for writing into tensorboard.
-        eval_num_mod = (200 - cfg.TEST.EVAL_PERIOD * iters_per_epoch) % 200
-        cfg.TEST.EVAL_PERIOD = cfg.TEST.EVAL_PERIOD * iters_per_epoch + eval_num_mod
-        # Change checkpoint saving period consistent with evaluation period.
-        cfg.SOLVER.CHECKPOINT_PERIOD = int(cfg.TEST.EVAL_PERIOD * ckpt_multiple)
-
-        logger = logging.getLogger(__name__)
-        logger.info(
-            f"Auto-scaling the config to num_classes={cfg.MODEL.HEADS.NUM_CLASSES}, "
-            f"max_Iter={cfg.SOLVER.MAX_ITER}, wamrup_Iter={cfg.SOLVER.WARMUP_ITERS}, "
-            f"freeze_Iter={cfg.SOLVER.FREEZE_ITERS}, delay_Iter={cfg.SOLVER.DELAY_ITERS}, "
-            f"step_Iter={cfg.SOLVER.STEPS}, ckpt_Iter={cfg.SOLVER.CHECKPOINT_PERIOD}, "
-            f"eval_Iter={cfg.TEST.EVAL_PERIOD}."
-        )
-
         if frozen: cfg.freeze()
 
         return cfg
+
+
+# Access basic attributes from the underlying trainer
+for _attr in ["model", "data_loader", "optimizer"]:
+    setattr(DefaultTrainer, _attr, property(lambda self, x=_attr: getattr(self._trainer, x)))

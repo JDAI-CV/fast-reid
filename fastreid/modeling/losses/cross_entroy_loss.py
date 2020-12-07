@@ -46,14 +46,6 @@ def cross_entropy_loss(pred_class_outputs, gt_classes, eps, alpha=0.2):
 
     loss = (-targets * log_probs).sum(dim=1)
 
-    """
-    # confidence penalty
-    conf_penalty = 0.3
-    probs = F.softmax(pred_class_logits, dim=1)
-    entropy = torch.sum(-probs * log_probs, dim=1)
-    loss = torch.clamp_min(loss - conf_penalty * entropy, min=0.)
-    """
-
     with torch.no_grad():
         non_zero_cnt = max(loss.nonzero(as_tuple=False).size(0), 1)
 

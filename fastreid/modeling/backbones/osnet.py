@@ -14,6 +14,7 @@ from torch import nn
 
 from fastreid.layers import get_norm
 from fastreid.utils import comm
+from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
 from .build import BACKBONE_REGISTRY
 
 logger = logging.getLogger(__name__)
@@ -463,23 +464,7 @@ def init_pretrained_weights(model, key=''):
             discarded_layers.append(k)
 
     model_dict.update(new_state_dict)
-    model.load_state_dict(model_dict)
-
-    if len(matched_layers) == 0:
-        warnings.warn(
-            'The pretrained weights from "{}" cannot be loaded, '
-            'please check the key names manually '
-            '(** ignored and continue **)'.format(cached_file)
-        )
-    else:
-        logger.info(
-            'Successfully loaded imagenet pretrained weights from "{}"'.format(cached_file)
-        )
-        if len(discarded_layers) > 0:
-            logger.info(
-                '** The following layers are discarded '
-                'due to unmatched keys or layer size: {}'.format(discarded_layers)
-            )
+    return model_dict
 
 
 @BACKBONE_REGISTRY.register()
@@ -513,7 +498,6 @@ def build_osnet_backbone(cfg):
             try:
                 state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))
                 logger.info(f"Loading pretrained model from {pretrain_path}")
-                model.load_state_dict(state_dict)
             except FileNotFoundError as e:
                 logger.info(f'{pretrain_path} is not found! Please check this path.')
                 raise e
@@ -526,5 +510,15 @@ def build_osnet_backbone(cfg):
             else:
                 pretrain_key = "osnet_" + depth
 
-            init_pretrained_weights(model, pretrain_key)
+            state_dict = init_pretrained_weights(model, pretrain_key)
+
+        incompatible = model.load_state_dict(state_dict, strict=False)
+        if incompatible.missing_keys:
+            logger.info(
+                get_missing_parameters_message(incompatible.missing_keys)
+            )
+        if incompatible.unexpected_keys:
+            logger.info(
+                get_unexpected_parameters_message(incompatible.unexpected_keys)
+            )
     return model

@@ -15,3 +15,6 @@ Note that these are research projects, and therefore may not have the same level
 
 External projects in the community that use fastreid:
 
+# Competitions
+
+- [NAIC20]() coming soon, stay tuned.

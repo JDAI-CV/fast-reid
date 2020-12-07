@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from torch.nn import Parameter
 
 
-class AMSoftmax(nn.Module):
+class CosSoftmax(nn.Module):
     r"""Implement of large margin cosine distance:
     Args:
         in_feat: size of each input sample

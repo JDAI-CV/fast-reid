@@ -10,14 +10,12 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-__all__ = [
-    "BatchNorm",
-    "IBN",
-    "GhostBatchNorm",
-    "FrozenBatchNorm",
-    "SyncBatchNorm",
-    "get_norm",
-]
+try:
+    from apex import parallel
+except ImportError:
+    raise ImportError("Please install apex from https://www.github.com/nvidia/apex to run model with syncBN")
+
+__all__ = ["IBN", "get_norm"]
 
 
 class BatchNorm(nn.BatchNorm2d):
@@ -30,7 +28,7 @@ class BatchNorm(nn.BatchNorm2d):
         self.bias.requires_grad_(not bias_freeze)
 
 
-class SyncBatchNorm(nn.SyncBatchNorm):
+class SyncBatchNorm(parallel.SyncBatchNorm):
     def __init__(self, num_features, eps=1e-05, momentum=0.1, weight_freeze=False, bias_freeze=False, weight_init=1.0,
                  bias_init=0.0):
         super().__init__(num_features, eps=eps, momentum=momentum)

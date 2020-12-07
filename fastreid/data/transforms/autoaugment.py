@@ -494,20 +494,14 @@ def auto_augment_policy(name="original"):
 
 class AutoAugment:
 
-    def __init__(self, total_iter):
-        self.total_iter = total_iter
-        self.gamma = 0
+    def __init__(self):
         self.policy = auto_augment_policy()
 
     def __call__(self, img):
-        if random.uniform(0, 1) > self.gamma:
-            sub_policy = random.choice(self.policy)
-            self.gamma = min(1.0, self.gamma + 1.0 / self.total_iter)
-            for op in sub_policy:
-                img = op(img)
-            return img
-        else:
-            return img
+        sub_policy = random.choice(self.policy)
+        for op in sub_policy:
+            img = op(img)
+        return img
 
 
 def auto_augment_transform(config_str, hparams):

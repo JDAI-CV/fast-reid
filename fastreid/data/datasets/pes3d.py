@@ -5,14 +5,10 @@
 """
 
 import os
-from scipy.io import loadmat
 from glob import glob
 
 from fastreid.data.datasets import DATASET_REGISTRY
 from fastreid.data.datasets.bases import ImageDataset
-import pdb
-import random
-import numpy as np
 
 __all__ = ['PeS3D',]
 

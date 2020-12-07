@@ -1,4 +1,4 @@
-_BASE_: "../Base-Strongerbaseline.yml"
+_BASE_: "../Base-SBS.yml"
 
 MODEL:
   BACKBONE:

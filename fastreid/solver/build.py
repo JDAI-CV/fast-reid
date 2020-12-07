@@ -20,7 +20,7 @@ def build_optimizer(cfg, model):
         if "bias" in key:
             lr *= cfg.SOLVER.BIAS_LR_FACTOR
             weight_decay = cfg.SOLVER.WEIGHT_DECAY_BIAS
-        params += [{"name": key, "params": [value], "lr": lr, "weight_decay": weight_decay, "freeze": False}]
+        params += [{"name": key, "params": [value], "lr": lr, "weight_decay": weight_decay}]
 
     solver_opt = cfg.SOLVER.OPT
     # fmt: off
@@ -31,22 +31,36 @@ def build_optimizer(cfg, model):
 
 
 def build_lr_scheduler(cfg, optimizer):
+    scheduler_dict = {}
+
+    if cfg.SOLVER.WARMUP_ITERS > 0:
+        warmup_args = {
+            "optimizer": optimizer,
+
+            # warmup options
+            "warmup_factor": cfg.SOLVER.WARMUP_FACTOR,
+            "warmup_iters": cfg.SOLVER.WARMUP_ITERS,
+            "warmup_method": cfg.SOLVER.WARMUP_METHOD,
+        }
+        scheduler_dict["warmup_sched"] = lr_scheduler.WarmupLR(**warmup_args)
+
     scheduler_args = {
-        "optimizer": optimizer,
-
-        # warmup options
-        "warmup_factor": cfg.SOLVER.WARMUP_FACTOR,
-        "warmup_iters": cfg.SOLVER.WARMUP_ITERS,
-        "warmup_method": cfg.SOLVER.WARMUP_METHOD,
-
-        # multi-step lr scheduler options
-        "milestones": cfg.SOLVER.STEPS,
-        "gamma": cfg.SOLVER.GAMMA,
-
-        # cosine annealing lr scheduler options
-        "max_iters": cfg.SOLVER.MAX_ITER,
-        "delay_iters": cfg.SOLVER.DELAY_ITERS,
-        "eta_min_lr": cfg.SOLVER.ETA_MIN_LR,
+        "MultiStepLR": {
+            "optimizer": optimizer,
+            # multi-step lr scheduler options
+            "milestones": cfg.SOLVER.STEPS,
+            "gamma": cfg.SOLVER.GAMMA,
+        },
+        "CosineAnnealingLR": {
+            "optimizer": optimizer,
+            # cosine annealing lr scheduler options
+            "T_max": cfg.SOLVER.MAX_EPOCH,
+            "eta_min": cfg.SOLVER.ETA_MIN_LR,
+        },
 
     }
-    return getattr(lr_scheduler, cfg.SOLVER.SCHED)(**scheduler_args)
+
+    scheduler_dict["lr_sched"] = getattr(lr_scheduler, cfg.SOLVER.SCHED)(
+        **scheduler_args[cfg.SOLVER.SCHED])
+
+    return scheduler_dict

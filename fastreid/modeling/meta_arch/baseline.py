@@ -89,7 +89,7 @@ class Baseline(nn.Module):
         loss_names = self._cfg.MODEL.LOSSES.NAME
 
         if "CrossEntropyLoss" in loss_names:
-            loss_dict['loss_cls'] = cross_entropy_loss(
+            loss_dict["loss_cls"] = cross_entropy_loss(
                 cls_outputs,
                 gt_labels,
                 self._cfg.MODEL.LOSSES.CE.EPSILON,
@@ -97,7 +97,7 @@ class Baseline(nn.Module):
             ) * self._cfg.MODEL.LOSSES.CE.SCALE
 
         if "TripletLoss" in loss_names:
-            loss_dict['loss_triplet'] = triplet_loss(
+            loss_dict["loss_triplet"] = triplet_loss(
                 pred_features,
                 gt_labels,
                 self._cfg.MODEL.LOSSES.TRI.MARGIN,
@@ -106,11 +106,11 @@ class Baseline(nn.Module):
             ) * self._cfg.MODEL.LOSSES.TRI.SCALE
 
         if "CircleLoss" in loss_names:
-            loss_dict['loss_circle'] = circle_loss(
+            loss_dict["loss_circle"] = pairwise_circleloss(
                 pred_features,
                 gt_labels,
                 self._cfg.MODEL.LOSSES.CIRCLE.MARGIN,
-                self._cfg.MODEL.LOSSES.CIRCLE.ALPHA,
+                self._cfg.MODEL.LOSSES.CIRCLE.GAMMA,
             ) * self._cfg.MODEL.LOSSES.CIRCLE.SCALE
 
         return loss_dict

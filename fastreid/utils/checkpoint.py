@@ -295,35 +295,35 @@ class PeriodicCheckpointer:
     multiple of period or if `max_iter` is reached.
     """
 
-    def __init__(self, checkpointer: Any, period: int, max_iter: int = None):
+    def __init__(self, checkpointer: Any, period: int, max_epoch: int = None):
         """
         Args:
             checkpointer (Any): the checkpointer object used to save
             checkpoints.
             period (int): the period to save checkpoint.
-            max_iter (int): maximum number of iterations. When it is reached,
+            max_epoch (int): maximum number of epochs. When it is reached,
                 a checkpoint named "model_final" will be saved.
         """
         self.checkpointer = checkpointer
         self.period = int(period)
-        self.max_iter = max_iter
+        self.max_epoch = max_epoch
 
-    def step(self, iteration: int, **kwargs: Any):
+    def step(self, epoch: int, **kwargs: Any):
         """
         Perform the appropriate action at the given iteration.
         Args:
-            iteration (int): the current iteration, ranged in [0, max_iter-1].
+            epoch (int): the current epoch, ranged in [0, max_epoch-1].
             kwargs (Any): extra data to save, same as in
                 :meth:`Checkpointer.save`.
         """
-        iteration = int(iteration)
-        additional_state = {"iteration": iteration}
+        epoch = int(epoch)
+        additional_state = {"epoch": epoch}
         additional_state.update(kwargs)
-        if (iteration + 1) % self.period == 0:
+        if (epoch + 1) % self.period == 0 and epoch < self.max_epoch - 1:
             self.checkpointer.save(
-                "model_{:07d}".format(iteration), **additional_state
+                "model_{:04d}".format(epoch), **additional_state
             )
-        if iteration >= self.max_iter - 1:
+        if epoch >= self.max_epoch - 1:
             self.checkpointer.save("model_final", **additional_state)
 
     def save(self, name: str, **kwargs: Any):

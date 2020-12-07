@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 from fastreid.utils import comm
 from fastreid.layers import GatherLayer
-from .utils import concat_all_gather, euclidean_dist, normalize
+from .utils import concat_all_gather, euclidean_dist, normalize, cosine_dist
 
 
 def softmax_weights(dist, mask):
@@ -87,21 +87,21 @@ def triplet_loss(embedding, targets, margin, norm_feat, hard_mining):
     Related Triplet Loss theory can be found in paper 'In Defense of the Triplet
     Loss for Person Re-Identification'."""
 
-    if norm_feat: embedding = normalize(embedding, axis=-1)
-
-    # For distributed training, gather all features from different process.
-    if comm.get_world_size() > 1:
-        all_embedding = torch.cat(GatherLayer.apply(embedding), dim=0)
-        all_targets = concat_all_gather(targets)
+    if norm_feat:
+        dist_mat = cosine_dist(embedding, embedding)
     else:
-        all_embedding = embedding
-        all_targets = targets
+        dist_mat = euclidean_dist(embedding, embedding)
+    # For distributed training, gather all features from different process.
+    # if comm.get_world_size() > 1:
+    #     all_embedding = torch.cat(GatherLayer.apply(embedding), dim=0)
+    #     all_targets = concat_all_gather(targets)
+    # else:
+    #     all_embedding = embedding
+    #     all_targets = targets
 
-    dist_mat = euclidean_dist(all_embedding, all_embedding)
-
-    N, N = dist_mat.size()
-    is_pos = all_targets.view(N, 1).expand(N, N).eq(all_targets.view(N, 1).expand(N, N).t())
-    is_neg = all_targets.view(N, 1).expand(N, N).ne(all_targets.view(N, 1).expand(N, N).t())
+    N = dist_mat.size(0)
+    is_pos = targets.view(N, 1).expand(N, N).eq(targets.view(N, 1).expand(N, N).t())
+    is_neg = targets.view(N, 1).expand(N, N).ne(targets.view(N, 1).expand(N, N).t())
 
     if hard_mining:
         dist_ap, dist_an = hard_example_mining(dist_mat, is_pos, is_neg)
