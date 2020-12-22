@@ -78,7 +78,7 @@ class DatasetEvaluator:
 #         return results
 
 
-def inference_on_dataset(model, data_loader, evaluator):
+def inference_on_dataset(model, data_loader, evaluator, flip_test=False):
     """
     Run model on the data_loader and evaluate the metrics with evaluator.
     The model will be used in eval mode.
@@ -92,6 +92,7 @@ def inference_on_dataset(model, data_loader, evaluator):
         evaluator (DatasetEvaluator): the evaluator to run. Use
             :class:`DatasetEvaluators([])` if you only want to benchmark, but
             don't want to do any evaluation.
+        flip_test (bool): If get features with flipped images
     Returns:
         The return value of `evaluator.evaluate()`
     """
@@ -112,6 +113,11 @@ def inference_on_dataset(model, data_loader, evaluator):
 
             start_compute_time = time.perf_counter()
             outputs = model(inputs)
+            # Flip test
+            if flip_test:
+                inputs["images"] = inputs["images"].flip(dims=[3])
+                flip_outputs = model(inputs)
+                outputs = (outputs + flip_outputs) / 2
             total_compute_time += time.perf_counter() - start_compute_time
             evaluator.process(inputs, outputs)
 

@@ -331,18 +331,17 @@ class DefaultTrainer(TrainerBase):
         # be saved by checkpointer.
         # This is not always the best: if checkpointing has a different frequency,
         # some checkpoints may have more precise statistics than others.
-        if comm.is_main_process():
-            ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
 
         def test_and_save_results():
             self._last_eval_results = self.test(self.cfg, self.model)
             return self._last_eval_results
 
-        # Do evaluation after checkpointer, because then if it fails,
+        # Do evaluation before checkpointer, because then if it fails,
         # we can use the saved checkpoint to debug.
         ret.append(hooks.EvalHook(cfg.TEST.EVAL_PERIOD, test_and_save_results))
 
         if comm.is_main_process():
+            ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
             # run writers in the end, so that evaluation metrics are written
             ret.append(hooks.PeriodicWriter(self.build_writers(), 200))
 
@@ -474,7 +473,7 @@ class DefaultTrainer(TrainerBase):
                 )
                 results[dataset_name] = {}
                 continue
-            results_i = inference_on_dataset(model, data_loader, evaluator)
+            results_i = inference_on_dataset(model, data_loader, evaluator, flip_test=cfg.TEST.FLIP_ENABLED)
             results[dataset_name] = results_i
 
         if comm.is_main_process():
