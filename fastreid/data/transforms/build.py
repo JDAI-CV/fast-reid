@@ -52,6 +52,7 @@ def build_transforms(cfg, is_train=True):
 
         if do_autoaug:
             res.append(T.RandomApply([AutoAugment()], p=autoaug_prob))
+
         res.append(T.Resize(size_train, interpolation=3))
         if do_flip:
             res.append(T.RandomHorizontalFlip(p=flip_prob))
