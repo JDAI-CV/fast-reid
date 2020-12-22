@@ -75,9 +75,9 @@ class Dataset(object):
         """
         pids = set()
         cams = set()
-        for _, pid, camid in data:
-            pids.add(pid)
-            cams.add(camid)
+        for info in data:
+            pids.add(info[1])
+            cams.add(info[2])
         return len(pids), len(cams)
 
     def get_num_pids(self, data):
