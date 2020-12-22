@@ -106,6 +106,7 @@ class ReidEvaluator(DatasetEvaluator):
             self._results['Rank-{}'.format(r)] = cmc[r - 1]
         self._results['mAP'] = mAP
         self._results['mINP'] = mINP
+        self._results["metric"] = (mAP + cmc[0]) / 2
 
         if self.cfg.TEST.ROC_ENABLED:
             scores, labels = evaluate_roc(dist, query_pids, gallery_pids, query_camids, gallery_camids)
