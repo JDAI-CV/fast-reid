@@ -113,4 +113,12 @@ class Baseline(nn.Module):
                 self._cfg.MODEL.LOSSES.CIRCLE.GAMMA,
             ) * self._cfg.MODEL.LOSSES.CIRCLE.SCALE
 
+        if "Cosface" in loss_names:
+            loss_dict["loss_cosface"] = pairwise_cosface(
+                pred_features,
+                gt_labels,
+                self._cfg.MODEL.LOSSES.COSFACE.MARGIN,
+                self._cfg.MODEL.LOSSES.COSFACE.GAMMA,
+            ) * self._cfg.MODEL.LOSSES.COSFACE.SCALE
+
         return loss_dict
