@@ -11,11 +11,11 @@ from typing import Optional, List, Dict, NamedTuple, Tuple, Iterable
 import numpy as np
 import torch
 import torch.nn as nn
+from apex.parallel import DistributedDataParallel
 from termcolor import colored
-from torch.nn.parallel import DataParallel, DistributedDataParallel
+from torch.nn.parallel import DataParallel
 
 from fastreid.utils.file_io import PathManager
-from fastreid.utils.events import get_event_storage
 
 
 class _IncompatibleKeys(
