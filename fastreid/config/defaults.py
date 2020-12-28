@@ -275,6 +275,9 @@ _C.TEST.PRECISE_BN.ENABLED = False
 _C.TEST.PRECISE_BN.DATASET = 'Market1501'
 _C.TEST.PRECISE_BN.NUM_ITER = 300
 
+# Get features with flipped images
+_C.TEST.FLIP_ENABLED = False
+
 # ---------------------------------------------------------------------------- #
 # Misc options
 # ---------------------------------------------------------------------------- #
