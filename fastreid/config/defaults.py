@@ -21,7 +21,8 @@ _C = CN()
 # -----------------------------------------------------------------------------
 _C.MODEL = CN()
 _C.MODEL.DEVICE = "cuda"
-_C.MODEL.META_ARCHITECTURE = 'Baseline'
+_C.MODEL.META_ARCHITECTURE = "Baseline"
+
 _C.MODEL.FREEZE_LAYERS = ['']
 
 # ---------------------------------------------------------------------------- #
@@ -159,7 +160,7 @@ _C.INPUT.AUGMIX_PROB = 0.0
 _C.INPUT.REA = CN()
 _C.INPUT.REA.ENABLED = False
 _C.INPUT.REA.PROB = 0.5
-_C.INPUT.REA.VALUE = [0.485*255, 0.456*255, 0.406*255]
+_C.INPUT.REA.VALUE = [0.596*255, 0.558*255, 0.497*255]
 # Random Patch
 _C.INPUT.RPT = CN()
 _C.INPUT.RPT.ENABLED = False
@@ -183,7 +184,7 @@ _C.DATALOADER = CN()
 # P/K Sampler for data loading
 _C.DATALOADER.PK_SAMPLER = True
 # Naive sampler which don't consider balanced identity sampling
-_C.DATALOADER.NAIVE_WAY = False
+_C.DATALOADER.NAIVE_WAY = True
 # Number of instance for each person
 _C.DATALOADER.NUM_INSTANCE = 4
 _C.DATALOADER.NUM_WORKERS = 8
@@ -226,7 +227,12 @@ _C.SOLVER.WARMUP_FACTOR = 0.1
 _C.SOLVER.WARMUP_ITERS = 10
 _C.SOLVER.WARMUP_METHOD = "linear"
 
+# Backbone freeze iters
 _C.SOLVER.FREEZE_ITERS = 0
+
+# FC freeze iters
+_C.SOLVER.FREEZE_FC_ITERS = 0
+
 
 # SWA options
 # _C.SOLVER.SWA = CN()
@@ -254,6 +260,7 @@ _C.TEST.EVAL_PERIOD = 20
 _C.TEST.IMS_PER_BATCH = 64
 _C.TEST.METRIC = "cosine"
 _C.TEST.ROC_ENABLED = False
+_C.TEST.FLIP_ENABLED = False
 
 # Average query expansion
 _C.TEST.AQE = CN()
