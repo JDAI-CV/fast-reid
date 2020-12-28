@@ -22,7 +22,7 @@ def read_image(file_name, format=None):
     with PathManager.open(file_name, "rb") as f:
         image = Image.open(f)
 
-        # capture and ignore this bug: https://github.com/python-pillow/Pillow/issues/3973
+        # work around this bug: https://github.com/python-pillow/Pillow/issues/3973
         try:
             image = ImageOps.exif_transpose(image)
         except Exception:
@@ -35,11 +35,20 @@ def read_image(file_name, format=None):
                 conversion_format = "RGB"
             image = image.convert(conversion_format)
         image = np.asarray(image)
-        if format == "BGR":
-            # flip channels if needed
-            image = image[:, :, ::-1]
+
         # PIL squeezes out the channel dimension for "L", so make it HWC
         if format == "L":
             image = np.expand_dims(image, -1)
+
+        # handle formats not supported by PIL
+        elif format == "BGR":
+            # flip channels if needed
+            image = image[:, :, ::-1]
+
+        # handle grayscale mixed in RGB images
+        elif len(image.shape) == 2:
+            image = np.repeat(image[..., np.newaxis], 3, axis=-1)
+
         image = Image.fromarray(image)
+
         return image
