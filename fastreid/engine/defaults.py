@@ -321,12 +321,12 @@ class DefaultTrainer(TrainerBase):
                 cfg.TEST.PRECISE_BN.NUM_ITER,
             ))
 
-        if cfg.MODEL.FREEZE_LAYERS != [''] and cfg.SOLVER.FREEZE_ITERS > 0:
-            ret.append(hooks.LayerFreeze(
-                self.model,
-                cfg.MODEL.FREEZE_LAYERS,
-                cfg.SOLVER.FREEZE_ITERS,
-            ))
+        ret.append(hooks.LayerFreeze(
+            self.model,
+            cfg.MODEL.FREEZE_LAYERS,
+            cfg.SOLVER.FREEZE_ITERS,
+            cfg.SOLVER.FREEZE_FC_ITERS,
+        ))
         # Do PreciseBN before checkpointer, because it updates the model and need to
         # be saved by checkpointer.
         # This is not always the best: if checkpointing has a different frequency,

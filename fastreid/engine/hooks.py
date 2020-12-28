@@ -447,7 +447,7 @@ class PreciseBN(HookBase):
 
 
 class LayerFreeze(HookBase):
-    def __init__(self, model, freeze_layers, freeze_iters):
+    def __init__(self, model, freeze_layers, freeze_iters, fc_freeze_iters):
         self._logger = logging.getLogger(__name__)
 
         if isinstance(model, DistributedDataParallel):
@@ -456,8 +456,11 @@ class LayerFreeze(HookBase):
 
         self.freeze_layers = freeze_layers
         self.freeze_iters = freeze_iters
+        self.fc_freeze_iters = fc_freeze_iters
 
         self.is_frozen = False
+
+        self.fc_frozen = False
 
     def before_step(self):
         # Freeze specific layers
@@ -467,6 +470,18 @@ class LayerFreeze(HookBase):
         # Recover original layers status
         if self.trainer.iter >= self.freeze_iters and self.is_frozen:
             self.open_all_layer()
+
+        if self.trainer.max_iter - self.trainer.iter <= self.fc_freeze_iters \
+                and not self.fc_frozen:
+            self.freeze_classifier()
+
+    def freeze_classifier(self):
+        for p in self.model.heads.classifier.parameters():
+            p.requires_grad_(False)
+
+        self.fc_frozen = True
+        self._logger.info("Freeze classifier training for "
+                          "last {} iterations".format(self.fc_freeze_iters))
 
     def freeze_specific_layer(self):
         for layer in self.freeze_layers:
@@ -493,7 +508,7 @@ class LayerFreeze(HookBase):
 
         self.is_frozen = False
 
-        freeze_layers = ",".join(self.freeze_layers)
+        freeze_layers = ", ".join(self.freeze_layers)
         self._logger.info(f'Open layer group "{freeze_layers}" training')
 
 
