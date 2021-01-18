@@ -13,14 +13,12 @@ import sys
 
 from yacs.config import CfgNode as CfgNode
 
-
 # Global config object
 _C = CfgNode()
 
 # Example usage:
 #   from core.config import cfg
 cfg = _C
-
 
 # ------------------------------------------------------------------------------------ #
 # Model options
@@ -39,7 +37,6 @@ _C.MODEL.NUM_CLASSES = 10
 # Loss function (see pycls/models/loss.py for options)
 _C.MODEL.LOSS_FUN = "cross_entropy"
 
-
 # ------------------------------------------------------------------------------------ #
 # ResNet options
 # ------------------------------------------------------------------------------------ #
@@ -56,7 +53,6 @@ _C.RESNET.WIDTH_PER_GROUP = 64
 
 # Apply stride to 1x1 conv (True -> MSRA; False -> fb.torch)
 _C.RESNET.STRIDE_1X1 = True
-
 
 # ------------------------------------------------------------------------------------ #
 # AnyNet options
@@ -92,7 +88,6 @@ _C.ANYNET.SE_ON = False
 
 # SE ratio
 _C.ANYNET.SE_R = 0.25
-
 
 # ------------------------------------------------------------------------------------ #
 # RegNet options
@@ -133,7 +128,6 @@ _C.REGNET.GROUP_W = 16
 # Bottleneck multiplier (bm = 1 / b from the paper)
 _C.REGNET.BOT_MUL = 1.0
 
-
 # ------------------------------------------------------------------------------------ #
 # EfficientNet options
 # ------------------------------------------------------------------------------------ #
@@ -169,7 +163,6 @@ _C.EN.DC_RATIO = 0.0
 # Dropout ratio
 _C.EN.DROPOUT_RATIO = 0.0
 
-
 # ------------------------------------------------------------------------------------ #
 # Batch norm options
 # ------------------------------------------------------------------------------------ #
@@ -191,7 +184,6 @@ _C.BN.ZERO_INIT_FINAL_GAMMA = False
 # Use a different weight decay for BN layers
 _C.BN.USE_CUSTOM_WEIGHT_DECAY = False
 _C.BN.CUSTOM_WEIGHT_DECAY = 0.0
-
 
 # ------------------------------------------------------------------------------------ #
 # Optimizer options
@@ -234,7 +226,6 @@ _C.OPTIM.WARMUP_FACTOR = 0.1
 # Gradually warm up the OPTIM.BASE_LR over this number of epochs
 _C.OPTIM.WARMUP_EPOCHS = 0
 
-
 # ------------------------------------------------------------------------------------ #
 # Training options
 # ------------------------------------------------------------------------------------ #
@@ -262,7 +253,6 @@ _C.TRAIN.AUTO_RESUME = True
 # Weights to start training from
 _C.TRAIN.WEIGHTS = ""
 
-
 # ------------------------------------------------------------------------------------ #
 # Testing options
 # ------------------------------------------------------------------------------------ #
@@ -281,7 +271,6 @@ _C.TEST.IM_SIZE = 256
 # Weights to use for testing
 _C.TEST.WEIGHTS = ""
 
-
 # ------------------------------------------------------------------------------------ #
 # Common train/test data loader options
 # ------------------------------------------------------------------------------------ #
@@ -293,7 +282,6 @@ _C.DATA_LOADER.NUM_WORKERS = 8
 # Load data to pinned host memory
 _C.DATA_LOADER.PIN_MEMORY = True
 
-
 # ------------------------------------------------------------------------------------ #
 # Memory options
 # ------------------------------------------------------------------------------------ #
@@ -301,7 +289,6 @@ _C.MEM = CfgNode()
 
 # Perform ReLU inplace
 _C.MEM.RELU_INPLACE = True
-
 
 # ------------------------------------------------------------------------------------ #
 # CUDNN options
@@ -313,7 +300,6 @@ _C.CUDNN = CfgNode()
 # in overall speedups when variable size inputs are used (e.g. COCO training)
 _C.CUDNN.BENCHMARK = True
 
-
 # ------------------------------------------------------------------------------------ #
 # Precise timing options
 # ------------------------------------------------------------------------------------ #
@@ -324,7 +310,6 @@ _C.PREC_TIME.WARMUP_ITER = 3
 
 # Number of iterations to compute avg time
 _C.PREC_TIME.NUM_ITER = 30
-
 
 # ------------------------------------------------------------------------------------ #
 # Misc options
@@ -359,7 +344,6 @@ _C.PORT_RANGE = [10000, 65000]
 # Models weights referred to by URL are downloaded to this local cache
 _C.DOWNLOAD_CACHE = "/tmp/pycls-download-cache"
 
-
 # ------------------------------------------------------------------------------------ #
 # Deprecated keys
 # ------------------------------------------------------------------------------------ #
@@ -369,7 +353,7 @@ _C.register_deprecated_key("PREC_TIME.ENABLED")
 _C.register_deprecated_key("PORT")
 
 
-def assert_and_infer_cfg(cache_urls=True):
+def assert_and_infer_cfg():
     """Checks config values invariants."""
     err_str = "The first lr step must start at 0"
     assert not _C.OPTIM.STEPS or _C.OPTIM.STEPS[0] == 0, err_str
@@ -382,14 +366,6 @@ def assert_and_infer_cfg(cache_urls=True):
     assert _C.TEST.BATCH_SIZE % _C.NUM_GPUS == 0, err_str
     err_str = "Log destination '{}' not supported"
     assert _C.LOG_DEST in ["stdout", "file"], err_str.format(_C.LOG_DEST)
-    if cache_urls:
-        cache_cfg_urls()
-
-
-def cache_cfg_urls():
-    """Download URLs in config, cache them, and rewrite cfg to use cached file."""
-    _C.TRAIN.WEIGHTS = cache_url(_C.TRAIN.WEIGHTS, _C.DOWNLOAD_CACHE)
-    _C.TEST.WEIGHTS = cache_url(_C.TEST.WEIGHTS, _C.DOWNLOAD_CACHE)
 
 
 def dump_cfg():
