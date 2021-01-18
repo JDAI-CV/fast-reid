@@ -1,0 +1,12 @@
+_BASE_: face_base.yml
+
+MODEL:
+  META_ARCHITECTURE: Baseline
+
+  BACKBONE:
+    NAME: build_resnetIR_backbone
+    DEPTH: 100x
+    FEAT_DIM: 25088 # 512x7x7
+    WITH_SE: True
+
+OUTPUT_DIR: projects/FastFace/logs/ir_se101-ms1mv2-circle

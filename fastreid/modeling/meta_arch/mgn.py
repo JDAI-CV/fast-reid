@@ -111,17 +111,11 @@ class MGN(nn.Module):
             b32_outputs = self.b32_head(b32_feat, targets)
             b33_outputs = self.b33_head(b33_feat, targets)
 
-            return {
-                "b1_outputs": b1_outputs,
-                "b2_outputs": b2_outputs,
-                "b21_outputs": b21_outputs,
-                "b22_outputs": b22_outputs,
-                "b3_outputs": b3_outputs,
-                "b31_outputs": b31_outputs,
-                "b32_outputs": b32_outputs,
-                "b33_outputs": b33_outputs,
-                "targets": targets,
-            }
+            losses = self.losses(b1_outputs,
+                        b2_outputs, b21_outputs, b22_outputs,
+                        b3_outputs, b31_outputs, b32_outputs, b33_outputs,
+                        targets)
+            return losses
         else:
             b1_pool_feat = self.b1_head(b1_feat)
             b2_pool_feat = self.b2_head(b2_feat)
@@ -150,18 +144,12 @@ class MGN(nn.Module):
         images.sub_(self.pixel_mean).div_(self.pixel_std)
         return images
 
-    def losses(self, outs):
-        # fmt: off
-        b1_outputs        = outs["b1_outputs"]
-        b2_outputs        = outs["b2_outputs"]
-        b21_outputs       = outs["b21_outputs"]
-        b22_outputs       = outs["b22_outputs"]
-        b3_outputs        = outs["b3_outputs"]
-        b31_outputs       = outs["b31_outputs"]
-        b32_outputs       = outs["b32_outputs"]
-        b33_outputs       = outs["b33_outputs"]
-        gt_labels         = outs["targets"]
+    def losses(self,
+               b1_outputs,
+               b2_outputs, b21_outputs, b22_outputs,
+               b3_outputs, b31_outputs, b32_outputs, b33_outputs, gt_labels):
         # model predictions
+        # fmt: off
         pred_class_logits = b1_outputs['pred_class_logits'].detach()
         b1_logits         = b1_outputs['cls_outputs']
         b2_logits         = b2_outputs['cls_outputs']

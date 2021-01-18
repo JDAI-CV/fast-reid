@@ -1,23 +1,22 @@
 MODEL:
-  META_ARCHITECTURE: "Baseline"
+  META_ARCHITECTURE: Baseline
 
   BACKBONE:
-    NAME: "build_resnet_backbone"
-    NORM: "BN"
-    DEPTH: "50x"
+    NAME: build_resnet_backbone
+    NORM: BN
+    DEPTH: 50x
     LAST_STRIDE: 1
     FEAT_DIM: 2048
     WITH_IBN: False
     PRETRAIN: True
-    PRETRAIN_PATH: "/export/home/lxy/.cache/torch/checkpoints/resnet50-19c8e357.pth"
 
   HEADS:
-    NAME: "EmbeddingHead"
-    NORM: "BN"
+    NAME: EmbeddingHead
+    NORM: BN
     WITH_BNNECK: True
-    POOL_LAYER: "avgpool"
-    NECK_FEAT: "before"
-    CLS_LAYER: "linear"
+    POOL_LAYER: avgpool
+    NECK_FEAT: before
+    CLS_LAYER: linear
 
   LOSSES:
     NAME: ("CrossEntropyLoss", "TripletLoss",)
@@ -33,8 +32,8 @@ MODEL:
       SCALE: 1.
 
 INPUT:
-  SIZE_TRAIN: [256, 128]
-  SIZE_TEST: [256, 128]
+  SIZE_TRAIN: [ 256, 128 ]
+  SIZE_TEST: [ 256, 128 ]
   REA:
     ENABLED: True
     PROB: 0.5
@@ -48,7 +47,7 @@ DATALOADER:
 
 SOLVER:
   FP16_ENABLED: True
-  OPT: "Adam"
+  OPT: Adam
   MAX_EPOCH: 120
   BASE_LR: 0.00035
   BIAS_LR_FACTOR: 2.
@@ -56,12 +55,12 @@ SOLVER:
   WEIGHT_DECAY_BIAS: 0.0005
   IMS_PER_BATCH: 64
 
-  SCHED: "MultiStepLR"
-  STEPS: [40, 90]
+  SCHED: MultiStepLR
+  STEPS: [ 40, 90 ]
   GAMMA: 0.1
 
   WARMUP_FACTOR: 0.1
-  WARMUP_ITERS: 2000
+  WARMUP_EPOCHS: 10
 
   CHECKPOINT_PERIOD: 30
 

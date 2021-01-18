@@ -30,7 +30,7 @@ def print_csv_format(results):
     table = tabulate(
         csv_results,
         tablefmt="pipe",
-        floatfmt=".2%",
+        floatfmt=".2f",
         headers=metrics,
         numalign="left",
     )

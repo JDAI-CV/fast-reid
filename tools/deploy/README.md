@@ -82,7 +82,7 @@ This is a tiny example for converting fastreid-baseline in `meta_arch` to Caffe 
     --input test_data/*.jpg --output caffe_output
    ```
 
-5. Run `demo/demo.py` to get fastreid model features with the same input images, then verify that Caffe and PyTorch are computing the same value for the network.
+6. Run `demo/demo.py` to get fastreid model features with the same input images, then verify that Caffe and PyTorch are computing the same value for the network.
 
     ```python
     np.testing.assert_allclose(torch_out, ort_out, rtol=1e-3, atol=1e-6)
@@ -127,9 +127,9 @@ This is a tiny example for converting fastreid-baseline in `meta_arch` to ONNX m
 <details>
 <summary>step-to-step pipeline for trt convert</summary>
 
-This is a tiny example for converting fastreid-baseline in `meta_arch` to TRT model. We use [tiny-tensorrt](https://github.com/zerollzeng/tiny-tensorrt), which is a simple and easy-to-use nvidia TensorRT warpper, to get the model converted to tensorRT.
+This is a tiny example for converting fastreid-baseline in `meta_arch` to TRT model. We use [tiny-tensorrt](https://github.com/zerollzeng/tiny-tensorrt) which is a simple and easy-to-use nvidia TensorRt warpper, to get the model converted to tensorRT.
 
-First you need to convert the pytorch model to ONNX format following [ONNX Convert](https://github.com/JDAI-CV/fast-reid/tree/master/tools/deploy#onnx-convert), and you need to remember your `output` name. Then you can convert ONNX model to TensorRT following instructions below.
+First you need to convert the pytorch model to ONNX format following [ONNX Convert](https://github.com/JDAI-CV/fast-reid#fastreid), and you need to remember your `output` name. Then you can convert ONNX model to TensorRT following instructions below.
 
 1. Run command line below to get the converted TRT model from ONNX model,
 

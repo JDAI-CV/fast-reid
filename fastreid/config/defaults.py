@@ -25,6 +25,9 @@ _C.MODEL.META_ARCHITECTURE = "Baseline"
 
 _C.MODEL.FREEZE_LAYERS = ['']
 
+# MoCo memory size
+_C.MODEL.QUEUE_SIZE = 8192
+
 # ---------------------------------------------------------------------------- #
 # Backbone options
 # ---------------------------------------------------------------------------- #
@@ -120,6 +123,13 @@ _C.MODEL.PIXEL_MEAN = [0.485*255, 0.456*255, 0.406*255]
 # Values to be used for image normalization
 _C.MODEL.PIXEL_STD = [0.229*255, 0.224*255, 0.225*255]
 
+# -----------------------------------------------------------------------------
+# KNOWLEDGE DISTILLATION
+# -----------------------------------------------------------------------------
+
+_C.KD = CN()
+_C.KD.MODEL_CONFIG = ""
+_C.KD.MODEL_WEIGHTS = ""
 
 # -----------------------------------------------------------------------------
 # INPUT
@@ -148,6 +158,9 @@ _C.INPUT.CJ.CONTRAST = 0.15
 _C.INPUT.CJ.SATURATION = 0.1
 _C.INPUT.CJ.HUE = 0.1
 
+# Random Affine
+_C.INPUT.DO_AFFINE = False
+
 # Auto augmentation
 _C.INPUT.DO_AUTOAUG = False
 _C.INPUT.AUTOAUG_PROB = 0.0
@@ -160,7 +173,7 @@ _C.INPUT.AUGMIX_PROB = 0.0
 _C.INPUT.REA = CN()
 _C.INPUT.REA.ENABLED = False
 _C.INPUT.REA.PROB = 0.5
-_C.INPUT.REA.VALUE = [0.596*255, 0.558*255, 0.497*255]
+_C.INPUT.REA.VALUE = [0.485*255, 0.456*255, 0.406*255]
 # Random Patch
 _C.INPUT.RPT = CN()
 _C.INPUT.RPT.ENABLED = False
@@ -207,6 +220,7 @@ _C.SOLVER.BIAS_LR_FACTOR = 1.
 _C.SOLVER.HEADS_LR_FACTOR = 1.
 
 _C.SOLVER.MOMENTUM = 0.9
+_C.SOLVER.NESTEROV = True
 
 _C.SOLVER.WEIGHT_DECAY = 0.0005
 _C.SOLVER.WEIGHT_DECAY_BIAS = 0.
@@ -224,7 +238,7 @@ _C.SOLVER.ETA_MIN_LR = 1e-7
 
 # Warmup options
 _C.SOLVER.WARMUP_FACTOR = 0.1
-_C.SOLVER.WARMUP_ITERS = 10
+_C.SOLVER.WARMUP_EPOCHS = 10
 _C.SOLVER.WARMUP_METHOD = "linear"
 
 # Backbone freeze iters

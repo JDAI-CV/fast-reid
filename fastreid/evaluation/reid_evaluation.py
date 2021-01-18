@@ -6,19 +6,18 @@
 import copy
 import logging
 from collections import OrderedDict
-from sklearn import metrics
 
 import numpy as np
 import torch
 import torch.nn.functional as F
+from sklearn import metrics
 
+from fastreid.utils import comm
+from fastreid.utils.compute_dist import build_dist
 from .evaluator import DatasetEvaluator
 from .query_expansion import aqe
 from .rank import evaluate_rank
-from .rerank import re_ranking
 from .roc import evaluate_roc
-from fastreid.utils import comm
-from fastreid.utils.compute_dist import build_dist
 
 logger = logging.getLogger(__name__)
 
@@ -103,10 +102,10 @@ class ReidEvaluator(DatasetEvaluator):
         mAP = np.mean(all_AP)
         mINP = np.mean(all_INP)
         for r in [1, 5, 10]:
-            self._results['Rank-{}'.format(r)] = cmc[r - 1]
-        self._results['mAP'] = mAP
-        self._results['mINP'] = mINP
-        self._results["metric"] = (mAP + cmc[0]) / 2
+            self._results['Rank-{}'.format(r)] = cmc[r - 1] * 100
+        self._results['mAP'] = mAP * 100
+        self._results['mINP'] = mINP * 100
+        self._results["metric"] = (mAP + cmc[0]) / 2 * 100
 
         if self.cfg.TEST.ROC_ENABLED:
             scores, labels = evaluate_roc(dist, query_pids, gallery_pids, query_camids, gallery_camids)

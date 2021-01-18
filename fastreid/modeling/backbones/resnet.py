@@ -183,6 +183,7 @@ class ResNet(nn.Module):
         x = self.relu(x)
         x = self.maxpool(x)
 
+        # layer 1
         NL1_counter = 0
         if len(self.NL_1_idx) == 0:
             self.NL_1_idx = [-1]
@@ -192,7 +193,7 @@ class ResNet(nn.Module):
                 _, C, H, W = x.shape
                 x = self.NL_1[NL1_counter](x)
                 NL1_counter += 1
-        # Layer 2
+        # layer 2
         NL2_counter = 0
         if len(self.NL_2_idx) == 0:
             self.NL_2_idx = [-1]
@@ -202,7 +203,8 @@ class ResNet(nn.Module):
                 _, C, H, W = x.shape
                 x = self.NL_2[NL2_counter](x)
                 NL2_counter += 1
-        # Layer 3
+
+        # layer 3
         NL3_counter = 0
         if len(self.NL_3_idx) == 0:
             self.NL_3_idx = [-1]
@@ -212,7 +214,8 @@ class ResNet(nn.Module):
                 _, C, H, W = x.shape
                 x = self.NL_3[NL3_counter](x)
                 NL3_counter += 1
-        # Layer 4
+
+        # layer 4
         NL4_counter = 0
         if len(self.NL_4_idx) == 0:
             self.NL_4_idx = [-1]

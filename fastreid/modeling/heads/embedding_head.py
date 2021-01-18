@@ -50,7 +50,7 @@ class EmbeddingHead(nn.Module):
 
         self.bottleneck = nn.Sequential(*bottleneck)
 
-        # identity classification layer
+        # classification layer
         # fmt: off
         if cls_type == 'linear':          self.classifier = nn.Linear(feat_dim, num_classes, bias=False)
         elif cls_type == 'arcSoftmax':    self.classifier = ArcSoftmax(cfg, feat_dim, num_classes)

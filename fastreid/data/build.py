@@ -59,7 +59,7 @@ def build_reid_train_loader(cfg, mapper=None, **kwargs):
     return train_loader
 
 
-def build_reid_test_loader(cfg, dataset_name, **kwargs):
+def build_reid_test_loader(cfg, dataset_name, mapper=None, **kwargs):
     cfg = cfg.clone()
 
     dataset = DATASET_REGISTRY.get(dataset_name)(root=_root, **kwargs)
@@ -67,8 +67,12 @@ def build_reid_test_loader(cfg, dataset_name, **kwargs):
         dataset.show_test()
     test_items = dataset.query + dataset.gallery
 
-    test_transforms = build_transforms(cfg, is_train=False)
-    test_set = CommDataset(test_items, test_transforms, relabel=False)
+    if mapper is not None:
+        transforms = mapper
+    else:
+        transforms = build_transforms(cfg, is_train=False)
+
+    test_set = CommDataset(test_items, transforms, relabel=False)
 
     mini_batch_size = cfg.TEST.IMS_PER_BATCH // comm.get_world_size()
     data_sampler = samplers.InferenceSampler(len(test_set))

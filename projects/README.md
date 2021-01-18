@@ -7,9 +7,13 @@ They are examples of how to use fastrei as a library, to make your projects more
 Note that these are research projects, and therefore may not have the same level of support or stability of fastreid.
 
 - [Deep Spatial Feature Reconstruction for Partial Person Re-identification](https://github.com/JDAI-CV/fast-reid/tree/master/projects/PartialReID)
-- [Distillation Person Re-identification](https://github.com/JDAI-CV/fast-reid/tree/master/projects/DistillReID)
 - [Black Re-ID: A Head-shoulder Descriptor for the Challenging Problem of Person Re-Identification](https://github.com/JDAI-CV/fast-reid/tree/master/projects/HAA)
-- [Person Attribute Recognition](https://github.com/JDAI-CV/fast-reid/tree/master/projects/attribute_recognition)
+- [Image Classification](https://github.com/JDAI-CV/fast-reid/tree/master/projects/FastCls)
+- [Face Recognition](https://github.com/JDAI-CV/fast-reid/tree/master/projects/FastFace)
+- [Image Retrieval](https://github.com/JDAI-CV/fast-reid/tree/master/projects/FastRetri)
+- [Attribute Recognition](https://github.com/JDAI-CV/fast-reid/tree/master/projects/FastAttr)
+- [Hyper-Parameters Optimization](https://github.com/JDAI-CV/fast-reid/tree/master/projects/FastTune)
+- [Overhaul Distillation](https://github.com/JDAI-CV/fast-reid/tree/master/projects/FastDistill)
 
 # External Projects
 

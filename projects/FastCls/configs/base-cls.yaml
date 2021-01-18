@@ -1,0 +1,75 @@
+MODEL:
+  META_ARCHITECTURE: Baseline
+
+  BACKBONE:
+    NAME: build_resnet_backbone
+    DEPTH: 50x
+    NORM: BN
+    LAST_STRIDE: 2
+    FEAT_DIM: 2048
+    PRETRAIN: True
+
+  HEADS:
+    NAME: ClsHead
+    WITH_BNNECK: False
+    EMBEDDING_DIM: 0
+    POOL_LAYER: fastavgpool
+    CLS_LAYER: linear
+
+  LOSSES:
+    NAME: ("CrossEntropyLoss",)
+
+    CE:
+      EPSILON: 0.1
+      SCALE: 1.
+
+INPUT:
+  SIZE_TEST: [256,]
+  CROP_SIZE: 224
+  DO_FLIP: True
+
+  DO_AUGMIX: False
+  DO_AUTOAUG: False
+  DO_PAD: False
+  CJ:
+    ENABLED: False
+  DO_AFFINE: False
+  REA:
+    ENABLED: False
+
+DATALOADER:
+  PK_SAMPLER: False
+  NUM_WORKERS: 8
+
+SOLVER:
+  MAX_EPOCH: 100
+  FP16_ENABLED: True
+
+  OPT: SGD
+  SCHED: CosineAnnealingLR
+
+  BASE_LR: 0.003
+  MOMENTUM: 0.99
+  NESTEROV: True
+
+  BIAS_LR_FACTOR: 1.
+  WEIGHT_DECAY: 0.0005
+  WEIGHT_DECAY_BIAS: 0.
+  IMS_PER_BATCH: 128
+
+  ETA_MIN_LR: 0.00003
+
+  WARMUP_FACTOR: 0.1
+  WARMUP_EPOCHS: 10
+
+  CHECKPOINT_PERIOD: 10
+
+TEST:
+  EVAL_PERIOD: 10
+  IMS_PER_BATCH: 256
+
+DATASETS:
+  NAMES: ("Hymenoptera",)
+  TESTS: ("Hymenoptera",)
+
+OUTPUT_DIR: projects/FastCls/logs/baseline

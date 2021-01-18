@@ -236,14 +236,7 @@ class SimpleTrainer(TrainerBase):
         If your want to do something with the heads, you can wrap the model.
         """
 
-        outs = self.model(data)
-
-        # Compute loss
-        if isinstance(self.model, DistributedDataParallel):
-            loss_dict = self.model.module.losses(outs)
-        else:
-            loss_dict = self.model.losses(outs)
-
+        loss_dict = self.model(data)
         losses = sum(loss_dict.values())
 
         """
@@ -251,6 +244,7 @@ class SimpleTrainer(TrainerBase):
         wrap the optimizer with your custom `zero_grad()` method.
         """
         self.optimizer.zero_grad()
+
         losses.backward()
 
         self._write_metrics(loss_dict, data_time)
@@ -308,6 +302,7 @@ class AMPTrainer(SimpleTrainer):
     Like :class:`SimpleTrainer`, but uses apex automatic mixed precision
     in the training loop.
     """
+
     def run_step(self):
         """
         Implement the AMP training logic.
@@ -319,14 +314,7 @@ class AMPTrainer(SimpleTrainer):
         data = next(self._data_loader_iter)
         data_time = time.perf_counter() - start
 
-        outs = self.model(data)
-
-        # Compute loss
-        if isinstance(self.model, DistributedDataParallel):
-            loss_dict = self.model.module.losses(outs)
-        else:
-            loss_dict = self.model.losses(outs)
-
+        loss_dict = self.model(data)
         losses = sum(loss_dict.values())
 
         self.optimizer.zero_grad()

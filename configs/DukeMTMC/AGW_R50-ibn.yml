@@ -1,4 +1,4 @@
-_BASE_: "../Base-AGW.yml"
+_BASE_: ../Base-AGW.yml
 
 MODEL:
   BACKBONE:
@@ -8,4 +8,4 @@ DATASETS:
   NAMES: ("DukeMTMC",)
   TESTS: ("DukeMTMC",)
 
-OUTPUT_DIR: "logs/dukemtmc/agw_R50-ibn"
+OUTPUT_DIR: logs/dukemtmc/agw_R50-ibn

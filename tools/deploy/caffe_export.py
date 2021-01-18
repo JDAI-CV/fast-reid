@@ -5,9 +5,11 @@
 """
 
 import argparse
+import logging
+import sys
 
 import torch
-import sys
+
 sys.path.append('../../')
 
 import pytorch_to_caffe
@@ -17,11 +19,15 @@ from fastreid.utils.file_io import PathManager
 from fastreid.utils.checkpoint import Checkpointer
 from fastreid.utils.logger import setup_logger
 
-logger = setup_logger(name='caffe_export')
+from projects.bjzProject.projectbaseline import add_moco_config
+
+setup_logger(name='fastreid')
+logger = logging.getLogger("fastreid.caffe_export")
 
 
 def setup_cfg(args):
     cfg = get_cfg()
+    add_moco_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()

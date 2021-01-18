@@ -10,7 +10,7 @@ import sys
 
 import cv2
 import numpy as np
-# import tqdm
+import tqdm
 
 sys.path.append("/export/home/lxy/runtimelib-tensorrt-tiny/build")
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         if os.path.isdir(args.input[0]):
             args.input = glob.glob(os.path.expanduser(args.input[0]))
             assert args.input, "The input path(s) was not found"
-        for path in args.input:
+        for path in tqdm.tqdm(args.input):
             input_numpy_array = preprocess(path, args.height, args.width)
             trt.DoInference(input_numpy_array)
             feat = trt.GetOutput(args.output_name)

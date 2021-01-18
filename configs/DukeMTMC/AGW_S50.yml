@@ -1,11 +1,11 @@
-_BASE_: "../Base-AGW.yml"
+_BASE_: ../Base-AGW.yml
 
 MODEL:
   BACKBONE:
-    NAME: "build_resnest_backbone"
+    NAME: build_resnest_backbone
 
 DATASETS:
   NAMES: ("DukeMTMC",)
   TESTS: ("DukeMTMC",)
 
-OUTPUT_DIR: "logs/dukemtmc/agw_S50"
+OUTPUT_DIR: logs/dukemtmc/agw_S50

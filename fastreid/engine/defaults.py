@@ -233,8 +233,7 @@ class DefaultTrainer(TrainerBase):
             model, data_loader, optimizer
         )
 
-        self.iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
-        self.scheduler = self.build_lr_scheduler(cfg, optimizer, self.iters_per_epoch)
+        self.scheduler = self.build_lr_scheduler(cfg, optimizer)
 
         # Assume no other objects need to be checkpointed.
         # We can later make it checkpoint the stateful hooks
@@ -246,16 +245,13 @@ class DefaultTrainer(TrainerBase):
             **optimizer_ckpt,
             **self.scheduler,
         )
+
+        self.iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
+
         self.start_epoch = 0
-
-        # if cfg.SOLVER.SWA.ENABLED:
-        #     self.max_iter = cfg.SOLVER.MAX_ITER + cfg.SOLVER.SWA.ITER
-        # else:
-        #     self.max_iter = cfg.SOLVER.MAX_ITER
-
         self.max_epoch = cfg.SOLVER.MAX_EPOCH
         self.max_iter = self.max_epoch * self.iters_per_epoch
-        self.warmup_iters = cfg.SOLVER.WARMUP_ITERS
+        self.warmup_epochs = cfg.SOLVER.WARMUP_EPOCHS
         self.delay_epochs = cfg.SOLVER.DELAY_EPOCHS
         self.cfg = cfg
 
@@ -413,15 +409,11 @@ class DefaultTrainer(TrainerBase):
         return build_optimizer(cfg, model)
 
     @classmethod
-    def build_lr_scheduler(cls, cfg, optimizer, iters_per_epoch):
+    def build_lr_scheduler(cls, cfg, optimizer):
         """
         It now calls :func:`fastreid.solver.build_lr_scheduler`.
         Overwrite it if you'd like a different scheduler.
         """
-        cfg = cfg.clone()
-        cfg.defrost()
-        cfg.SOLVER.MAX_EPOCH = cfg.SOLVER.MAX_EPOCH - max(
-            math.ceil(cfg.SOLVER.WARMUP_ITERS / iters_per_epoch), cfg.SOLVER.DELAY_EPOCHS)
         return build_lr_scheduler(cfg, optimizer)
 
     @classmethod
@@ -429,7 +421,7 @@ class DefaultTrainer(TrainerBase):
         """
         Returns:
             iterable
-        It now calls :func:`fastreid.data.build_detection_train_loader`.
+        It now calls :func:`fastreid.data.build_reid_train_loader`.
         Overwrite it if you'd like a different data loader.
         """
         logger = logging.getLogger(__name__)
@@ -441,7 +433,7 @@ class DefaultTrainer(TrainerBase):
         """
         Returns:
             iterable
-        It now calls :func:`fastreid.data.build_detection_test_loader`.
+        It now calls :func:`fastreid.data.build_reid_test_loader`.
         Overwrite it if you'd like a different data loader.
         """
         return build_reid_test_loader(cfg, dataset_name)

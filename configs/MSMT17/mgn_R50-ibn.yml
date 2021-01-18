@@ -1,4 +1,4 @@
-_BASE_: "../Base-MGN.yml"
+_BASE_: ../Base-MGN.yml
 
 MODEL:
   BACKBONE:
@@ -8,4 +8,4 @@ DATASETS:
   NAMES: ("MSMT17",)
   TESTS: ("MSMT17",)
 
-OUTPUT_DIR: "logs/msmt17/mgn_R50-ibn"
+OUTPUT_DIR: logs/msmt17/mgn_R50-ibn

@@ -1,0 +1,68 @@
+MODEL:
+  META_ARCHITECTURE: Baseline
+
+  PIXEL_MEAN: [127.5, 127.5, 127.5]
+  PIXEL_STD: [127.5, 127.5, 127.5]
+
+  HEADS:
+    NAME: EmbeddingHead
+    NORM: BN
+    NECK_FEAT: after
+    EMBEDDING_DIM: 512
+    POOL_LAYER: flatten
+    CLS_LAYER: circleSoftmax
+    SCALE: 256
+    MARGIN: 0.25
+
+  LOSSES:
+    NAME: ("CrossEntropyLoss",)
+
+    CE:
+      EPSILON: 0.
+      SCALE: 1.
+
+DATASETS:
+  NAMES: ("MS1MV2",)
+  TESTS: ("CPLFW", "VGG2_FP", "CALFW", "CFP_FF", "CFP_FP", "AgeDB_30", "LFW")
+
+INPUT:
+  SIZE_TRAIN: [112, 112]
+  SIZE_TEST: [112, 112]
+  DO_AUGMIX: False
+  DO_AUTOAUG: False
+
+  CJ:
+    ENABLED: False
+
+  DO_FLIP: True
+  FLIP_PROB: 0.5
+  DO_PAD: False
+
+DATALOADER:
+  PK_SAMPLER: False
+  NUM_WORKERS: 8
+
+SOLVER:
+  MAX_EPOCH: 16
+  FP16_ENABLED: False
+
+  OPT: SGD
+  BASE_LR: 0.1
+  MOMENTUM: 0.9
+
+  SCHED: CosineAnnealingLR
+  ETA_MIN_LR: 0.0001
+
+  BIAS_LR_FACTOR: 1.
+  WEIGHT_DECAY: 0.0005
+  WEIGHT_DECAY_BIAS: 0.0005
+  IMS_PER_BATCH: 512
+
+  WARMUP_FACTOR: 0.1
+  WARMUP_EPOCHS: 1
+
+  CHECKPOINT_PERIOD: 2
+
+TEST:
+  EVAL_PERIOD: 2
+  IMS_PER_BATCH: 1024

@@ -1,11 +1,11 @@
-_BASE_: "Base-bagtricks.yml"
+_BASE_: Base-bagtricks.yml
 
 MODEL:
   BACKBONE:
     WITH_NL: True
 
   HEADS:
-    POOL_LAYER: "gempool"
+    POOL_LAYER: gempool
 
   LOSSES:
     NAME: ("CrossEntropyLoss", "TripletLoss")

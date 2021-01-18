@@ -1,4 +1,4 @@
-_BASE_: "../Base-SBS.yml"
+_BASE_: ../Base-SBS.yml
 
 INPUT:
   SIZE_TRAIN: [256, 256]
@@ -9,14 +9,14 @@ MODEL:
     WITH_IBN: True
 
 SOLVER:
-  OPT: "SGD"
+  OPT: SGD
   BASE_LR: 0.01
   ETA_MIN_LR: 7.7e-5
 
   IMS_PER_BATCH: 64
   MAX_ITER: 60
   DELAY_ITERS: 30
-  WARMUP_ITERS: 10
+  WARMUP_EPOCHS: 10
   FREEZE_ITERS: 10
 
   CHECKPOINT_PERIOD: 20
@@ -29,4 +29,4 @@ TEST:
   EVAL_PERIOD: 20
   IMS_PER_BATCH: 128
 
-OUTPUT_DIR: "logs/veri/sbs_R50-ibn"
+OUTPUT_DIR: logs/veri/sbs_R50-ibn

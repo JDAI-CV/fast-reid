@@ -1,4 +1,4 @@
-_BASE_: "../Base-bagtricks.yml"
+_BASE_: ../Base-bagtricks.yml
 
 INPUT:
   SIZE_TRAIN: [256, 256]
@@ -24,7 +24,7 @@ SOLVER:
   IMS_PER_BATCH: 512
   MAX_ITER: 60
   STEPS: [30, 50]
-  WARMUP_ITERS: 10
+  WARMUP_EPOCHS: 10
 
   CHECKPOINT_PERIOD: 20
 
@@ -32,4 +32,4 @@ TEST:
   EVAL_PERIOD: 20
   IMS_PER_BATCH: 128
 
-OUTPUT_DIR: "logs/vehicleid/bagtricks_R50-ibn_4gpu"
+OUTPUT_DIR: logs/vehicleid/bagtricks_R50-ibn_4gpu

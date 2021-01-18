@@ -1,25 +1,12 @@
-_BASE_: "Base-SBS.yml"
+_BASE_: Base-SBS.yml
 
 MODEL:
-  META_ARCHITECTURE: 'MGN'
+  META_ARCHITECTURE: MGN
 
-  FREEZE_LAYERS: ["backbone", "b1", "b2", "b3",]
+  FREEZE_LAYERS: [backbone, b1, b2, b3,]
 
   BACKBONE:
     WITH_NL: False
 
   HEADS:
     EMBEDDING_DIM: 256
-
-  LOSSES:
-    NAME: ("CrossEntropyLoss", "TripletLoss",)
-    CE:
-      EPSILON: 0.1
-      SCALE: 1.0
-
-    TRI:
-      MARGIN: 0.0
-      HARD_MINING: True
-      NORM_FEAT: False
-      SCALE: 1.0
-

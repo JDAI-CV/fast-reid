@@ -322,20 +322,21 @@ class PeriodicCheckpointer:
         additional_state = {"epoch": epoch}
         additional_state.update(kwargs)
         if (epoch + 1) % self.period == 0 and epoch < self.max_epoch - 1:
-            self.checkpointer.save(
-                "model_{:04d}".format(epoch), **additional_state
-            )
             if additional_state["metric"] > self.best_metric:
                 self.checkpointer.save(
                     "model_best", **additional_state
                 )
                 self.best_metric = additional_state["metric"]
+            # Put it behind best model save to make last checkpoint valid
+            self.checkpointer.save(
+                "model_{:04d}".format(epoch), **additional_state
+            )
         if epoch >= self.max_epoch - 1:
-            self.checkpointer.save("model_final", **additional_state)
             if additional_state["metric"] > self.best_metric:
                 self.checkpointer.save(
                     "model_best", **additional_state
                 )
+            self.checkpointer.save("model_final", **additional_state)
 
     def save(self, name: str, **kwargs: Any):
         """
