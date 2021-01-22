@@ -238,7 +238,7 @@ _C.SOLVER.ETA_MIN_LR = 1e-7
 
 # Warmup options
 _C.SOLVER.WARMUP_FACTOR = 0.1
-_C.SOLVER.WARMUP_EPOCHS = 10
+_C.SOLVER.WARMUP_ITERS = 1000
 _C.SOLVER.WARMUP_METHOD = "linear"
 
 # Backbone freeze iters

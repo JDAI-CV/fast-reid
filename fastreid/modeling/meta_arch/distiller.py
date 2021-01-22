@@ -64,7 +64,7 @@ class Distiller(Baseline):
             return super(Distiller, self).forward(batched_inputs)
 
     def losses(self, s_outputs, t_outputs, gt_labels):
-        r"""
+        """
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
         """

@@ -250,11 +250,14 @@ class LRScheduler(HookBase):
         lr = self._optimizer.param_groups[self._best_param_group_id]["lr"]
         self.trainer.storage.put_scalar("lr", lr, smoothing_hint=False)
 
-    def after_epoch(self):
-        next_epoch = self.trainer.epoch + 1
-        if next_epoch <= self.trainer.warmup_epochs:
+        next_iter = self.trainer.iter + 1
+        if next_iter <= self.trainer.warmup_iters:
             self._scheduler["warmup_sched"].step()
-        elif next_epoch >= self.trainer.delay_epochs:
+
+    def after_epoch(self):
+        next_iter = self.trainer.iter + 1
+        next_epoch = self.trainer.epoch + 1
+        if next_iter > self.trainer.warmup_iters and next_epoch >= self.trainer.delay_epochs:
             self._scheduler["lr_sched"].step()
 
 

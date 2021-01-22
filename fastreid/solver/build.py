@@ -4,6 +4,8 @@
 @contact: sherlockliao01@gmail.com
 """
 
+import math
+
 from . import lr_scheduler
 from . import optim
 
@@ -34,11 +36,9 @@ def build_optimizer(cfg, model):
     return opt_fns
 
 
-def build_lr_scheduler(cfg, optimizer):
-    cfg = cfg.clone()
-    cfg.defrost()
-    cfg.SOLVER.MAX_EPOCH = cfg.SOLVER.MAX_EPOCH - max(
-        cfg.SOLVER.WARMUP_EPOCHS + 1, cfg.SOLVER.DELAY_EPOCHS)
+def build_lr_scheduler(cfg, optimizer, iters_per_epoch):
+    max_epoch = cfg.SOLVER.MAX_EPOCH - max(
+        math.ceil(cfg.SOLVER.WARMUP_ITERS / iters_per_epoch), cfg.SOLVER.DELAY_EPOCHS)
 
     scheduler_dict = {}
 
@@ -52,7 +52,7 @@ def build_lr_scheduler(cfg, optimizer):
         "CosineAnnealingLR": {
             "optimizer": optimizer,
             # cosine annealing lr scheduler options
-            "T_max": cfg.SOLVER.MAX_EPOCH,
+            "T_max": max_epoch,
             "eta_min": cfg.SOLVER.ETA_MIN_LR,
         },
 
@@ -61,13 +61,13 @@ def build_lr_scheduler(cfg, optimizer):
     scheduler_dict["lr_sched"] = getattr(lr_scheduler, cfg.SOLVER.SCHED)(
         **scheduler_args[cfg.SOLVER.SCHED])
 
-    if cfg.SOLVER.WARMUP_EPOCHS > 0:
+    if cfg.SOLVER.WARMUP_ITERS > 0:
         warmup_args = {
             "optimizer": optimizer,
 
             # warmup options
             "warmup_factor": cfg.SOLVER.WARMUP_FACTOR,
-            "warmup_epochs": cfg.SOLVER.WARMUP_EPOCHS,
+            "warmup_iters": cfg.SOLVER.WARMUP_ITERS,
             "warmup_method": cfg.SOLVER.WARMUP_METHOD,
         }
         scheduler_dict["warmup_sched"] = lr_scheduler.WarmupLR(**warmup_args)

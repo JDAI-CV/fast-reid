@@ -233,7 +233,8 @@ class DefaultTrainer(TrainerBase):
             model, data_loader, optimizer
         )
 
-        self.scheduler = self.build_lr_scheduler(cfg, optimizer)
+        self.iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
+        self.scheduler = self.build_lr_scheduler(cfg, optimizer, self.iters_per_epoch)
 
         # Assume no other objects need to be checkpointed.
         # We can later make it checkpoint the stateful hooks
@@ -246,12 +247,11 @@ class DefaultTrainer(TrainerBase):
             **self.scheduler,
         )
 
-        self.iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
 
         self.start_epoch = 0
         self.max_epoch = cfg.SOLVER.MAX_EPOCH
         self.max_iter = self.max_epoch * self.iters_per_epoch
-        self.warmup_epochs = cfg.SOLVER.WARMUP_EPOCHS
+        self.warmup_iters = cfg.SOLVER.WARMUP_ITERS
         self.delay_epochs = cfg.SOLVER.DELAY_EPOCHS
         self.cfg = cfg
 
@@ -409,12 +409,12 @@ class DefaultTrainer(TrainerBase):
         return build_optimizer(cfg, model)
 
     @classmethod
-    def build_lr_scheduler(cls, cfg, optimizer):
+    def build_lr_scheduler(cls, cfg, optimizer, iters_per_epoch):
         """
         It now calls :func:`fastreid.solver.build_lr_scheduler`.
         Overwrite it if you'd like a different scheduler.
         """
-        return build_lr_scheduler(cfg, optimizer)
+        return build_lr_scheduler(cfg, optimizer, iters_per_epoch)
 
     @classmethod
     def build_train_loader(cls, cfg):

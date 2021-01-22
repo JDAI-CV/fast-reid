@@ -80,7 +80,8 @@ def do_train(cfg, model, resume=False):
 
     optimizer_ckpt = dict(optimizer=optimizer)
 
-    scheduler = build_lr_scheduler(cfg, optimizer)
+    iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
+    scheduler = build_lr_scheduler(cfg, optimizer, iters_per_epoch)
 
     checkpointer = Checkpointer(
         model,
@@ -90,8 +91,6 @@ def do_train(cfg, model, resume=False):
         **scheduler
     )
 
-    iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
-
     start_epoch = (
             checkpointer.resume_or_load(cfg.MODEL.WEIGHTS, resume=resume).get("epoch", -1) + 1
     )
@@ -99,7 +98,7 @@ def do_train(cfg, model, resume=False):
 
     max_epoch = cfg.SOLVER.MAX_EPOCH
     max_iter = max_epoch * iters_per_epoch
-    warmup_epochs = cfg.SOLVER.WARMUP_EPOCHS
+    warmup_iters = cfg.SOLVER.WARMUP_ITERS
     delay_epochs = cfg.SOLVER.DELAY_EPOCHS
 
     periodic_checkpointer = PeriodicCheckpointer(checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD, max_epoch)
@@ -146,13 +145,14 @@ def do_train(cfg, model, resume=False):
 
                 iteration += 1
 
+                if iteration <= warmup_iters:
+                    scheduler["warmup_sched"].step()
+
             # Write metrics after each epoch
             for writer in writers:
                 writer.write()
 
-            if (epoch + 1) <= warmup_epochs:
-                scheduler["warmup_sched"].step()
-            elif (epoch + 1) >= delay_epochs:
+            if iteration > warmup_iters and (epoch + 1) >= delay_epochs:
                 scheduler["lr_sched"].step()
 
             if (

@@ -73,6 +73,7 @@ class Checkpointer(object):
     def save(self, name: str, **kwargs: Dict[str, str]):
         """
         Dump model and checkpointables to a file.
+
         Args:
             name (str): name of the file.
             kwargs (dict): extra arbitrary data to save.
@@ -98,6 +99,7 @@ class Checkpointer(object):
         """
         Load from the given checkpoint. When path points to network file, this
         function has to be called on all ranks.
+
         Args:
             path (str): path or url to the checkpoint. If empty, will not load
                 anything.
@@ -176,6 +178,7 @@ class Checkpointer(object):
         If `resume` is True, this method attempts to resume from the last
         checkpoint, if exists. Otherwise, load checkpoint from the given path.
         This is useful when restarting an interrupted training job.
+
         Args:
             path (str): path to the checkpoint.
             resume (bool): if True, resume from the last checkpoint if it exists.
@@ -191,6 +194,7 @@ class Checkpointer(object):
     def tag_last_checkpoint(self, last_filename_basename: str):
         """
         Tag the last checkpoint.
+
         Args:
             last_filename_basename (str): the basename of the last filename.
         """
@@ -202,6 +206,7 @@ class Checkpointer(object):
         """
         Load a checkpoint file. Can be overwritten by subclasses to support
         different formats.
+
         Args:
             f (str): a locally mounted file path.
         Returns:
@@ -214,6 +219,7 @@ class Checkpointer(object):
     def _load_model(self, checkpoint: Any):
         """
         Load weights from a checkpoint.
+
         Args:
             checkpoint (Any): checkpoint contains the weights.
         """
@@ -269,6 +275,7 @@ class Checkpointer(object):
     def _convert_ndarray_to_tensor(self, state_dict: dict):
         """
         In-place convert all numpy arrays in the state_dict to torch tensor.
+
         Args:
             state_dict (dict): a state-dict to be loaded to the model.
         """
@@ -313,6 +320,7 @@ class PeriodicCheckpointer:
     def step(self, epoch: int, **kwargs: Any):
         """
         Perform the appropriate action at the given iteration.
+
         Args:
             epoch (int): the current epoch, ranged in [0, max_epoch-1].
             kwargs (Any): extra data to save, same as in
@@ -342,6 +350,7 @@ class PeriodicCheckpointer:
         """
         Same argument as :meth:`Checkpointer.save`.
         Use this method to manually save checkpoints outside the schedule.
+
         Args:
             name (str): file name.
             kwargs (Any): extra data to save, same as in
@@ -374,6 +383,7 @@ def get_missing_parameters_message(keys: List[str]) -> str:
     """
     Get a logging-friendly message to report parameter names (keys) that are in
     the model but not found in a checkpoint.
+
     Args:
         keys (list[str]): List of keys that were not found in the checkpoint.
     Returns:
@@ -391,6 +401,7 @@ def get_unexpected_parameters_message(keys: List[str]) -> str:
     """
     Get a logging-friendly message to report parameter names (keys) that are in
     the checkpoint but not found in the model.
+
     Args:
         keys (list[str]): List of keys that were not found in the model.
     Returns:
@@ -407,6 +418,7 @@ def get_unexpected_parameters_message(keys: List[str]) -> str:
 def _strip_prefix_if_present(state_dict: Dict[str, Any], prefix: str) -> None:
     """
     Strip the prefix in metadata, if any.
+
     Args:
         state_dict (OrderedDict): a state-dict to be loaded to the model.
         prefix (str): prefix.
@@ -441,6 +453,7 @@ def _group_checkpoint_keys(keys: List[str]) -> Dict[str, List[str]]:
     """
     Group keys based on common prefixes. A prefix is the string up to the final
     "." in each key.
+
     Args:
         keys (list[str]): list of parameter names, i.e. keys in the model
             checkpoint dict.
@@ -461,6 +474,7 @@ def _group_checkpoint_keys(keys: List[str]) -> Dict[str, List[str]]:
 def _group_to_str(group: List[str]) -> str:
     """
     Format a group of parameter name suffixes into a loggable string.
+
     Args:
         group (list[str]): list of parameter name suffixes.
     Returns:
