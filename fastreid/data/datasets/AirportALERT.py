@@ -14,6 +14,9 @@ __all__ = ['AirportALERT', ]
 
 @DATASET_REGISTRY.register()
 class AirportALERT(ImageDataset):
+    """Airport 
+
+    """
     dataset_dir = "AirportALERT"
     dataset_name = "airport"
 

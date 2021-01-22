@@ -15,6 +15,8 @@ __all__ = ['PKU', ]
 
 @DATASET_REGISTRY.register()
 class PKU(ImageDataset):
+    """PKU
+    """
     dataset_dir = "PKUv1a_128x48"
     dataset_name = 'pku'
 

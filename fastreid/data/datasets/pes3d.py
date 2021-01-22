@@ -15,6 +15,8 @@ __all__ = ['PeS3D',]
 
 @DATASET_REGISTRY.register()
 class PeS3D(ImageDataset):
+    """3Dpes
+    """
     dataset_dir = "3DPeS"
     dataset_name = "pes3d"
 

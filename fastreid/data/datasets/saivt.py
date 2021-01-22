@@ -15,6 +15,8 @@ __all__ = ['SAIVT', ]
 
 @DATASET_REGISTRY.register()
 class SAIVT(ImageDataset):
+    """SAIVT
+    """
     dataset_dir = "SAIVT-SoftBio"
     dataset_name = "saivt"
 

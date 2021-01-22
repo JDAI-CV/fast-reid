@@ -149,13 +149,9 @@ class AugMix(object):
             np.random.dirichlet([self.aug_prob_coeff] * self.mixture_width))
         m = np.float32(np.random.beta(self.aug_prob_coeff, self.aug_prob_coeff))
 
-        # image = np.asarray(image, dtype=np.float32).copy()
-        # mix = np.zeros_like(image)
         mix = np.zeros([image.size[1], image.size[0], 3])
-        # h, w = image.shape[0], image.shape[1]
         for i in range(self.mixture_width):
             image_aug = image.copy()
-            # image_aug = Image.fromarray(image.copy().astype(np.uint8))
             depth = self.mixture_depth if self.mixture_depth > 0 else np.random.randint(1, 4)
             for _ in range(depth):
                 op = np.random.choice(self.augmentations)

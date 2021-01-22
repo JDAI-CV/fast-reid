@@ -16,10 +16,25 @@ from .common import CommDataset
 from .datasets import DATASET_REGISTRY
 from .transforms import build_transforms
 
+__all__ = [
+    "build_reid_train_loader",
+    "build_reid_test_loader"
+]
+
 _root = os.getenv("FASTREID_DATASETS", "datasets")
 
 
 def build_reid_train_loader(cfg, mapper=None, **kwargs):
+    """
+    Build reid train loader
+
+    Args:
+        cfg : image file path
+        mapper : one of the supported image modes in PIL, or "BGR"
+
+    Returns:
+        torch.utils.data.DataLoader: a dataloader.
+    """
     cfg = cfg.clone()
 
     train_items = list()
@@ -60,6 +75,19 @@ def build_reid_train_loader(cfg, mapper=None, **kwargs):
 
 
 def build_reid_test_loader(cfg, dataset_name, mapper=None, **kwargs):
+    """
+    Build reid test loader
+
+    Args:
+        cfg:
+        dataset_name:
+        mapper:
+        **kwargs:
+
+    Returns:
+
+    """
+
     cfg = cfg.clone()
 
     dataset = DATASET_REGISTRY.get(dataset_name)(root=_root, **kwargs)

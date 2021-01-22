@@ -15,6 +15,8 @@ __all__ = ['iLIDS', ]
 
 @DATASET_REGISTRY.register()
 class iLIDS(ImageDataset):
+    """iLIDS
+    """
     dataset_dir = "iLIDS"
     dataset_name = "ilids"
 

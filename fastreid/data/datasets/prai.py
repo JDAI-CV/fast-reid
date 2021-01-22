@@ -5,18 +5,18 @@
 """
 
 import os
-from scipy.io import loadmat
 from glob import glob
 
 from fastreid.data.datasets import DATASET_REGISTRY
 from fastreid.data.datasets.bases import ImageDataset
-import pdb
 
-__all__ = ['PRAI',]
+__all__ = ['PRAI', ]
 
 
 @DATASET_REGISTRY.register()
 class PRAI(ImageDataset):
+    """PRAI
+    """
     dataset_dir = "PRAI-1581"
     dataset_name = 'prai'
 
@@ -41,4 +41,3 @@ class PRAI(ImageDataset):
             camid = self.dataset_name + "_" + img_info[1]
             data.append([img_path, pid, camid])
         return data
-

@@ -17,6 +17,8 @@ __all__ = ['SYSU_mm', ]
 
 @DATASET_REGISTRY.register()
 class SYSU_mm(ImageDataset):
+    """sysu mm
+    """
     dataset_dir = "SYSU-MM01"
     dataset_name = "sysumm01"
 

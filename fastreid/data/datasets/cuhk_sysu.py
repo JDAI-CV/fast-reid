@@ -15,7 +15,7 @@ from ..datasets import DATASET_REGISTRY
 
 @DATASET_REGISTRY.register()
 class cuhkSYSU(ImageDataset):
-    r"""CUHK SYSU datasets.
+    """CUHK SYSU datasets.
 
     The dataset is collected from two sources: street snap and movie.
     In street snap, 12,490 images and 6,057 query persons were collected

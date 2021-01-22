@@ -7,6 +7,7 @@
 import copy
 import logging
 import os
+
 from tabulate import tabulate
 from termcolor import colored
 
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 class Dataset(object):
     """An abstract class representing a Dataset.
     This is the base class for ``ImageDataset`` and ``VideoDataset``.
+
     Args:
         train (list): contains tuples of (img_path(s), pid, camid).
         query (list): contains tuples of (img_path(s), pid, camid).

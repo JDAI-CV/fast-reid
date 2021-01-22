@@ -13,6 +13,7 @@ def read_image(file_name, format=None):
     """
     Read an image into the given format.
     Will apply rotation and flipping if the image has such exif information.
+
     Args:
         file_name (str): image file path
         format (str): one of the supported image modes in PIL, or "BGR"

@@ -19,6 +19,8 @@ __all__ = ['Thermalworld',]
 
 @DATASET_REGISTRY.register()
 class Thermalworld(ImageDataset):
+    """thermal world
+    """
     dataset_dir = "thermalworld_rgb"
     dataset_name = "thermalworld"
 

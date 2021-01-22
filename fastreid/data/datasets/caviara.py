@@ -19,6 +19,8 @@ __all__ = ['CAVIARa',]
 
 @DATASET_REGISTRY.register()
 class CAVIARa(ImageDataset):
+    """CAVIARa
+    """
     dataset_dir = "CAVIARa"
     dataset_name = "caviara"
 

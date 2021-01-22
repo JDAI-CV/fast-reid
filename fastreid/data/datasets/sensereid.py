@@ -15,6 +15,8 @@ __all__ = ['SenseReID', ]
 
 @DATASET_REGISTRY.register()
 class SenseReID(ImageDataset):
+    """Sense reid
+    """
     dataset_dir = "SenseReID"
     dataset_name = "senseid"
 
