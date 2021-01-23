@@ -20,4 +20,4 @@ from .meta_arch import (
     META_ARCH_REGISTRY,
 )
 
-__all__ = [k for k in globals().keys() if k not in k.startswith("_")]
+__all__ = [k for k in globals().keys() if not k.startswith("_")]

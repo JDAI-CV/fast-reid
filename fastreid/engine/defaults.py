@@ -11,7 +11,6 @@ since they are meant to represent the "common default behavior" people need in t
 import argparse
 import logging
 import os
-import math
 import sys
 from collections import OrderedDict
 
@@ -247,7 +246,6 @@ class DefaultTrainer(TrainerBase):
             **self.scheduler,
         )
 
-
         self.start_epoch = 0
         self.max_epoch = cfg.SOLVER.MAX_EPOCH
         self.max_iter = self.max_epoch * self.iters_per_epoch
@@ -323,6 +321,7 @@ class DefaultTrainer(TrainerBase):
             cfg.SOLVER.FREEZE_ITERS,
             cfg.SOLVER.FREEZE_FC_ITERS,
         ))
+
         # Do PreciseBN before checkpointer, because it updates the model and need to
         # be saved by checkpointer.
         # This is not always the best: if checkpointing has a different frequency,

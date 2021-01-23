@@ -5,7 +5,6 @@ import cython
 import numpy as np
 cimport numpy as np
 from collections import defaultdict
-import faiss
 
 
 """

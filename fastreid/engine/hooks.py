@@ -10,8 +10,8 @@ import time
 from collections import Counter
 
 import torch
-from torch import nn
 from apex.parallel import DistributedDataParallel
+from torch import nn
 
 from fastreid.evaluation.testing import flatten_results_dict
 from fastreid.solver import optim

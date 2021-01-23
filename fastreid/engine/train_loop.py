@@ -12,7 +12,6 @@ from typing import Dict
 import numpy as np
 import torch
 from apex import amp
-from apex.parallel import DistributedDataParallel
 
 import fastreid.utils.comm as comm
 from fastreid.utils.events import EventStorage, get_event_storage

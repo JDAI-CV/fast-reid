@@ -100,7 +100,7 @@ class CUHK03(ImageDataset):
 
         import h5py
         from imageio import imwrite
-        from scipy.io import loadmat
+        from scipy import io
 
         PathManager.mkdirs(self.imgs_detected_dir)
         PathManager.mkdirs(self.imgs_labeled_dir)
@@ -236,7 +236,7 @@ class CUHK03(ImageDataset):
 
         print('Creating new split for detected images (767/700) ...')
         train_info, query_info, gallery_info = _extract_new_split(
-            loadmat(self.split_new_det_mat_path),
+            io.loadmat(self.split_new_det_mat_path),
             self.imgs_detected_dir
         )
         split = [{
@@ -256,7 +256,7 @@ class CUHK03(ImageDataset):
 
         print('Creating new split for labeled images (767/700) ...')
         train_info, query_info, gallery_info = _extract_new_split(
-            loadmat(self.split_new_lab_mat_path),
+            io.loadmat(self.split_new_lab_mat_path),
             self.imgs_labeled_dir
         )
         split = [{
