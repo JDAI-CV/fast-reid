@@ -11,11 +11,16 @@ from typing import Optional, List, Dict, NamedTuple, Tuple, Iterable
 import numpy as np
 import torch
 import torch.nn as nn
-from apex.parallel import DistributedDataParallel
 from termcolor import colored
 from torch.nn.parallel import DataParallel
 
 from fastreid.utils.file_io import PathManager
+
+try:
+    from apex.parallel import DistributedDataParallel
+except ImportError:
+    raise ImportError("Please install apex from https://www.github.com/nvidia/apex to run this example if you want to"
+                      "train with DDP")
 
 
 class _IncompatibleKeys(
