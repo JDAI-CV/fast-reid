@@ -20,7 +20,7 @@ We write a [chinese blog](https://l1aoxingyu.github.io/blogpages/reid/2020/05/29
 
 ## Installation
 
-See [INSTALL.md](https://github.com/JDAI-CV/fast-reid/blob/master/docs/INSTALL.md).
+See [INSTALL.md](https://github.com/JDAI-CV/fast-reid/blob/master/INSTALL.md).
 
 ## Quick Start
 
