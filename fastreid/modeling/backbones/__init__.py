@@ -12,3 +12,4 @@ from .resnest import build_resnest_backbone
 from .resnext import build_resnext_backbone
 from .regnet import build_regnet_backbone, build_effnet_backbone
 from .shufflenet import build_shufflenetv2_backbone
+from .mobilenet import build_mobilenetv2_backbone
