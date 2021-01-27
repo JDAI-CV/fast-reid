@@ -154,7 +154,7 @@ Bag of Specials(BoS):
 
 | Method | Pretrained | Rank@1 | mAP | mINP | download |
 | :---: | :---: | :---: |:---: | :---: | :---:| 
-| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/VeRi/sbs_R50-ibn.yml) | ImageNet | 97.0%  | 81.9% | 46.3% | -|
+| [SBS(R50-ibn)](https://github.com/JDAI-CV/fast-reid/blob/master/configs/VeRi/sbs_R50-ibn.yml) | ImageNet | 97.0%  | 81.9% | 46.3% | [model](https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/veri_sbs_R50-ibn.pth) |
 
 ### VehicleID Baseline
 
@@ -193,7 +193,7 @@ Test protocol: 10-fold cross-validation; trained on 4 NVIDIA P40 GPU.
     <td align="center">96.0%</td>
     <td align="center">80.6%</td>
     <td align="center">93.9%</td>
-    <td align="center">-</td>
+    <td align="center"><a href="https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/vehicleid_bot_R50-ibn.pth">model</a></td>
   </tr>
 </tbody>
 </table>
@@ -241,7 +241,7 @@ Test protocol: Trained on 4 NVIDIA P40 GPU.
     <td align="center">92.5%</td>
     <td align="center">77.3%</td>
     <td align="center">49.8%</td>
-    <td align="center">-</td>
+    <td align="center"><a href="https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/veriwild_bot_R50-ibn.pth">model</a></td>
   </tr>
 </tbody>
 </table>
