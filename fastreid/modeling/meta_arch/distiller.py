@@ -22,22 +22,25 @@ class Distiller(Baseline):
         super(Distiller, self).__init__(cfg)
 
         # Get teacher model config
-        cfg_t = get_cfg()
-        cfg_t.merge_from_file(cfg.KD.MODEL_CONFIG)
+        model_ts = []
+        for i in range(len(cfg.KD.MODEL_CONFIG)):
+            cfg_t = get_cfg()
+            cfg_t.merge_from_file(cfg.KD.MODEL_CONFIG[i])
 
-        model_t = build_model(cfg_t)
-        logger.info("Teacher model:\n{}".format(model_t))
+            model_t = build_model(cfg_t)
 
-        # No gradients for teacher model
-        for param in model_t.parameters():
-            param.requires_grad_(False)
+            # No gradients for teacher model
+            for param in model_t.parameters():
+                param.requires_grad_(False)
 
-        logger.info("Loading teacher model weights ...")
-        Checkpointer(model_t).load(cfg.KD.MODEL_WEIGHTS)
+            logger.info("Loading teacher model weights ...")
+            Checkpointer(model_t).load(cfg.KD.MODEL_WEIGHTS[i])
+
+            model_ts.append(model_t)
 
         # Not register teacher model as `nn.Module`, this is
         # make sure teacher model weights not saved
-        self.model_t = [model_t.backbone, model_t.heads]
+        self.model_ts = model_ts
 
     def forward(self, batched_inputs):
         if self.training:
@@ -51,10 +54,13 @@ class Distiller(Baseline):
 
             s_outputs = self.heads(s_feat, targets)
 
+            t_outputs = []
             # teacher model forward
             with torch.no_grad():
-                t_feat = self.model_t[0](images)
-                t_outputs = self.model_t[1](t_feat, targets)
+                for model_t in self.model_ts:
+                    t_feat = model_t.backbone(images)
+                    t_output = model_t.heads(t_feat, targets)
+                    t_outputs.append(t_output)
 
             losses = self.losses(s_outputs, t_outputs, targets)
             return losses
@@ -71,8 +77,12 @@ class Distiller(Baseline):
         loss_dict = super(Distiller, self).losses(s_outputs, gt_labels)
 
         s_logits = s_outputs["pred_class_logits"]
-        t_logits = t_outputs["pred_class_logits"].detach()
-        loss_dict["loss_jsdiv"] = self.jsdiv_loss(s_logits, t_logits)
+        loss_jsdiv = 0.
+        for t_output in t_outputs:
+            t_logits = t_output["pred_class_logits"].detach()
+            loss_jsdiv += self.jsdiv_loss(s_logits, t_logits)
+
+        loss_dict["loss_jsdiv"] = loss_jsdiv / len(t_outputs)
 
         return loss_dict
 

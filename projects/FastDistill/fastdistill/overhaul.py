@@ -61,16 +61,18 @@ class DistillerOverhaul(Distiller):
         super().__init__(cfg)
 
         s_channels = self.backbone.get_channel_nums()
-        t_channels = self.model_t[0].get_channel_nums()
 
-        self.connectors = nn.ModuleList(
-            [build_feature_connector(t, s) for t, s in zip(t_channels, s_channels)])
+        for i in range(len(self.model_ts)):
+            t_channels = self.model_ts[i].backbone.get_channel_nums()
 
-        teacher_bns = self.model_t[0].get_bn_before_relu()
-        margins = [get_margin_from_BN(bn) for bn in teacher_bns]
-        for i, margin in enumerate(margins):
-            self.register_buffer("margin%d" % (i + 1),
-                                 margin.unsqueeze(1).unsqueeze(2).unsqueeze(0).detach())
+            setattr(self, "connectors_{}".format(i), nn.ModuleList(
+                [build_feature_connector(t, s) for t, s in zip(t_channels, s_channels)]))
+
+            teacher_bns = self.model_ts[i].backbone.get_bn_before_relu()
+            margins = [get_margin_from_BN(bn) for bn in teacher_bns]
+            for j, margin in enumerate(margins):
+                self.register_buffer("margin{}_{}".format(i, j + 1),
+                                     margin.unsqueeze(1).unsqueeze(2).unsqueeze(0).detach())
 
     def forward(self, batched_inputs):
         if self.training:
@@ -84,20 +86,25 @@ class DistillerOverhaul(Distiller):
 
             s_outputs = self.heads(s_feat, targets)
 
+            t_feats_list = []
+            t_outputs = []
             # teacher model forward
             with torch.no_grad():
-                t_feats, t_feat = self.model_t[0].extract_feature(images, preReLU=True)
-                t_outputs = self.model_t[1](t_feat, targets)
+                for model_t in self.model_ts:
+                    t_feats, t_feat = model_t.backbone.extract_feature(images, preReLU=True)
+                    t_output = model_t.heads(t_feat, targets)
+                    t_feats_list.append(t_feats)
+                    t_outputs.append(t_output)
 
-            losses = self.losses(s_outputs, s_feats, t_outputs, t_feats, targets)
+            losses = self.losses(s_outputs, s_feats, t_outputs, t_feats_list, targets)
             return losses
 
         else:
             outputs = super(DistillerOverhaul, self).forward(batched_inputs)
             return outputs
 
-    def losses(self, s_outputs, s_feats, t_outputs, t_feats, gt_labels):
-        r"""
+    def losses(self, s_outputs, s_feats, t_outputs, t_feats_list, gt_labels):
+        """
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
         """
@@ -106,11 +113,12 @@ class DistillerOverhaul(Distiller):
         # Overhaul distillation loss
         feat_num = len(s_feats)
         loss_distill = 0
-        for i in range(feat_num):
-            s_feats[i] = self.connectors[i](s_feats[i])
-            loss_distill += distillation_loss(s_feats[i], t_feats[i].detach(), getattr(
-                self, "margin%d" % (i + 1)).to(s_feats[i].dtype)) / 2 ** (feat_num - i - 1)
+        for i in range(len(t_feats_list)):
+            for j in range(feat_num):
+                s_feats_connect = getattr(self, "connectors_{}".format(i))[j](s_feats[j])
+                loss_distill += distillation_loss(s_feats_connect, t_feats_list[i][j].detach(), getattr(
+                    self, "margin{}_{}".format(i, j + 1)).to(s_feats_connect.dtype)) / 2 ** (feat_num - j - 1)
 
-        loss_dict["loss_overhaul"] = loss_distill / len(gt_labels) / 10000
+        loss_dict["loss_overhaul"] = loss_distill / len(t_feats_list) / len(gt_labels) / 10000
 
         return loss_dict
