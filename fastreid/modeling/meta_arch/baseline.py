@@ -53,7 +53,7 @@ class Baseline(nn.Module):
             return outputs
 
     def preprocess_image(self, batched_inputs):
-        r"""
+        """
         Normalize and batch the input images.
         """
         if isinstance(batched_inputs, dict):
@@ -67,7 +67,7 @@ class Baseline(nn.Module):
         return images
 
     def losses(self, outputs, gt_labels):
-        r"""
+        """
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
         """
