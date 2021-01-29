@@ -21,4 +21,4 @@ External projects in the community that use fastreid:
 
 # Competitions
 
-- [NAIC20]() coming soon, stay tuned.
+- NAIC20 reid track [1-st solution](https://github.com/JDAI-CV/fast-reid/tree/master/projects/NAIC20) 
