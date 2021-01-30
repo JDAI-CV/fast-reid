@@ -20,16 +20,16 @@ python3 projects/FastDistill/train_net.py \
 --config-file projects/FastDistill/configs/kd-sbs_r101ibn-sbs_r34.yaml \
 --num-gpus 4 \
 MODEL.META_ARCHITECTURE Distiller
-KD.MODEL_CONFIG projects/FastDistill/logs/dukemtmc/r101_ibn/config.yaml \
-KD.MODEL_WEIGHTS projects/FastDistill/logs/dukemtmc/r101_ibn/model_best.pth
+KD.MODEL_CONFIG '("projects/FastDistill/logs/dukemtmc/r101_ibn/config.yaml",)' \
+KD.MODEL_WEIGHTS '("projects/FastDistill/logs/dukemtmc/r101_ibn/model_best.pth",)'
 
 # loss+overhaul distillation
 python3 projects/FastDistill/train_net.py \
 --config-file projects/FastDistill/configs/kd-sbs_r101ibn-sbs_r34.yaml \
 --num-gpus 4 \
 MODEL.META_ARCHITECTURE DistillerOverhaul
-KD.MODEL_CONFIG projects/FastDistill/logs/dukemtmc/r101_ibn/config.yaml \
-KD.MODEL_WEIGHTS projects/FastDistill/logs/dukemtmc/r101_ibn/model_best.pth
+KD.MODEL_CONFIG '("projects/FastDistill/logs/dukemtmc/r101_ibn/config.yaml",)' \
+KD.MODEL_WEIGHTS '("projects/FastDistill/logs/dukemtmc/r101_ibn/model_best.pth",)'
 ```
 
 ## Experimental Results
