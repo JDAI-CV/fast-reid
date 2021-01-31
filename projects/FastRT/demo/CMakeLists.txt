@@ -16,7 +16,7 @@ add_executable(${APP_PROJECT_NAME} inference.cpp)
 find_package(OpenCV)
 target_include_directories(${APP_PROJECT_NAME}
 PUBLIC
-  OpenCV_INCLUDE_DIRS
+  ${OpenCV_INCLUDE_DIRS}
 )
 target_link_libraries(${APP_PROJECT_NAME}
 PUBLIC
