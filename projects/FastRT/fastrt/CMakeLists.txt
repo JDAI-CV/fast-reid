@@ -24,7 +24,7 @@ PUBLIC
 find_package(OpenCV)
 target_include_directories(${PROJECT_NAME}
 PUBLIC
-  OpenCV_INCLUDE_DIRS
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 target_link_libraries(${PROJECT_NAME} 
