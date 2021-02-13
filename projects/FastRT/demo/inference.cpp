@@ -3,8 +3,7 @@
 
 #include "fastrt/utils.h"
 #include "fastrt/baseline.h"
-#include "fastrt/sbs_resnet.h"
-#include "fastrt/embedding_head.h"
+#include "fastrt/factory.h"
 using namespace fastrt;
 using namespace nvinfer1;
 
@@ -18,8 +17,9 @@ static const int INPUT_W = 128;
 static const int OUTPUT_SIZE = 2048;
 static const int DEVICE_ID = 0;
 
-static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const FastreidBackboneType BACKBONE = FastreidBackboneType::r50; 
+static const FastreidHeadType HEAD = FastreidHeadType::EmbeddingHead;
+static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const int LAST_STRIDE = 1;
 static const bool WITH_IBNA = true; 
 static const bool WITH_NL = true;
@@ -37,8 +37,9 @@ int main(int argc, char** argv) {
         DEVICE_ID};
 
     FastreidConfig reidCfg { 
-        HEAD_POOLING,
         BACKBONE,
+        HEAD,
+        HEAD_POOLING,
         LAST_STRIDE,
         WITH_IBNA,
         WITH_NL,
@@ -50,13 +51,11 @@ int main(int argc, char** argv) {
     Baseline baseline{modelCfg, reidCfg}; 
 
     if (argc == 2 && std::string(argv[1]) == "-s") {
-        auto backbone = createBackbone<IActivationLayer>(reidCfg); 
-        if(!backbone) {
-            std::cout << "CreateBackbone Failed." << std::endl;
-            return -1;
-        }
+        ModuleFactory moduleFactory;
         std::cout << "[Serializling Engine]" << std::endl;
-        if(!baseline.serializeEngine<IActivationLayer, IScaleLayer>(ENGINE_PATH, backbone, embedding_head)) {
+        if (!baseline.serializeEngine(ENGINE_PATH, 
+            {std::move(moduleFactory.createBackbone(reidCfg.backbone)), 
+                std::move(moduleFactory.createHead(reidCfg.head))})) {
             std::cout << "SerializeEngine Failed." << std::endl;
             return -1;
         }   

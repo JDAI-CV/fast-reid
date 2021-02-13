@@ -3,12 +3,11 @@
 #include "fastrt/utils.h"
 #include "fastrt/layers.h"
 #include "fastrt/sbs_resnet.h"
-
 using namespace trtxapi;
 
 namespace fastrt {
 
-    IActivationLayer* backbone_sbsR34_distill(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
+    ILayer* backbone_sbsR34_distill::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
         std::string ibn{""};
         if(reidCfg.with_ibna) {
             ibn = "a";
@@ -64,7 +63,7 @@ namespace fastrt {
         return relu2;
     }
 
-    IActivationLayer* backbone_sbsR50_distill(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
+    ILayer* backbone_sbsR50_distill::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
         std::string ibn{""};
         if(reidCfg.with_ibna) {
             ibn = "a";
@@ -140,7 +139,7 @@ namespace fastrt {
         return relu2;
     }
 
-    IActivationLayer* backbone_sbsR34(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
+    ILayer* backbone_sbsR34::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
         std::string ibn{""};
         if(reidCfg.with_ibna) {
             ibn = "a";
@@ -193,7 +192,7 @@ namespace fastrt {
         return x;
     }
 
-    IActivationLayer* backbone_sbsR50(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
+    ILayer* backbone_sbsR50::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
         /*
          * Reference: https://github.com/JDAI-CV/fast-reid/blob/master/fastreid/modeling/backbones/resnet.py
          * NL layers follow by: nl_layers_per_stage = {'50x': [0, 2, 3, 0],}[depth]
