@@ -4,13 +4,18 @@
 #include "NvInfer.h"
 #include "fastrt/module.h"
 #include "fastrt/struct.h"
+#include "fastrt/factory.h"
 using namespace nvinfer1;
 
 namespace fastrt {
 
     class embedding_head : public Module {
+    private:
+        std::unique_ptr<LayerFactory> _layerFactory;
+
     public:
-        embedding_head() = default;
+        embedding_head();
+        embedding_head(std::unique_ptr<LayerFactory> layerFactory);
         ~embedding_head() = default;
 
         ILayer* topology(INetworkDefinition *network, 
@@ -18,4 +23,5 @@ namespace fastrt {
             ITensor& input, 
             const FastreidConfig& reidCfg) override;
     };
+
 }

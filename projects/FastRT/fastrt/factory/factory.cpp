@@ -3,6 +3,7 @@
 #include "fastrt/sbs_resnet.h"
 #include "fastrt/factory.h"
 #include "fastrt/embedding_head.h"
+#include "../layers/poolingLayerRT.h"
 
 namespace fastrt {
 
@@ -44,6 +45,26 @@ namespace fastrt {
                 std::cerr << "[Head is not supported.]" << std::endl;
                 return nullptr;
         }
+    }
+
+    std::unique_ptr<IPoolingLayerRT> LayerFactory::createPoolingLayer(const FastreidPoolingType& pooltype) {
+        switch(pooltype) {
+            case FastreidPoolingType::maxpool:
+                std::cout << "[createPoolingLayer]: maxpool" << std::endl;
+                return make_unique<MaxPool>();
+            case FastreidPoolingType::avgpool:
+                std::cout << "[createPoolingLayer]: avgpool" << std::endl;
+                return make_unique<AvgPool>();
+            case FastreidPoolingType::gempool:
+                std::cout << "[createPoolingLayer]: gempool" << std::endl;
+                return make_unique<GemPool>();
+            case FastreidPoolingType::gempoolP:
+                std::cout << "[createPoolingLayer]: gempoolP" << std::endl;
+                return make_unique<GemPoolP>();
+            default:
+                std::cerr << "[Pooling layer is not supported.]" << std::endl; 
+                return nullptr;
+        }  
     }
 
 }

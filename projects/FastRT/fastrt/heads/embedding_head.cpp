@@ -5,37 +5,16 @@
 
 namespace fastrt {
 
+    embedding_head::embedding_head() : _layerFactory(make_unique<LayerFactory>()) {}
+    
+    embedding_head::embedding_head(std::unique_ptr<LayerFactory> layerFactory) : _layerFactory(std::move(layerFactory)) {}
+
     ILayer* embedding_head::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
         /*
          * Reference: https://github.com/JDAI-CV/fast-reid/blob/master/fastreid/modeling/heads/embedding_head.py
          */
-        ILayer* pooling{nullptr};
-        switch(reidCfg.pooling) {
-            case FastreidPoolingType::maxpool:
-                pooling = network->addPoolingNd(input, PoolingType::kMAX, DimsHW{input.getDimensions().d[1], input.getDimensions().d[2]});
-                { 
-                    auto p = dynamic_cast<IPoolingLayer*>(pooling);
-                    if(p) p->setStrideNd(DimsHW{input.getDimensions().d[1], input.getDimensions().d[2]});
-                    else std::cout << "Downcasting failed." << std::endl; 
-                }
-                break;
-            case FastreidPoolingType::avgpool:
-                pooling = network->addPoolingNd(input, PoolingType::kAVERAGE, DimsHW{input.getDimensions().d[1], input.getDimensions().d[2]});
-                { 
-                    auto p = dynamic_cast<IPoolingLayer*>(pooling);
-                    if(p) p->setStrideNd(DimsHW{input.getDimensions().d[1], input.getDimensions().d[2]});
-                    else std::cout << "Downcasting failed." << std::endl; 
-                }
-                break;
-            case FastreidPoolingType::gempool:
-                pooling = trtxapi::addGeneralizedMeanPooling(network, input); 
-                break;
-            case FastreidPoolingType::gempoolP:
-                pooling = trtxapi::addGeneralizedMeanPooling(network, input, *(float*)weightMap["heads.pool_layer.p"].values); 
-                break;
-            default:
-                std::cout << "This pooling layer is not supported." << std::endl; 
-        }
+
+        ILayer* pooling = _layerFactory->createPoolingLayer(reidCfg.pooling)->addPooling(network, weightMap, input);
         TRTASSERT(pooling);
 
         // Hint: It's used to be "heads.bnneck.0" before Sep 10, 2020. (JDAI-CV/fast-reid)
@@ -57,5 +36,5 @@ namespace fastrt {
         TRTASSERT(bottleneck);
         return bottleneck;
     }
-    
+
 }
