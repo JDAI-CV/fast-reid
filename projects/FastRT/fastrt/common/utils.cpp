@@ -67,13 +67,6 @@ namespace trt {
 
 namespace fastrt {
 
-    const std::string PoolingTypetoString(FastreidPoolingType value) {
-    #define X(a, b) b,
-        static std::vector<std::string> table{ FASTPOOLING_TABLE };
-    #undef X
-        return table[value];
-    }
-
     const std::string BackboneTypetoString(FastreidBackboneType value) {
     #define X(a, b) b,
         static std::vector<std::string> table{ FASTBACKBONE_TABLE };
@@ -81,9 +74,24 @@ namespace fastrt {
         return table[value];
     }
 
+    const std::string HeadTypetoString(FastreidHeadType value) {
+    #define X(a, b) b,
+        static std::vector<std::string> table{ FASTHEAD_TABLE };
+    #undef X
+        return table[value];
+    }
+
+    const std::string PoolingTypetoString(FastreidPoolingType value) {
+    #define X(a, b) b,
+        static std::vector<std::string> table{ FASTPOOLING_TABLE };
+    #undef X
+        return table[value];
+    }
+
     std::ostream& operator<<(std::ostream& os, const FastreidConfig& fastreidCfg) {
-        os << "\tpooling: "             << PoolingTypetoString(fastreidCfg.pooling)   << "\n\t"
-            << "backbone: "             << BackboneTypetoString(fastreidCfg.backbone) << "\n\t"
+        os << "\tbackbone: "            << BackboneTypetoString(fastreidCfg.backbone) << "\n\t"
+            << "head: "                 << HeadTypetoString(fastreidCfg.head)         << "\n\t"
+            << "pooling: "              << PoolingTypetoString(fastreidCfg.pooling)   << "\n\t"
             << "last_stride: "          << fastreidCfg.last_stride                    << "\n\t"
             << "with_ibna: "            << fastreidCfg.with_ibna                      << "\n\t"
             << "with_nl: "              << fastreidCfg.with_nl                        << "\n\t"

@@ -24,16 +24,6 @@ namespace trt {
 
 namespace fastrt {
 
-#define FASTPOOLING_TABLE \
-        X(maxpool, "maxpool") \
-        X(avgpool, "avgpool") \
-        X(gempool, "gempool") \
-        X(gempoolP, "gempoolP") 
-
-#define X(a, b) a,
-    enum FastreidPoolingType { FASTPOOLING_TABLE };
-#undef X
-
 #define FASTBACKBONE_TABLE \
         X(r50, "r50") \
         X(r50_distill, "r50_distill") \
@@ -44,9 +34,27 @@ namespace fastrt {
         enum FastreidBackboneType { FASTBACKBONE_TABLE };
 #undef X
 
+#define FASTHEAD_TABLE \
+        X(EmbeddingHead, "EmbeddingHead")
+
+#define X(a, b) a,
+    enum FastreidHeadType { FASTHEAD_TABLE };
+#undef X
+
+#define FASTPOOLING_TABLE \
+        X(maxpool, "maxpool") \
+        X(avgpool, "avgpool") \
+        X(gempool, "gempool") \
+        X(gempoolP, "gempoolP") 
+
+#define X(a, b) a,
+    enum FastreidPoolingType { FASTPOOLING_TABLE };
+#undef X
+
     struct FastreidConfig {
-        FastreidPoolingType pooling;   /* cfg.MODEL.HEADS.POOL_LAYER */
         FastreidBackboneType backbone; /* cfg.MODEL.BACKBONE.DEPTH and cfg.MODEL.META_ARCHITECTURE */
+        FastreidHeadType head;         /* cfg.MODEL.HEADS.NAME */
+        FastreidPoolingType pooling;   /* cfg.MODEL.HEADS.POOL_LAYER */
         int last_stride;               /* cfg.MODEL.BACKBONE.LAST_STRIDE */
         bool with_ibna;                /* cfg.MODEL.BACKBONE.WITH_IBN */
         bool with_nl;                  /* cfg.MODEL.BACKBONE.WITH_NL */

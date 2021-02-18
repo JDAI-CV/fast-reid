@@ -6,8 +6,8 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <cassert>
 
-#include "assert.h"
 #include "NvInfer.h"
 #include "cuda_runtime_api.h"
 #include "fastrt/struct.h"
@@ -23,18 +23,7 @@
         }                                         \
     } while (0)
 
-
-#define TRTASSERT(CONDITION)                      \
-    do                                            \
-    {                                             \
-        auto cond = (CONDITION);                  \
-        if (!cond)                                \
-        {                                         \
-            std::cerr << "Condition failure.\n";  \
-            abort();                              \
-        }                                         \
-    } while (0)
-
+#define TRTASSERT assert
 
 using Time = std::chrono::high_resolution_clock;
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;

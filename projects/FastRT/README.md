@@ -84,8 +84,9 @@ static const int INPUT_W = 128;
 static const int OUTPUT_SIZE = 2048;
 static const int DEVICE_ID = 0;
 
-static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const FastreidBackboneType BACKBONE = FastreidBackboneType::r50; 
+static const FastreidHeadType HEAD = FastreidHeadType::EmbeddingHead;
+static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const int LAST_STRIDE = 1;
 static const bool WITH_IBNA = true; 
 static const bool WITH_NL = true;
@@ -103,8 +104,9 @@ static const int INPUT_W = 128;
 static const int OUTPUT_SIZE = 2048;
 static const int DEVICE_ID = 0;
 
-static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const FastreidBackboneType BACKBONE = FastreidBackboneType::r50; 
+static const FastreidHeadType HEAD = FastreidHeadType::EmbeddingHead;
+static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const int LAST_STRIDE = 1;
 static const bool WITH_IBNA = false; 
 static const bool WITH_NL = true;
@@ -122,8 +124,9 @@ static const int INPUT_W = 128;
 static const int OUTPUT_SIZE = 512;
 static const int DEVICE_ID = 0;
 
-static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const FastreidBackboneType BACKBONE = FastreidBackboneType::r34_distill; 
+static const FastreidHeadType HEAD = FastreidHeadType::EmbeddingHead;
+static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const int LAST_STRIDE = 1;
 static const bool WITH_IBNA = false; 
 static const bool WITH_NL = false;
@@ -141,8 +144,9 @@ static const int INPUT_W = 128;
 static const int OUTPUT_SIZE = 512;
 static const int DEVICE_ID = 0;
 
-static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const FastreidBackboneType BACKBONE = FastreidBackboneType::r34_distill; 
+static const FastreidHeadType HEAD = FastreidHeadType::EmbeddingHead;
+static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const int LAST_STRIDE = 1;
 static const bool WITH_IBNA = false; 
 static const bool WITH_NL = false;
