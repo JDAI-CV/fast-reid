@@ -21,7 +21,7 @@ You may want to use it as a reference to write your own training script.
 To train a model with "train_net.py", first setup up the corresponding datasets following [datasets/README.md](https://github.com/JDAI-CV/fast-reid/tree/master/datasets), then run:
 
 ```bash
-./tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml MODEL.DEVICE "cuda:0"
+python3 tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml MODEL.DEVICE "cuda:0"
 ```
 
 The configs are made for 1-GPU training.
@@ -29,14 +29,14 @@ The configs are made for 1-GPU training.
 If you want to train model with 4 GPUs, you can run:
 
 ```bash
-python tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml --num-gpus 4
+python3 tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml --num-gpus 4
 ```
 
 To evaluate a model's performance, use
 
 ```bash
-python tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml --eval-only \
+python3 tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml --eval-only \
 MODEL.WEIGHTS /path/to/checkpoint_file MODEL.DEVICE "cuda:0"
 ```
 
-For more options, see `./tools/train_net.py -h`.
+For more options, see `python3 tools/train_net.py -h`.
