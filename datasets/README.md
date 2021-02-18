@@ -6,7 +6,7 @@ You can set the location for builtin datasets by `export FASTREID_DATASETS=/path
 
 The [model zoo](https://github.com/JDAI-CV/fast-reid/blob/master/MODEL_ZOO.md) contains configs and models that use these buildin datasets.
 
-## Expected dataset structure for Market1501
+## Expected dataset structure for [Market1501](https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/Zheng_Scalable_Person_Re-Identification_ICCV_2015_paper.pdf)
 
 1. Download dataset to `datasets/` from [baidu pan](https://pan.baidu.com/s/1ntIi2Op) or [google driver](https://drive.google.com/file/d/0B8-rUzbwVRk0c054eEozWG9COHM/view)
 2. Extract dataset. The dataset structure would like:
@@ -18,7 +18,7 @@ datasets/
         bounding_box_train/
 ```
 
-## Expected dataset structure for DukeMTMC
+## Expected dataset structure for [DukeMTMC-reID](https://openaccess.thecvf.com/content_ICCV_2017/papers/Zheng_Unlabeled_Samples_Generated_ICCV_2017_paper.pdf)
 
 1. Download datasets to `datasets/`
 2. Extract dataset. The dataset structure would like:
@@ -30,7 +30,7 @@ datasets/
         bounding_box_test/
 ```
 
-## Expected dataset structure for MSMT17
+## Expected dataset structure for [MSMT17](https://arxiv.org/abs/1711.08565)
 
 1. Download datasets to `datasets/`
 2. Extract dataset. The dataset structure would like:
