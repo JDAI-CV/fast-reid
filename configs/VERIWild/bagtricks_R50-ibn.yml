@@ -3,18 +3,15 @@ _BASE_: ../Base-bagtricks.yml
 INPUT:
   SIZE_TRAIN: [256, 256]
   SIZE_TEST: [256, 256]
-  CJ: 
-    ENABLED: False
 
 MODEL:
   BACKBONE:
     WITH_IBN: True
-    WITH_NL: False
+
   HEADS:
-    NAME: EmbeddingHead
     POOL_LAYER: gempool
+
   LOSSES:
-    NAME: ("CrossEntropyLoss", "TripletLoss",)
     TRI:
       HARD_MINING: False
       MARGIN: 0.0
@@ -24,18 +21,15 @@ DATASETS:
   TESTS: ("SmallVeRiWild", "MediumVeRiWild", "LargeVeRiWild",)
 
 SOLVER:
-  BASE_LR: 0.00035
-  BIAS_LR_FACTOR: 1.0
-  ETA_MIN_LR: 3e-07
-  IMS_PER_BATCH: 512 # 512 For 4 GPUs, 128 per GPU
-  MAX_EPOCH: 120
-  STEPS: [30, 70, 90]
-  WARMUP_ITERS: 5000
+  IMS_PER_BATCH: 128
+  MAX_EPOCH: 60
+  STEPS: [30, 50]
+  WARMUP_ITERS: 2000
 
   CHECKPOINT_PERIOD: 20
 
 TEST:
-  EVAL_PERIOD: 10
+  EVAL_PERIOD: 20
   IMS_PER_BATCH: 128
 
 OUTPUT_DIR: logs/veriwild/bagtricks_R50-ibn_4gpu
