@@ -21,7 +21,7 @@
 conda create -n fastreid python=3.7
 conda activate fastreid
 conda install pytorch==1.6.0 torchvision tensorboard -c pytorch
-pip install -r requirements
+pip install -r docs/requirements.txt
 ```
 
 # Set up with Dockder
