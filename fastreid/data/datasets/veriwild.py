@@ -65,8 +65,8 @@ class VeRiWild(ImageDataset):
             vid = int(line.split('/')[0])
             imgid = line.split('/')[1]
             if is_train:
-                vid = self.dataset_name + "_" + str(vid)
-            dataset.append((self.imgid2imgpath[imgid], vid, int(self.imgid2camid[imgid])))
+                vid = self.dataset_name + '_' + str(vid)
+            dataset.append((self.imgid2imgpath[imgid], vid, self.imgid2camid[imgid]))
 
         assert len(dataset) == len(img_list_lines)
         return dataset

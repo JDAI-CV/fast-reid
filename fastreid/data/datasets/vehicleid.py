@@ -60,8 +60,8 @@ class VehicleID(ImageDataset):
             imgid = line.split(' ')[0]
             img_path = osp.join(self.image_dir, imgid + '.jpg')
             if is_train:
-                vid = self.dataset_name + "_" + str(vid)
-            dataset.append((img_path, vid, int(imgid)))
+                vid = self.dataset_name + '_' + str(vid)
+            dataset.append((img_path, vid, imgid))
 
         if is_train: return dataset
         else:
