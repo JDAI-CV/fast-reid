@@ -21,6 +21,8 @@ from .AirportALERT import AirportALERT
 from .iLIDS import iLIDS
 from .pku import PKU
 from .prai import PRAI
+from .prid import PRID
+from .grid import GRID
 from .saivt import SAIVT
 from .sensereid import SenseReID
 from .sysu_mm import SYSU_mm
