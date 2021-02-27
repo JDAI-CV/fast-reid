@@ -3,7 +3,8 @@
 
 namespace fastrt {
 
-    Baseline::Baseline(const trt::ModelConfig &modelcfg, const FastreidConfig& reidcfg) : Model(modelcfg, reidcfg) {}
+    Baseline::Baseline(const trt::ModelConfig &modelcfg, const std::string input_name, const std::string output_name) 
+        : Model(modelcfg, input_name, output_name) {}
 
     void Baseline::preprocessing_cpu(const cv::Mat& img, float* const data, const std::size_t stride) {
         /* Normalization & BGR->RGB */

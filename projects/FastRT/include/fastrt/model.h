@@ -19,7 +19,6 @@ namespace fastrt {
     class Model {
     public:
         Model(const trt::ModelConfig &modelcfg, 
-            const FastreidConfig &reidcfg, 
             const std::string input_name="input", 
             const std::string output_name="output");
 
@@ -67,7 +66,6 @@ namespace fastrt {
     private:
         DataType _dt{DataType::kFLOAT};
         trt::EngineConfig _engineCfg;
-        FastreidConfig _reidcfg;
         std::unique_ptr<trt::InferenceEngine> _inferEngine{nullptr};
     };
 }

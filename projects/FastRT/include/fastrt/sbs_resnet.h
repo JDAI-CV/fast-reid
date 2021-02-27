@@ -9,43 +9,47 @@ using namespace nvinfer1;
 namespace fastrt {
 
     class backbone_sbsR34_distill : public Module {
+    private:
+        FastreidConfig& _modelCfg;
     public:
-        backbone_sbsR34_distill() = default;
+        backbone_sbsR34_distill(FastreidConfig& modelCfg) : _modelCfg(modelCfg) {}
         ~backbone_sbsR34_distill() = default;
         ILayer* topology(INetworkDefinition *network, 
             std::map<std::string, Weights>& weightMap, 
-            ITensor& input,
-            const FastreidConfig& reidCfg) override; 
+            ITensor& input) override; 
     };
 
-    class backbone_sbsR50_distill : public Module {  
+    class backbone_sbsR50_distill : public Module { 
+    private:
+        FastreidConfig& _modelCfg;
     public:
-        backbone_sbsR50_distill() = default;   
+        backbone_sbsR50_distill(FastreidConfig& modelCfg) : _modelCfg(modelCfg) {}
         ~backbone_sbsR50_distill() = default;
         ILayer* topology(INetworkDefinition *network, 
             std::map<std::string, Weights>& weightMap, 
-            ITensor& input,
-            const FastreidConfig& reidCfg) override;
+            ITensor& input) override;
     };
 
     class backbone_sbsR34 : public Module {
+    private:
+        FastreidConfig& _modelCfg;
     public:
-        backbone_sbsR34() = default;
+        backbone_sbsR34(FastreidConfig& modelCfg) : _modelCfg(modelCfg) {}
         ~backbone_sbsR34() = default;
         ILayer* topology(INetworkDefinition *network, 
             std::map<std::string, Weights>& weightMap, 
-            ITensor& input,
-            const FastreidConfig& reidCfg) override;
+            ITensor& input) override;
     };
 
     class backbone_sbsR50 : public Module {
+    private:
+        FastreidConfig& _modelCfg;
     public:
-        backbone_sbsR50() = default;
+        backbone_sbsR50(FastreidConfig& modelCfg) : _modelCfg(modelCfg) {}
         ~backbone_sbsR50() = default;
         ILayer* topology(INetworkDefinition *network, 
             std::map<std::string, Weights>& weightMap, 
-            ITensor& input,
-            const FastreidConfig& reidCfg) override;
+            ITensor& input) override;
     };
      
 }
