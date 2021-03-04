@@ -14,8 +14,7 @@ namespace fastrt {
 
         virtual ILayer* topology(INetworkDefinition *network, 
             std::map<std::string, Weights>& weightMap, 
-            ITensor& input,
-            const FastreidConfig& reidCfg) = 0; 
+            ITensor& input) = 0; 
     };
 
 }

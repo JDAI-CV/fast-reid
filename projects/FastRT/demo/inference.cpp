@@ -48,14 +48,14 @@ int main(int argc, char** argv) {
     std::cout << "[ModelConfig]: \n" << modelCfg
         << "\n[FastreidConfig]: \n" << reidCfg << std::endl;
 
-    Baseline baseline{modelCfg, reidCfg}; 
+    Baseline baseline{modelCfg}; 
 
     if (argc == 2 && std::string(argv[1]) == "-s") {
         ModuleFactory moduleFactory;
         std::cout << "[Serializling Engine]" << std::endl;
         if (!baseline.serializeEngine(ENGINE_PATH, 
-            {std::move(moduleFactory.createBackbone(reidCfg.backbone)), 
-                std::move(moduleFactory.createHead(reidCfg.head))})) {
+            {std::move(moduleFactory.createBackbone(reidCfg)), 
+                std::move(moduleFactory.createHead(reidCfg))})) {
             std::cout << "SerializeEngine Failed." << std::endl;
             return -1;
         }   

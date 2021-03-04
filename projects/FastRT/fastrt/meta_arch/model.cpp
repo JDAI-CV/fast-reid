@@ -2,8 +2,7 @@
 
 namespace fastrt {
 
-    Model::Model(const trt::ModelConfig &modelcfg, const FastreidConfig &reidcfg, const std::string input_name, const std::string output_name) :
-        _reidcfg(reidcfg) {
+    Model::Model(const trt::ModelConfig &modelcfg, const std::string input_name, const std::string output_name) {
         
         _engineCfg.weights_path = modelcfg.weights_path;
         _engineCfg.max_batch_size = modelcfg.max_batch_size;
@@ -57,7 +56,7 @@ namespace fastrt {
         /* Modeling */
         ILayer* output{nullptr};
         for(auto& sequential_module: modules) {
-            output = sequential_module->topology(network.get(), weightMap, *input, _reidcfg);
+            output = sequential_module->topology(network.get(), weightMap, *input);
             TRTASSERT(output);
             input = output->getOutput(0);
         }

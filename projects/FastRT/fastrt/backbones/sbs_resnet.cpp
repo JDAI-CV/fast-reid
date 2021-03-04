@@ -7,9 +7,9 @@ using namespace trtxapi;
 
 namespace fastrt {
 
-    ILayer* backbone_sbsR34_distill::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
+    ILayer* backbone_sbsR34_distill::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input) {
         std::string ibn{""};
-        if(reidCfg.with_ibna) {
+        if(_modelCfg.with_ibna) {
             ibn = "a";
         }
         std::map<std::string, std::vector<std::string>> ibn_layers{ 
@@ -54,7 +54,7 @@ namespace fastrt {
         x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 256, 256, 1, "backbone.layer3.4.", ibn_layers[ibn][11]);
         x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 256, 256, 1, "backbone.layer3.5.", ibn_layers[ibn][12]);
        
-        x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 256, 512, reidCfg.last_stride, "backbone.layer4.0.", ibn_layers[ibn][13]);
+        x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 256, 512, _modelCfg.last_stride, "backbone.layer4.0.", ibn_layers[ibn][13]);
         x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 512, 512, 1, "backbone.layer4.1.", ibn_layers[ibn][14]);
         x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 512, 512, 1, "backbone.layer4.2.", ibn_layers[ibn][15]);
 
@@ -63,9 +63,9 @@ namespace fastrt {
         return relu2;
     }
 
-    ILayer* backbone_sbsR50_distill::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
+    ILayer* backbone_sbsR50_distill::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input) {
         std::string ibn{""};
-        if(reidCfg.with_ibna) {
+        if(_modelCfg.with_ibna) {
             ibn = "a";
         }
         std::map<std::string, std::vector<std::string>> ibn_layers{ 
@@ -102,12 +102,12 @@ namespace fastrt {
         x = distill_bottleneck_ibn(network, weightMap, *x->getOutput(0), 512, 128, 1, "backbone.layer2.1.", ibn_layers[ibn][4]);
         x = distill_bottleneck_ibn(network, weightMap, *x->getOutput(0), 512, 128, 1, "backbone.layer2.2.", ibn_layers[ibn][5]);
         ILayer* _layer{x};
-        if(reidCfg.with_nl) {
+        if(_modelCfg.with_nl) {
             _layer = Non_local(network, weightMap, *x->getOutput(0), "backbone.NL_2.0.");
         }
         x = distill_bottleneck_ibn(network, weightMap, *_layer->getOutput(0), 512, 128, 1, "backbone.layer2.3.", ibn_layers[ibn][6]);
         _layer = x;
-        if(reidCfg.with_nl) {
+        if(_modelCfg.with_nl) {
             _layer = Non_local(network, weightMap, *x->getOutput(0), "backbone.NL_2.1.");
         }
 
@@ -116,21 +116,21 @@ namespace fastrt {
         x = distill_bottleneck_ibn(network, weightMap, *x->getOutput(0), 1024, 256, 1, "backbone.layer3.2.", ibn_layers[ibn][9]);
         x = distill_bottleneck_ibn(network, weightMap, *x->getOutput(0), 1024, 256, 1, "backbone.layer3.3.", ibn_layers[ibn][10]);
         _layer = x;
-        if(reidCfg.with_nl) {
+        if(_modelCfg.with_nl) {
             _layer = Non_local(network, weightMap, *x->getOutput(0), "backbone.NL_3.0.");
         } 
         x = distill_bottleneck_ibn(network, weightMap, *_layer->getOutput(0), 1024, 256, 1, "backbone.layer3.4.", ibn_layers[ibn][11]);
         _layer = x;
-        if(reidCfg.with_nl) {
+        if(_modelCfg.with_nl) {
             _layer = Non_local(network, weightMap, *x->getOutput(0), "backbone.NL_3.1.");
         }
         x = distill_bottleneck_ibn(network, weightMap, *_layer->getOutput(0), 1024, 256, 1, "backbone.layer3.5.", ibn_layers[ibn][12]);
         _layer = x;
-        if(reidCfg.with_nl) {
+        if(_modelCfg.with_nl) {
             _layer = Non_local(network, weightMap, *x->getOutput(0), "backbone.NL_3.2.");
         }
 
-        x = distill_bottleneck_ibn(network, weightMap, *_layer->getOutput(0), 1024, 512, reidCfg.last_stride, "backbone.layer4.0.", ibn_layers[ibn][13]); 
+        x = distill_bottleneck_ibn(network, weightMap, *_layer->getOutput(0), 1024, 512, _modelCfg.last_stride, "backbone.layer4.0.", ibn_layers[ibn][13]); 
         x = distill_bottleneck_ibn(network, weightMap, *x->getOutput(0), 2048, 512, 1, "backbone.layer4.1.", ibn_layers[ibn][14]);
         x = distill_bottleneck_ibn(network, weightMap, *x->getOutput(0), 2048, 512, 1, "backbone.layer4.2.", ibn_layers[ibn][15]);
         
@@ -139,9 +139,9 @@ namespace fastrt {
         return relu2;
     }
 
-    ILayer* backbone_sbsR34::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
+    ILayer* backbone_sbsR34::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input) {
         std::string ibn{""};
-        if(reidCfg.with_ibna) {
+        if(_modelCfg.with_ibna) {
             ibn = "a";
         }
         std::map<std::string, std::vector<std::string>> ibn_layers{ 
@@ -186,13 +186,13 @@ namespace fastrt {
         x = basicBlock_ibn(network, weightMap, *x->getOutput(0), 256, 256, 1, "backbone.layer3.4.", ibn_layers[ibn][11]);
         x = basicBlock_ibn(network, weightMap, *x->getOutput(0), 256, 256, 1, "backbone.layer3.5.", ibn_layers[ibn][12]);
        
-        x = basicBlock_ibn(network, weightMap, *x->getOutput(0), 256, 512, reidCfg.last_stride, "backbone.layer4.0.", ibn_layers[ibn][13]); 
+        x = basicBlock_ibn(network, weightMap, *x->getOutput(0), 256, 512, _modelCfg.last_stride, "backbone.layer4.0.", ibn_layers[ibn][13]); 
         x = basicBlock_ibn(network, weightMap, *x->getOutput(0), 512, 512, 1, "backbone.layer4.1.", ibn_layers[ibn][14]);
         x = basicBlock_ibn(network, weightMap, *x->getOutput(0), 512, 512, 1, "backbone.layer4.2.", ibn_layers[ibn][15]);
         return x;
     }
 
-    ILayer* backbone_sbsR50::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, const FastreidConfig& reidCfg) {
+    ILayer* backbone_sbsR50::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input) {
         /*
          * Reference: https://github.com/JDAI-CV/fast-reid/blob/master/fastreid/modeling/backbones/resnet.py
          * NL layers follow by: nl_layers_per_stage = {'50x': [0, 2, 3, 0],}[depth]
@@ -200,7 +200,7 @@ namespace fastrt {
          * for nn.MaxPool2d(kernel_size=3, stride=2, padding=1) replace with => pool1->setPaddingNd(DimsHW{1, 1});
          */
         std::string ibn{""};
-        if(reidCfg.with_ibna) {
+        if(_modelCfg.with_ibna) {
             ibn = "a";
         }
         std::map<std::string, std::vector<std::string>> ibn_layers{ 
@@ -236,12 +236,12 @@ namespace fastrt {
         x = bottleneck_ibn(network, weightMap, *x->getOutput(0), 512, 128, 1, "backbone.layer2.1.", ibn_layers[ibn][4]);
         x = bottleneck_ibn(network, weightMap, *x->getOutput(0), 512, 128, 1, "backbone.layer2.2.", ibn_layers[ibn][5]);
         ILayer* _layer{x};
-        if(reidCfg.with_nl) {
+        if(_modelCfg.with_nl) {
             _layer = Non_local(network, weightMap, *x->getOutput(0), "backbone.NL_2.0.");
         }
         x = bottleneck_ibn(network, weightMap, *_layer->getOutput(0), 512, 128, 1, "backbone.layer2.3.", ibn_layers[ibn][6]);
         _layer = x;
-        if(reidCfg.with_nl) {
+        if(_modelCfg.with_nl) {
             _layer = Non_local(network, weightMap, *x->getOutput(0), "backbone.NL_2.1.");
         }
 
@@ -250,21 +250,21 @@ namespace fastrt {
         x = bottleneck_ibn(network, weightMap, *x->getOutput(0), 1024, 256, 1, "backbone.layer3.2.", ibn_layers[ibn][9]);
         x = bottleneck_ibn(network, weightMap, *x->getOutput(0), 1024, 256, 1, "backbone.layer3.3.", ibn_layers[ibn][10]);
         _layer = x;
-        if(reidCfg.with_nl) {
+        if(_modelCfg.with_nl) {
             _layer = Non_local(network, weightMap, *x->getOutput(0), "backbone.NL_3.0.");
         } 
         x = bottleneck_ibn(network, weightMap, *_layer->getOutput(0), 1024, 256, 1, "backbone.layer3.4.", ibn_layers[ibn][11]);
         _layer = x;
-        if(reidCfg.with_nl) {
+        if(_modelCfg.with_nl) {
             _layer = Non_local(network, weightMap, *x->getOutput(0), "backbone.NL_3.1.");
         }
         x = bottleneck_ibn(network, weightMap, *_layer->getOutput(0), 1024, 256, 1, "backbone.layer3.5.", ibn_layers[ibn][12]);
         _layer = x;
-        if(reidCfg.with_nl) {
+        if(_modelCfg.with_nl) {
             _layer = Non_local(network, weightMap, *x->getOutput(0), "backbone.NL_3.2.");
         }
 
-        x = bottleneck_ibn(network, weightMap, *_layer->getOutput(0), 1024, 512, reidCfg.last_stride, "backbone.layer4.0.", ibn_layers[ibn][13]); 
+        x = bottleneck_ibn(network, weightMap, *_layer->getOutput(0), 1024, 512, _modelCfg.last_stride, "backbone.layer4.0.", ibn_layers[ibn][13]); 
         x = bottleneck_ibn(network, weightMap, *x->getOutput(0), 2048, 512, 1, "backbone.layer4.1.", ibn_layers[ibn][14]);
         x = bottleneck_ibn(network, weightMap, *x->getOutput(0), 2048, 512, 1, "backbone.layer4.2.", ibn_layers[ibn][15]);
         return x;

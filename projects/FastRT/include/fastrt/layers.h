@@ -13,6 +13,11 @@ namespace trtxapi {
         ITensor& input, 
         const float min);
 
+    ITensor* addDiv255(INetworkDefinition* network, 
+        std::map<std::string, Weights>& weightMap, 
+        ITensor* input,
+        const std::string lname);
+        
     ITensor* addMeanStd(INetworkDefinition* network, 
         std::map<std::string, Weights>& weightMap, 
         ITensor* input, 

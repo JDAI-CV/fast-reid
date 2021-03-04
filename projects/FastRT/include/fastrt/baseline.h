@@ -10,7 +10,9 @@ namespace fastrt {
 
     class Baseline : public Model {
     public:
-        Baseline(const trt::ModelConfig &modelcfg, const FastreidConfig& reidcfg);
+        Baseline(const trt::ModelConfig &modelcfg,
+            const std::string input_name = "data",
+            const std::string output_name = "reid_embd");
         ~Baseline() = default;
     
     private:
@@ -18,8 +20,5 @@ namespace fastrt {
         ITensor* preprocessing_gpu(INetworkDefinition* network, 
             std::map<std::string, Weights>& weightMap, 
             ITensor* input); 
-    private:
-        std::string _input_name{"data"};
-        std::string _output_name{"embd"}; 
     };
 }
