@@ -33,11 +33,40 @@ from fastreid.utils.events import (
     CommonMetricPrinter,
     EventStorage,
     JSONWriter,
-    TensorboardXWriter
+    TensorboardXWriter,
+    PathManager
 )
 
 logger = logging.getLogger("fastreid")
 
+def auto_scale_hyperparams(cfg, num_classes):
+    r"""
+    This is used for auto-computation actual training iterations,
+    because some hyper-param, such as MAX_ITER, means training epochs rather than iters,
+    so we need to convert specific hyper-param to training iterations.
+    """
+    cfg = cfg.clone()
+    frozen = cfg.is_frozen()
+    cfg.defrost()
+
+    # If you don't hard-code the number of classes, it will compute the number automatically
+    if cfg.MODEL.HEADS.NUM_CLASSES == 0:
+        output_dir = cfg.OUTPUT_DIR
+        cfg.MODEL.HEADS.NUM_CLASSES = num_classes
+        logger = logging.getLogger(__name__)
+        logger.info(f"Auto-scaling the num_classes={cfg.MODEL.HEADS.NUM_CLASSES}")
+
+        # Update the saved config file to make the number of classes valid
+        if comm.is_main_process() and output_dir:
+            # Note: some of our scripts may expect the existence of
+            # config.yaml in output directory
+            path = os.path.join(output_dir, "config.yaml")
+            with PathManager.open(path, "w") as f:
+                f.write(cfg.dump())
+
+    if frozen: cfg.freeze()
+
+    return cfg
 
 def get_evaluator(cfg, dataset_name, output_dir=None):
     data_loader, num_query = build_reid_test_loader(cfg, dataset_name)
@@ -72,8 +101,7 @@ def do_test(cfg, model):
     return results
 
 
-def do_train(cfg, model, resume=False):
-    data_loader = build_reid_train_loader(cfg)
+def do_train(cfg, model, data_loader, resume=False):
 
     model.train()
     optimizer = build_optimizer(cfg, model)
@@ -181,6 +209,9 @@ def setup(args):
 def main(args):
     cfg = setup(args)
 
+    train_data_loader = build_reid_train_loader(cfg)
+    cfg = auto_scale_hyperparams(cfg, train_data_loader.dataset.num_classes)
+
     model = build_model(cfg)
     logger.info("Model:\n{}".format(model))
     if args.eval_only:
@@ -195,7 +226,7 @@ def main(args):
     if distributed:
         model = DistributedDataParallel(model, delay_allreduce=True)
 
-    do_train(cfg, model, resume=args.resume)
+    do_train(cfg, model, train_data_loader, resume=args.resume)
     return do_test(cfg, model)
 
 
