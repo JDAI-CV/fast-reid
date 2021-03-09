@@ -6,6 +6,7 @@ from contextlib import contextmanager
 
 import torch
 
+from fastreid.utils import comm
 from fastreid.utils.logger import log_every_n_seconds
 
 
@@ -96,6 +97,7 @@ def inference_on_dataset(model, data_loader, evaluator, flip_test=False):
     Returns:
         The return value of `evaluator.evaluate()`
     """
+    num_devices = comm.get_world_size()
     logger = logging.getLogger(__name__)
     logger.info("Start inference on {} images".format(len(data_loader.dataset)))
 
@@ -118,10 +120,11 @@ def inference_on_dataset(model, data_loader, evaluator, flip_test=False):
                 inputs["images"] = inputs["images"].flip(dims=[3])
                 flip_outputs = model(inputs)
                 outputs = (outputs + flip_outputs) / 2
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
             total_compute_time += time.perf_counter() - start_compute_time
             evaluator.process(inputs, outputs)
 
-            idx += 1
             iters_after_start = idx + 1 - num_warmup * int(idx >= num_warmup)
             seconds_per_batch = total_compute_time / iters_after_start
             if idx >= num_warmup * 2 or seconds_per_batch > 30:
@@ -140,17 +143,18 @@ def inference_on_dataset(model, data_loader, evaluator, flip_test=False):
     total_time_str = str(datetime.timedelta(seconds=total_time))
     # NOTE this format is parsed by grep
     logger.info(
-        "Total inference time: {} ({:.6f} s / batch per device)".format(
-            total_time_str, total_time / (total - num_warmup)
+        "Total inference time: {} ({:.6f} s / batch per device, on {} devices)".format(
+            total_time_str, total_time / (total - num_warmup), num_devices
         )
     )
     total_compute_time_str = str(datetime.timedelta(seconds=int(total_compute_time)))
     logger.info(
-        "Total inference pure compute time: {} ({:.6f} s / batch per device)".format(
-            total_compute_time_str, total_compute_time / (total - num_warmup)
+        "Total inference pure compute time: {} ({:.6f} s / batch per device, on {} devices)".format(
+            total_compute_time_str, total_compute_time / (total - num_warmup), num_devices
         )
     )
     results = evaluator.evaluate()
+
     # An evaluator may return None when not in main process.
     # Replace it by an empty dict instead to make it easier for downstream code to handle
     if results is None:
