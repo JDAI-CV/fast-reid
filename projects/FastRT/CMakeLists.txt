@@ -29,8 +29,13 @@ endif()
 
 option(CUDA_USE_STATIC_CUDA_RUNTIME "Use Static CUDA"     OFF)
 option(BUILD_FASTRT_ENGINE     "Build FastRT Engine"       ON)
-option(BUILD_DEMO              "Build DEMO"               OFF)
+option(BUILD_DEMO              "Build DEMO"                ON)
 option(BUILD_FP16              "Build Engine as FP16"     OFF)
+option(USE_CNUMPY              "Include CNPY libs"        OFF)
+
+if(USE_CNUMPY)
+  add_definitions(-DUSE_CNUMPY)
+endif()
 
 if(BUILD_FP16)
   add_definitions(-DBUILD_FP16)

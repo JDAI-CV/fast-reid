@@ -13,17 +13,24 @@ So we don't use any parsers here.
 
 2. Config your model
    
-   See [Tensorrt Model Config](#ConfigSection) 
+   See [Tensorrt Model Config](#ConfigSection)
    
-3. Build `fastrt` execute file
+3. (Optional) Build <a name="step3"></a>`third party` libs
+
+   See [Build third_party section](#third_party)
+   
+4. Build <a name="step4"></a>`fastrt` execute file
    
    ``` 
    mkdir build
    cd build
-   cmake -DBUILD_FASTRT_ENGINE=ON -DBUILD_DEMO=ON ..
+   cmake -DBUILD_FASTRT_ENGINE=ON \
+         -DBUILD_DEMO=ON \
+         -DUSE_CNUMPY=ON ..
    make
    ```
-4. Run <a name="step4"></a>`fastrt`
+
+5. Run <a name="step5"></a>`fastrt`
    
    put `model_best.wts` into `FastRT/`
 
@@ -35,10 +42,10 @@ So we don't use any parsers here.
    ./demo/fastrt -d  // deserialize 'xxx.engine' file and run inference
    ```
    
-5. Verify the output with pytorch
+6. Verify the output with pytorch
 
 
-6. (Optional) Once you verify the result, you can set FP16 for speed up
+7. (Optional) Once you verify the result, you can set FP16 for speed up
    ``` 
    mkdir build
    cd build
@@ -46,9 +53,9 @@ So we don't use any parsers here.
    make
    ```
    
-   then go to [step 4](#step4)  
+   then go to [step 5](#step5)  
 
-7. (Optional) Build tensorrt model as shared libs
+8. (Optional) Build tensorrt model as shared libs
 
    ``` 
    mkdir build
@@ -65,7 +72,7 @@ So we don't use any parsers here.
    make
    ```
 
-   then go to [step 4](#step4)  
+   then go to [step 5](#step5)  
 
 ### <a name="ConfigSection"></a>`Tensorrt Model Config`
 
@@ -213,5 +220,14 @@ static const int EMBEDDING_DIM = 0;
    sudo docker run --gpus all -it --name fastrt -v /home/YOURID/workspace:/workspace -d trt7:cuda102 
    // then put the repo into `/home/YOURID/workspace/` before you getin container
    ```
-   
+
 * [Installation reference](https://github.com/wang-xinyu/tensorrtx/blob/master/tutorials/install.md)
+
+### Build <a name="third_party"></a> third party
+
+* for read/write numpy
+
+   ```
+   cd third_party/cnpy
+   cmake -DCMAKE_INSTALL_PREFIX=../../libs/cnpy -DENABLE_STATIC=OFF . && make -j4 && make install
+   ```

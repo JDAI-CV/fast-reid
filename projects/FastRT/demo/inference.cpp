@@ -7,6 +7,10 @@
 using namespace fastrt;
 using namespace nvinfer1;
 
+#ifdef USE_CNUMPY
+#include "cnpy.h"
+#endif
+
 /* Ex1. sbs_R50-ibn */
 static const std::string WEIGHTS_PATH = "../sbs_R50-ibn.wts"; 
 static const std::string ENGINE_PATH = "./sbs_R50-ibn.engine";
@@ -91,6 +95,11 @@ int main(int argc, char** argv) {
 
         /* get output from cudaMallocHost */
         float* feat_embedding = baseline.getOutput();
+
+#ifdef USE_CNUMPY
+        /* save as numpy. shape = (OUTPUT_SIZE,) */
+        cnpy::npy_save("./feat_embedding.npy", feat_embedding, {OUTPUT_SIZE}, "w");
+#endif
 
         /* print output */
         TRTASSERT(feat_embedding);
