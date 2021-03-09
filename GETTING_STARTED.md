@@ -32,6 +32,26 @@ If you want to train model with 4 GPUs, you can run:
 python3 tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml --num-gpus 4
 ```
 
+If you want to train model with multiple machines, you can run:
+
+```
+# machine 1
+export GLOO_SOCKET_IFNAME=eth0
+export NCCL_SOCKET_IFNAME=eth0
+
+python3 tools/train_net.py --config-file configs/Market1501/bagtricks_R50.yml \
+--num-gpus 4 --num-machines 2 --machine-rank 0 --dist-url tcp://ip:port 
+
+# machine 2
+export GLOO_SOCKET_IFNAME=eth0
+export NCCL_SOCKET_IFNAME=eth0
+
+python3 tools/train_net.py --config-file configs/Market1501/bagtricks_R50.yml \
+--num-gpus 4 --num-machines 2 --machine-rank 1 --dist-url tcp://ip:port 
+```
+
+Make sure the dataset path and code are the same in different machines, and machines can communicate with each other. 
+
 To evaluate a model's performance, use
 
 ```bash

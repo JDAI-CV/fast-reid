@@ -467,15 +467,18 @@ class DefaultTrainer(TrainerBase):
             results_i = inference_on_dataset(model, data_loader, evaluator, flip_test=cfg.TEST.FLIP_ENABLED)
             results[dataset_name] = results_i
 
-        if comm.is_main_process():
-            assert isinstance(
-                results, dict
-            ), "Evaluator must return a dict on the main process. Got {} instead.".format(
-                results
-            )
-            print_csv_format(results)
+            if comm.is_main_process():
+                assert isinstance(
+                    results, dict
+                ), "Evaluator must return a dict on the main process. Got {} instead.".format(
+                    results
+                )
+                logger.info("Evaluation results for {} in csv format:".format(dataset_name))
+                results_i['dataset'] = dataset_name
+                print_csv_format(results_i)
 
-        if len(results) == 1: results = list(results.values())[0]
+        if len(results) == 1:
+            results = list(results.values())[0]
 
         return results
 
