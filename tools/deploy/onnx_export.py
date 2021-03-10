@@ -21,6 +21,10 @@ from fastreid.utils.file_io import PathManager
 from fastreid.utils.checkpoint import Checkpointer
 from fastreid.utils.logger import setup_logger
 
+# import some modules added in project like this below
+# sys.path.append('../../projects/FastDistill')
+# from fastdistill import *
+
 logger = setup_logger(name='onnx_export')
 
 
@@ -49,6 +53,12 @@ def get_parser():
         "--output",
         default='onnx_model',
         help='path to save converted onnx model'
+    )
+    parser.add_argument(
+        '--batch-size',
+        default=1,
+        type=int,
+        help="the maximum batch size of onnx runtime"
     )
     parser.add_argument(
         "--opts",
@@ -130,7 +140,7 @@ if __name__ == '__main__':
     model.eval()
     logger.info(model)
 
-    inputs = torch.randn(1, 3, cfg.INPUT.SIZE_TEST[0], cfg.INPUT.SIZE_TEST[1])
+    inputs = torch.randn(args.batch_size, 3, cfg.INPUT.SIZE_TEST[0], cfg.INPUT.SIZE_TEST[1])
     onnx_model = export_onnx_model(model, inputs)
 
     model_simp, check = simplify(onnx_model)
