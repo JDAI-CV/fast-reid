@@ -6,17 +6,16 @@
 
 import argparse
 import os
-import numpy as np
 import sys
+
 import tensorrt as trt
 
-sys.path.append('../../')
-sys.path.append("/export/home/lxy/runtimelib-tensorrt-tiny/build")
+from trt_calibrator import FeatEntropyCalibrator
 
-import pytrt
+sys.path.append('../../')
+
 from fastreid.utils.logger import setup_logger
 from fastreid.utils.file_io import PathManager
-
 
 logger = setup_logger(name='trt_export')
 
@@ -25,79 +24,103 @@ def get_parser():
     parser = argparse.ArgumentParser(description="Convert ONNX to TRT model")
 
     parser.add_argument(
-        "--name",
-        default="baseline",
+        '--name',
+        default='baseline',
         help="name for converted model"
     )
     parser.add_argument(
-        "--output",
+        '--output',
         default='outputs/trt_model',
-        help='path to save converted trt model'
+        help="path to save converted trt model"
+    )
+    parser.add_argument(
+        '--mode',
+        default='fp32',
+        help="which mode is used in tensorRT engine, mode can be ['fp32', 'fp16' 'int8']"
+    )
+    parser.add_argument(
+        '--batch-size',
+        default=1,
+        type=int,
+        help="the maximum batch size of trt module"
+    )
+    parser.add_argument(
+        '--height',
+        default=256,
+        type=int,
+        help="input image height"
+    )
+    parser.add_argument(
+        '--width',
+        default=128,
+        type=int,
+        help="input image width"
+    )
+    parser.add_argument(
+        '--channel',
+        default=3,
+        type=int,
+        help="input image channel"
+    )
+    parser.add_argument(
+        '--calib-data',
+        default='Market1501',
+        help="int8 calibrator dataset name"
     )
     parser.add_argument(
         "--onnx-model",
         default='outputs/onnx_model/baseline.onnx',
         help='path to onnx model'
     )
-    parser.add_argument(
-        "--height",
-        type=int,
-        default=256,
-        help="height of image"
-    )
-    parser.add_argument(
-        "--width",
-        type=int,
-        default=128,
-        help="width of image"
-    )
     return parser
 
 
 def onnx2trt(
-        model,
+        onnx_file_path,
         save_path,
+        mode,
         log_level='ERROR',
-        max_batch_size=1,
         max_workspace_size=1,
-        fp16_mode=False,
         strict_type_constraints=False,
-        int8_mode=False,
         int8_calibrator=None,
 ):
     """build TensorRT model from onnx model.
     Args:
-        model (string or io object): onnx model name
+        onnx_file_path (string or io object): onnx model name
+        save_path (string): tensortRT serialization save path
+        mode (string): Whether or not FP16 or Int8 kernels are permitted during engine build.
         log_level (string, default is ERROR): tensorrt logger level, now
             INTERNAL_ERROR, ERROR, WARNING, INFO, VERBOSE are support.
-        max_batch_size (int, default=1): The maximum batch size which can be used at execution time, and also the
-            batch size for which the ICudaEngine will be optimized.
         max_workspace_size (int, default is 1): The maximum GPU temporary memory which the ICudaEngine can use at
             execution time. default is 1GB.
-        fp16_mode (bool, default is False): Whether or not 16-bit kernels are permitted. During engine build
-            fp16 kernels will also be tried when this mode is enabled.
         strict_type_constraints (bool, default is False): When strict type constraints is set, TensorRT will choose
             the type constraints that conforms to type constraints. If the flag is not enabled higher precision
             implementation may be chosen if it results in higher performance.
-        int8_mode (bool, default is False): Whether Int8 mode is used.
         int8_calibrator (volksdep.calibrators.base.BaseCalibrator, default is None): calibrator for int8 mode,
             if None, default calibrator will be used as calibration data.
     """
+    mode = mode.lower()
+    assert mode in ['fp32', 'fp16', 'int8'], "mode should be in ['fp32', 'fp16', 'int8'], " \
+                                             "but got {}".format(mode)
 
-    logger = trt.Logger(getattr(trt.Logger, log_level))
-    builder = trt.Builder(logger)
+    trt_logger = trt.Logger(getattr(trt.Logger, log_level))
+    builder = trt.Builder(trt_logger)
 
-    network = builder.create_network(1 << (int)(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
-    parser = trt.OnnxParser(network, logger)
-    if isinstance(model, str):
-        with open(model, 'rb') as f:
+    logger.info("Loading ONNX file from path {}...".format(onnx_file_path))
+    EXPLICIT_BATCH = 1 << (int)(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
+    network = builder.create_network(EXPLICIT_BATCH)
+    parser = trt.OnnxParser(network, trt_logger)
+    if isinstance(onnx_file_path, str):
+        with open(onnx_file_path, 'rb') as f:
+            logger.info("Beginning ONNX file parsing")
             flag = parser.parse(f.read())
     else:
-        flag = parser.parse(model.read())
+        flag = parser.parse(onnx_file_path.read())
     if not flag:
         for error in range(parser.num_errors):
-            print(parser.get_error(error))
+            logger.info(parser.get_error(error))
 
+    logger.info("Completed parsing of ONNX file.")
     # re-order output tensor
     output_tensors = [network.get_output(i) for i in range(network.num_outputs)]
     [network.unmark_output(tensor) for tensor in output_tensors]
@@ -106,68 +129,39 @@ def onnx2trt(
         identity_out_tensor.name = 'identity_{}'.format(tensor.name)
         network.mark_output(tensor=identity_out_tensor)
 
-    builder.max_batch_size = max_batch_size
-
     config = builder.create_builder_config()
     config.max_workspace_size = max_workspace_size * (1 << 25)
-    if fp16_mode:
-        config.set_flag(trt.BuilderFlag.FP16)
+    if mode == 'fp16':
+        assert builder.platform_has_fast_fp16, "not support fp16"
+        builder.fp16_mode = True
+    if mode == 'int8':
+        assert builder.platform_has_fast_int8, "not support int8"
+        builder.int8_mode = True
+        builder.int8_calibrator = int8_calibrator
+
     if strict_type_constraints:
         config.set_flag(trt.BuilderFlag.STRICT_TYPES)
-    # if int8_mode:
-    #     config.set_flag(trt.BuilderFlag.INT8)
-    #     if int8_calibrator is None:
-    #         shapes = [(1,) + network.get_input(i).shape[1:] for i in range(network.num_inputs)]
-    #         dummy_data = utils.gen_ones_data(shapes)
-    #         int8_calibrator = EntropyCalibrator2(CustomDataset(dummy_data))
-    #     config.int8_calibrator = int8_calibrator
 
-    # set dynamic batch size profile
-    profile = builder.create_optimization_profile()
-    for i in range(network.num_inputs):
-        tensor = network.get_input(i)
-        name = tensor.name
-        shape = tensor.shape[1:]
-        min_shape = (1,) + shape
-        opt_shape = ((1 + max_batch_size) // 2,) + shape
-        max_shape = (max_batch_size,) + shape
-        profile.set_shape(name, min_shape, opt_shape, max_shape)
-    config.add_optimization_profile(profile)
+    logger.info("Building an engine from file {}; this may take a while...".format(onnx_file_path))
+    engine = builder.build_cuda_engine(network)
+    logger.info("Create engine successfully!")
 
-    engine = builder.build_engine(network, config)
-
+    logger.info("Saving TRT engine file to path {}".format(save_path))
     with open(save_path, 'wb') as f:
         f.write(engine.serialize())
-    # trt_model = TRTModel(engine)
-
-    # return trt_model
-
-
-def export_trt_model(onnxModel, engineFile, input_numpy_array):
-    r"""
-    Export a model to trt format.
-    """
-
-    trt = pytrt.Trt()
-
-    customOutput = []
-    maxBatchSize = 8
-    calibratorData = []
-    mode = 0
-    trt.CreateEngine(onnxModel, engineFile, customOutput, maxBatchSize, mode, calibratorData)
-    trt.DoInference(input_numpy_array)  # slightly different from c++
-    return 0
+    logger.info("Engine file has already saved to {}!".format(save_path))
 
 
 if __name__ == '__main__':
     args = get_parser().parse_args()
 
-    inputs = np.zeros(shape=(1, args.height, args.width, 3))
-    onnxModel = args.onnx_model
-    engineFile = os.path.join(args.output, args.name+'.engine')
+    onnx_file_path = args.onnx_model
+    engineFile = os.path.join(args.output, args.name + '.engine')
+
+    if args.mode.lower() == 'int8':
+        int8_calib = FeatEntropyCalibrator(args)
+    else:
+        int8_calib = None
 
     PathManager.mkdirs(args.output)
-    onnx2trt(onnxModel, engineFile)
-    # export_trt_model(onnxModel, engineFile, inputs)
-
-    logger.info(f"Export trt model in {args.output} successfully!")
+    onnx2trt(onnx_file_path, engineFile, args.mode, int8_calibrator=int8_calib)

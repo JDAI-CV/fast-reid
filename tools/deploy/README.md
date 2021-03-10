@@ -18,32 +18,14 @@ This is a tiny example for converting fastreid-baseline in `meta_arch` to Caffe 
 1. Run `caffe_export.py` to get the converted Caffe model,
 
     ```bash
-    python caffe_export.py --config-file root-path/market1501/bagtricks_R50/config.yml --name "baseline_R50" --output outputs/caffe_model --opts MODEL.WEIGHTS root-path/logs/market1501/bagtricks_R50/model_final.pth
+    python caffe_export.py --config-file root-path/market1501/bagtricks_R50/config.yml --name baseline_R50 --output outputs/caffe_model --opts MODEL.WEIGHTS root-path/logs/market1501/bagtricks_R50/model_final.pth
     ```
 
     then you can check the Caffe model and prototxt in `outputs/caffe_model`.
 
-2. Change `prototxt` following next three steps:
+2. Change `prototxt` following next two steps:
 
-   1) Edit `max_pooling` in `baseline_R50.prototxt` like this
-
-        ```prototxt
-        layer {
-            name: "max_pool1"
-            type: "Pooling"
-            bottom: "relu_blob1"
-            top: "max_pool_blob1"
-            pooling_param {
-                pool: MAX
-                kernel_size: 3
-                stride: 2
-                pad: 0 # 1
-                # ceil_mode: false
-            }
-        }
-        ```
-
-   2) Add `avg_pooling` right place in `baseline_R50.prototxt`
+   1) Modify `avg_pooling` in `baseline_R50.prototxt`
 
         ```prototxt
         layer {
@@ -58,7 +40,7 @@ This is a tiny example for converting fastreid-baseline in `meta_arch` to Caffe 
         }
         ```
 
-   3) Change the last layer `top` name to `output`
+   2) Change the last layer `top` name to `output`
 
         ```prototxt
         layer {
@@ -100,7 +82,7 @@ This is a tiny example for converting fastreid-baseline in `meta_arch` to ONNX m
 1. Run `onnx_export.py` to get the converted ONNX model,
 
     ```bash
-    python onnx_export.py --config-file root-path/bagtricks_R50/config.yml --name "baseline_R50" --output outputs/onnx_model --opts MODEL.WEIGHTS root-path/logs/market1501/bagtricks_R50/model_final.pth
+    python onnx_export.py --config-file root-path/bagtricks_R50/config.yml --name baseline_R50 --output outputs/onnx_model --opts MODEL.WEIGHTS root-path/logs/market1501/bagtricks_R50/model_final.pth
     ```
 
     then you can check the ONNX model in `outputs/onnx_model`.
@@ -127,15 +109,16 @@ This is a tiny example for converting fastreid-baseline in `meta_arch` to ONNX m
 <details>
 <summary>step-to-step pipeline for trt convert</summary>
 
-This is a tiny example for converting fastreid-baseline in `meta_arch` to TRT model. We use [tiny-tensorrt](https://github.com/zerollzeng/tiny-tensorrt) which is a simple and easy-to-use nvidia TensorRt warpper, to get the model converted to tensorRT.
+This is a tiny example for converting fastreid-baseline in `meta_arch` to TRT model.
 
 First you need to convert the pytorch model to ONNX format following [ONNX Convert](https://github.com/JDAI-CV/fast-reid#fastreid), and you need to remember your `output` name. Then you can convert ONNX model to TensorRT following instructions below.
 
 1. Run command line below to get the converted TRT model from ONNX model,
 
     ```bash
-
-    python trt_export.py --name "baseline_R50" --output outputs/trt_model --onnx-model outputs/onnx_model/baseline.onnx --heighi 256 --width 128
+    python trt_export.py --name baseline_R50 --output outputs/trt_model \
+    --mode fp32 --batch-size 8 --height 256 --width 128 \
+    --onnx-model outputs/onnx_model/baseline.onnx 
     ```
 
     then you can check the TRT model in `outputs/trt_model`.
@@ -143,15 +126,17 @@ First you need to convert the pytorch model to ONNX format following [ONNX Conve
 2. Run `trt_inference.py` to save TRT model features with input images
 
    ```bash
-    python onnx_inference.py --model-path outputs/trt_model/baseline.engine \
-    --input test_data/*.jpg --output trt_output --output-name trt_model_outputname
+    python3 trt_inference.py --model-path outputs/trt_model/baseline.engine \
+    --input test_data/*.jpg --batch-size 8 --height 256 --width 128 --output trt_output 
    ```
 
 3. Run `demo/demo.py` to get fastreid model features with the same input images, then verify that TensorRT and PyTorch are computing the same value for the network.
 
     ```python
-    np.testing.assert_allclose(torch_out, ort_out, rtol=1e-3, atol=1e-6)
+    np.testing.assert_allclose(torch_out, trt_out, rtol=1e-3, atol=1e-6)
     ```
+
+Notice: The int8 mode in tensorRT runtime is not supported now and there are some bugs in calibrator. Need help!
 
 </details>
 
