@@ -9,9 +9,9 @@ namespace fastrt {
     void Baseline::preprocessing_cpu(const cv::Mat& img, float* const data, const std::size_t stride) {
         /* Normalization & BGR->RGB */
         for (std::size_t i = 0; i < stride; ++i) { 
-            data[i] = img.at<cv::Vec3b>(i)[2] / 255.0; 
-            data[i + stride] = img.at<cv::Vec3b>(i)[1] / 255.0;
-            data[i + (stride<<1)] = img.at<cv::Vec3b>(i)[0] / 255.0;
+            data[i] = img.at<cv::Vec3b>(i)[2]; 
+            data[i + stride] = img.at<cv::Vec3b>(i)[1];
+            data[i + (stride<<1)] = img.at<cv::Vec3b>(i)[0];
         }
     }
 
@@ -19,7 +19,7 @@ namespace fastrt {
         /* Standardization */
         static const float mean[3] = {123.675, 116.28, 103.53};
         static const float std[3] = {58.395, 57.120000000000005, 57.375};
-        return addMeanStd(network, weightMap, input, "", mean, std, false); // true for div 255
+        return addMeanStd(network, weightMap, input, "", mean, std, true); // true for div 255
     }
 
 }
