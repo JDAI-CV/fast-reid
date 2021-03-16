@@ -90,6 +90,7 @@ So we don't use any parsers here.
    then go to [step 5](#step5)  
    
 10. (Optional) Build tensorrt model with python interface, then you can use FastRT model in python.
+   First get the pybind lib, run `git submodule update --init --recursive`.
 
    ``` 
    mkdir build
