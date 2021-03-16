@@ -44,7 +44,6 @@ So we don't use any parsers here.
    
 6. Verify the output with pytorch
 
-
 7. (Optional) Once you verify the result, you can set FP16 for speed up
    ``` 
    mkdir build
@@ -55,7 +54,23 @@ So we don't use any parsers here.
    
    then go to [step 5](#step5)  
 
-8. (Optional) Build tensorrt model as shared libs
+8. (Optional) You can use INT8 quantization for speed up
+
+   First, modify the source code to specify your calibrate dataset path. In `FastRT/fastrt/meta_arch/model.cpp`, line 91.
+   ```
+   Int8EntropyCalibrator2* calibrator = new Int8EntropyCalibrator2(1, w, h, PATH_TO_YOUR_DATASET, "int8calib.table", p);
+   ```
+   Then build.
+   ``` 
+   mkdir build
+   cd build
+   cmake -DBUILD_FASTRT_ENGINE=ON -DBUILD_DEMO=ON -DBUILD_INT8=ON ..
+   make
+   ```
+   
+   then go to [step 5](#step5)  
+
+9. (Optional) Build tensorrt model as shared libs
 
    ``` 
    mkdir build
@@ -73,6 +88,28 @@ So we don't use any parsers here.
    ```
 
    then go to [step 5](#step5)  
+   
+10. (Optional) Build tensorrt model with python interface, then you can use FastRT model in python.
+
+   ``` 
+   mkdir build
+   cd build
+   cmake -DBUILD_FASTRT_ENGINE=ON -DBUILD_DEMO=ON -DBUILD_PYTHON_INTERFACE=ON -DPYTHON_EXECUTABLE=$(which python) ..
+   make
+   ```
+   You should get a so file `FastRT/build/pybind_interface/ReID.cpython-36m-x86_64-linux-gnu.so`. 
+   
+   Then go to [step 5](#step5) to create engine file. After that you can import this so file in python, and deserialize engine file to infer in python. You can find use example in `test.py` and `market_benchmark.py`. 
+   ``` 
+   from PATH_TO_SO_FILE import ReID
+   model = ReID(GPU_ID)
+   model.build(PATH_TO_YOUR_ENGINEFILE)
+   numpy_feature = np.array([model.infer(CV2_FRAME)])
+   ```
+   
+   
+
+   
 
 ### <a name="ConfigSection"></a>`Tensorrt Model Config`
 
@@ -160,9 +197,30 @@ static const bool WITH_NL = false;
 static const int EMBEDDING_DIM = 0; 
 ```
 
+
++ Ex5.`kd-r18-r101_ibn`
+```
+static const std::string WEIGHTS_PATH = "../kd-r18-r101_ibn.wts"; 
+static const std::string ENGINE_PATH = "./kd_r18_distill.engine"; 
+
+static const int MAX_BATCH_SIZE = 16;
+static const int INPUT_H = 384;
+static const int INPUT_W = 128;
+static const int OUTPUT_SIZE = 512;
+static const int DEVICE_ID = 1;
+
+static const FastreidBackboneType BACKBONE = FastreidBackboneType::r18_distill; 
+static const FastreidHeadType HEAD = FastreidHeadType::EmbeddingHead;
+static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
+static const int LAST_STRIDE = 1;
+static const bool WITH_IBNA = true; 
+static const bool WITH_NL = false;
+static const int EMBEDDING_DIM = 0; 
+```
+
 ### Supported conversion
 
-*  Backbone: resnet50, resnet34, distill-resnet50, distill-resnet34
+*  Backbone: resnet50, resnet34, distill-resnet50, distill-resnet34, distill-resnet18
 *  Heads: embedding_head
 *  Plugin layers: ibn, non-local
 *  Pooling layers: maxpool, avgpool, GeneralizedMeanPooling, GeneralizedMeanPoolingP
