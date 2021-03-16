@@ -28,7 +28,8 @@ namespace fastrt {
         X(r50, "r50") \
         X(r50_distill, "r50_distill") \
         X(r34, "r34") \
-        X(r34_distill, "r34_distill") 
+        X(r34_distill, "r34_distill") \
+        X(r18_distill, "r18_distill") 
 
 #define X(a, b) a,
         enum FastreidBackboneType { FASTBACKBONE_TABLE };

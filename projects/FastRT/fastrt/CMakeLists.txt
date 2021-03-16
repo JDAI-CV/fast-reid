@@ -2,6 +2,8 @@ project(FastRTEngine)
 
 file(GLOB_RECURSE COMMON_SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/calibrator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/common/common.cpp
 )
 
 find_package(CUDA REQUIRED)

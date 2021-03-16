@@ -19,7 +19,7 @@ namespace fastrt {
         /* Standardization */
         static const float mean[3] = {123.675, 116.28, 103.53};
         static const float std[3] = {58.395, 57.120000000000005, 57.375};
-        return addMeanStd(network, weightMap, input, "", mean, std, true); // true for div 255
+        return addMeanStd(network, weightMap, input, "", mean, std, false); // true for div 255
     }
 
 }

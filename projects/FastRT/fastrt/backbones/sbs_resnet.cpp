@@ -6,6 +6,53 @@
 using namespace trtxapi;
 
 namespace fastrt {
+    ILayer* backbone_sbsR18_distill::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input) {
+        std::string ibn{""};
+        if(_modelCfg.with_ibna) {
+            ibn = "a";
+        }
+        std::map<std::string, std::vector<std::string>> ibn_layers{ 
+            {"a", {"a","a","a","a","a","a","",""}},
+            {"b", {"","","b","","","","b","","","","","","","","","",}},
+            {"", {16,""}}};
+
+        Weights emptywts{DataType::kFLOAT, nullptr, 0};
+        IConvolutionLayer* conv1 = network->addConvolutionNd(input, 64, DimsHW{7, 7}, weightMap["backbone.conv1.weight"], emptywts);
+        TRTASSERT(conv1);
+        conv1->setStrideNd(DimsHW{2, 2});
+        conv1->setPaddingNd(DimsHW{3, 3});
+
+        IScaleLayer* bn1{nullptr};
+        if (ibn == "b") {
+            bn1 = addInstanceNorm2d(network, weightMap, *conv1->getOutput(0), "backbone.bn1", 1e-5);
+        } else {
+            bn1 = addBatchNorm2d(network, weightMap, *conv1->getOutput(0), "backbone.bn1", 1e-5);
+        }
+        IActivationLayer* relu1 = network->addActivation(*bn1->getOutput(0), ActivationType::kRELU);
+        TRTASSERT(relu1);
+
+        // pytorch: nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True)
+        IPoolingLayer* pool1 = network->addPoolingNd(*relu1->getOutput(0), PoolingType::kMAX, DimsHW{3, 3});
+        TRTASSERT(pool1);
+        pool1->setStrideNd(DimsHW{2, 2});
+        pool1->setPaddingMode(PaddingMode::kEXPLICIT_ROUND_UP);
+
+        ILayer* x = distill_basicBlock_ibn(network, weightMap, *pool1->getOutput(0), 64, 64, 1, "backbone.layer1.0.", ibn_layers[ibn][0]);
+        x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 64, 64, 1, "backbone.layer1.1.", ibn_layers[ibn][1]);
+
+        x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 64, 128, 2, "backbone.layer2.0.", ibn_layers[ibn][2]);
+        x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 128, 128, 1, "backbone.layer2.1.", ibn_layers[ibn][3]);
+
+        x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 128, 256, 2, "backbone.layer3.0.", ibn_layers[ibn][4]);
+        x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 256, 256, 1, "backbone.layer3.1.", ibn_layers[ibn][5]);
+       
+        x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 256, 512, _modelCfg.last_stride, "backbone.layer4.0.", ibn_layers[ibn][6]);
+        x = distill_basicBlock_ibn(network, weightMap, *x->getOutput(0), 512, 512, 1, "backbone.layer4.1.", ibn_layers[ibn][7]);
+
+        IActivationLayer* relu2 = network->addActivation(*x->getOutput(0), ActivationType::kRELU);
+        TRTASSERT(relu2);
+        return relu2;
+    }
 
     ILayer* backbone_sbsR34_distill::topology(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input) {
         std::string ibn{""};
