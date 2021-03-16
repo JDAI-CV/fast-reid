@@ -100,7 +100,7 @@ So we don't use any parsers here.
    ```
    You should get a so file `FastRT/build/pybind_interface/ReID.cpython-36m-x86_64-linux-gnu.so`. 
    
-   Then go to [step 5](#step5) to create engine file. After that you can import this so file in python, and deserialize engine file to infer in python. You can find use example in `test.py` and `market_benchmark.py`. 
+   Then go to [step 5](#step5) to create engine file. After that you can import this so file in python, and deserialize engine file to infer in python. You can find use example in `test.py` and `market_benchmark.py`.  Batch infer now had bug, need help.
    ``` 
    from PATH_TO_SO_FILE import ReID
    model = ReID(GPU_ID)
