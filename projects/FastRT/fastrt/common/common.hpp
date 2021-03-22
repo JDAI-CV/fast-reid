@@ -1,13 +1,9 @@
-#ifndef YOLOV5_COMMON_H_
-#define YOLOV5_COMMON_H_
-
 #include <fstream>
 #include <map>
 #include <sstream>
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include "NvInfer.h"
-#include "yololayer.h"
 
 using namespace nvinfer1;
 

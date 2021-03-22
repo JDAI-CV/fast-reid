@@ -33,7 +33,7 @@ option(BUILD_DEMO              "Build DEMO"                ON)
 option(BUILD_FP16              "Build Engine as FP16"     OFF)
 option(BUILD_INT8              "Build Engine as INT8"     OFF)
 option(USE_CNUMPY              "Include CNPY libs"        OFF)
-option(BUILD_PYTHON_INTERFACE  "Build Python Interface"    ON)
+option(BUILD_PYTHON_INTERFACE  "Build Python Interface"   OFF)
 
 if(USE_CNUMPY)
   add_definitions(-DUSE_CNUMPY)
