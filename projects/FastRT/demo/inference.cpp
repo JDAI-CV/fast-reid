@@ -12,21 +12,21 @@ using namespace nvinfer1;
 #endif
 
 /* Ex1. sbs_R50-ibn */
-static const std::string WEIGHTS_PATH = "../kd-r18-r101_ibn.wts"; 
-static const std::string ENGINE_PATH = "./kd_r18_distill.engine"; 
+static const std::string WEIGHTS_PATH = "../sbs_R50-ibn.wts"; 
+static const std::string ENGINE_PATH = "./sbs_R50-ibn.engine";
 
-static const int MAX_BATCH_SIZE = 16;
-static const int INPUT_H = 384;
+static const int MAX_BATCH_SIZE = 4;
+static const int INPUT_H = 256;
 static const int INPUT_W = 128;
-static const int OUTPUT_SIZE = 512;
-static const int DEVICE_ID = 1;
+static const int OUTPUT_SIZE = 2048;
+static const int DEVICE_ID = 0;
 
-static const FastreidBackboneType BACKBONE = FastreidBackboneType::r18_distill; 
+static const FastreidBackboneType BACKBONE = FastreidBackboneType::r50; 
 static const FastreidHeadType HEAD = FastreidHeadType::EmbeddingHead;
 static const FastreidPoolingType HEAD_POOLING = FastreidPoolingType::gempoolP;
 static const int LAST_STRIDE = 1;
 static const bool WITH_IBNA = true; 
-static const bool WITH_NL = false;
+static const bool WITH_NL = true;
 static const int EMBEDDING_DIM = 0; 
 
 
