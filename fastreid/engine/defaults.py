@@ -31,14 +31,8 @@ from fastreid.utils.file_io import PathManager
 from fastreid.utils.logger import setup_logger
 from . import hooks
 from .train_loop import TrainerBase, AMPTrainer, SimpleTrainer
+from torch.nn.parallel import DistributedDataParallel
 
-try:
-    import apex
-    from apex import amp
-    from apex.parallel import DistributedDataParallel
-except ImportError:
-    raise ImportError("Please install apex from https://www.github.com/nvidia/apex to run this example if you want to"
-                      "train with DDP")
 
 __all__ = ["default_argument_parser", "default_setup", "DefaultPredictor", "DefaultTrainer"]
 
@@ -214,19 +208,14 @@ class DefaultTrainer(TrainerBase):
         model = self.build_model(cfg)
         optimizer = self.build_optimizer(cfg, model)
 
-        optimizer_ckpt = dict(optimizer=optimizer)
-        if cfg.SOLVER.FP16_ENABLED:
-            model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
-            optimizer_ckpt.update(dict(amp=amp))
-
         # For training, wrap with DDP. But don't need this for inference.
         if comm.get_world_size() > 1:
             # ref to https://github.com/pytorch/pytorch/issues/22049 to set `find_unused_parameters=True`
             # for part of the parameters is not updated.
-            # model = DistributedDataParallel(
-            #     model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
-            # )
-            model = DistributedDataParallel(model, delay_allreduce=True)
+            model = DistributedDataParallel(
+                model, device_ids=[comm.get_local_rank()], broadcast_buffers=False,
+                find_unused_parameters=True
+            )
 
         self._trainer = (AMPTrainer if cfg.SOLVER.FP16_ENABLED else SimpleTrainer)(
             model, data_loader, optimizer
@@ -242,7 +231,7 @@ class DefaultTrainer(TrainerBase):
             model,
             cfg.OUTPUT_DIR,
             save_to_disk=comm.is_main_process(),
-            **optimizer_ckpt,
+            optimizer=optimizer,
             **self.scheduler,
         )
 

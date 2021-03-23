@@ -11,7 +11,7 @@ from typing import Dict
 
 import numpy as np
 import torch
-from apex import amp
+from torch.nn.parallel import DataParallel, DistributedDataParallel
 
 import fastreid.utils.comm as comm
 from fastreid.utils.events import EventStorage, get_event_storage
@@ -97,9 +97,10 @@ class TrainerBase:
     We made no assumptions about the existence of dataloader, optimizer, model, etc.
     Attributes:
         iter(int): the current iteration.
+        epoch(int): the current epoch.
         start_iter(int): The iteration to start with.
             By convention the minimum possible value is 0.
-        max_iter(int): The iteration to end training.
+        max_epoch (int): The epoch to end training.
         storage(EventStorage): An EventStorage that's opened during the course of training.
     """
 
@@ -126,7 +127,7 @@ class TrainerBase:
     def train(self, start_epoch: int, max_epoch: int, iters_per_epoch: int):
         """
         Args:
-            start_iter, max_iter (int): See docs above
+            start_epoch, max_epoch (int): See docs above
         """
         logger = logging.getLogger(__name__)
         logger.info("Starting training from epoch {}".format(start_epoch))
@@ -298,9 +299,29 @@ class SimpleTrainer(TrainerBase):
 
 class AMPTrainer(SimpleTrainer):
     """
-    Like :class:`SimpleTrainer`, but uses apex automatic mixed precision
+    Like :class:`SimpleTrainer`, but uses automatic mixed precision
     in the training loop.
     """
+
+    def __init__(self, model, data_loader, optimizer, grad_scaler=None):
+        """
+
+        Args:
+            model, data_loader, optimizer: same as in :class:`SimpleTrainer`.
+            grad_scaler: torch GradScaler to automatically scale gradients.
+        """
+        unsupported = "AMPTrainer does not support single-process multi-device training!"
+        if isinstance(model, DistributedDataParallel):
+            assert not (model.device_ids and len(model.device_ids) > 1), unsupported
+        assert not isinstance(model, DataParallel), unsupported
+
+        super().__init__(model, data_loader, optimizer)
+
+        if grad_scaler is None:
+            from torch.cuda.amp import GradScaler
+
+            grad_scaler = GradScaler()
+        self.grad_scaler = grad_scaler
 
     def run_step(self):
         """
@@ -308,19 +329,20 @@ class AMPTrainer(SimpleTrainer):
         """
         assert self.model.training, "[AMPTrainer] model was changed to eval mode!"
         assert torch.cuda.is_available(), "[AMPTrainer] CUDA is required for AMP training!"
+        from torch.cuda.amp import autocast
 
         start = time.perf_counter()
         data = next(self._data_loader_iter)
         data_time = time.perf_counter() - start
 
-        loss_dict = self.model(data)
-        losses = sum(loss_dict.values())
+        with autocast():
+            loss_dict = self.model(data)
+            losses = sum(loss_dict.values())
 
         self.optimizer.zero_grad()
-
-        with amp.scale_loss(losses, self.optimizer) as scaled_loss:
-            scaled_loss.backward()
+        self.grad_scaler.scale(losses).backward()
 
         self._write_metrics(loss_dict, data_time)
 
-        self.optimizer.step()
+        self.grad_scaler.step(self.optimizer)
+        self.grad_scaler.update()
