@@ -5,7 +5,7 @@ MODEL:
     WITH_NL: True
 
   HEADS:
-    POOL_LAYER: gempool
+    POOL_LAYER: GeneralizedMeanPooling
 
   LOSSES:
     NAME: ("CrossEntropyLoss", "TripletLoss")

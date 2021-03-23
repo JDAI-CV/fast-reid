@@ -14,9 +14,9 @@ MODEL:
     NAME: EmbeddingHead
     NORM: BN
     WITH_BNNECK: True
-    POOL_LAYER: avgpool
+    POOL_LAYER: GLobalAvgPool
     NECK_FEAT: before
-    CLS_LAYER: linear
+    CLS_LAYER: Linear
 
   LOSSES:
     NAME: ("CrossEntropyLoss", "TripletLoss",)

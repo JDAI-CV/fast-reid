@@ -17,7 +17,7 @@ from .build import META_ARCH_REGISTRY
 @META_ARCH_REGISTRY.register()
 class MoCo(Baseline):
     def __init__(self, cfg):
-        super(MoCo, self).__init__(cfg)
+        super().__init__(cfg)
 
         dim = cfg.MODEL.HEADS.EMBEDDING_DIM if cfg.MODEL.HEADS.EMBEDDING_DIM \
             else cfg.MODEL.BACKBONE.FEAT_DIM
@@ -29,13 +29,13 @@ class MoCo(Baseline):
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
         """
-        # reid loss
-        loss_dict = super(MoCo, self).losses(outputs, gt_labels)
+        # regular reid loss
+        loss_dict = super().losses(outputs, gt_labels)
 
         # memory loss
         pred_features = outputs['features']
         loss_mb = self.memory(pred_features, gt_labels)
-        loss_dict["loss_mb"] = loss_mb
+        loss_dict['loss_mb'] = loss_mb
         return loss_dict
 
 

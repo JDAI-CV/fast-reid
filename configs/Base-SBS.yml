@@ -8,8 +8,8 @@ MODEL:
 
   HEADS:
     NECK_FEAT: after
-    POOL_LAYER: gempoolP
-    CLS_LAYER: circleSoftmax
+    POOL_LAYER: GeneralizedMeanPoolingP
+    CLS_LAYER: CircleSoftmax
     SCALE: 64
     MARGIN: 0.35
 
@@ -36,7 +36,7 @@ DATALOADER:
   NUM_INSTANCE: 16
 
 SOLVER:
-  FP16_ENABLED: False
+  FP16_ENABLED: True
   OPT: Adam
   MAX_EPOCH: 60
   BASE_LR: 0.00035
