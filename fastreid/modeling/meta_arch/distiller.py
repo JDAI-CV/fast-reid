@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 @META_ARCH_REGISTRY.register()
 class Distiller(Baseline):
     def __init__(self, cfg):
-        super(Distiller, self).__init__(cfg)
+        super().__init__(cfg)
 
         # Get teacher model config
         model_ts = []
@@ -67,19 +67,19 @@ class Distiller(Baseline):
 
         # Eval mode, just conventional reid feature extraction
         else:
-            return super(Distiller, self).forward(batched_inputs)
+            return super().forward(batched_inputs)
 
     def losses(self, s_outputs, t_outputs, gt_labels):
         """
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
         """
-        loss_dict = super(Distiller, self).losses(s_outputs, gt_labels)
+        loss_dict = super().losses(s_outputs, gt_labels)
 
-        s_logits = s_outputs["pred_class_logits"]
+        s_logits = s_outputs['pred_class_logits']
         loss_jsdiv = 0.
         for t_output in t_outputs:
-            t_logits = t_output["pred_class_logits"].detach()
+            t_logits = t_output['pred_class_logits'].detach()
             loss_jsdiv += self.jsdiv_loss(s_logits, t_logits)
 
         loss_dict["loss_jsdiv"] = loss_jsdiv / len(t_outputs)

@@ -4,18 +4,93 @@
 @contact: sherlockliao01@gmail.com
 """
 
+import math
+
+import torch
 import torch.nn.functional as F
 from torch import nn
 
+from fastreid.config import configurable
 from fastreid.layers import *
-from fastreid.utils.weight_init import weights_init_kaiming, weights_init_classifier
+from fastreid.layers import pooling, any_softmax
+from fastreid.utils.weight_init import weights_init_kaiming
 from .build import REID_HEADS_REGISTRY
 
 
 @REID_HEADS_REGISTRY.register()
 class EmbeddingHead(nn.Module):
-    def __init__(self, cfg):
+    """
+    EmbeddingHead perform all feature aggregation in an embedding task, such as reid, image retrieval
+    and face recognition
+
+    It typically contains logic to
+
+    1. feature aggregation via global average pooling and generalized mean pooling
+    2. (optional) batchnorm, dimension reduction and etc.
+    2. (in training only) margin-based softmax logits computation
+    """
+
+    @configurable
+    def __init__(
+            self,
+            *,
+            feat_dim,
+            embedding_dim,
+            num_classes,
+            neck_feat,
+            pool_type,
+            cls_type,
+            scale,
+            margin,
+            with_bnneck,
+            norm_type
+    ):
+        """
+        NOTE: this interface is experimental.
+
+        Args:
+            feat_dim:
+            embedding_dim:
+            num_classes:
+            neck_feat:
+            pool_type:
+            cls_type:
+            scale:
+            margin:
+            with_bnneck:
+            norm_type:
+        """
         super().__init__()
+
+        # Pooling layer
+        assert hasattr(pooling, pool_type), "Expected pool types are {}, " \
+                                            "but got {}".format(pooling.__all__, pool_type)
+        self.pool_layer = getattr(pooling, pool_type)()
+
+        self.neck_feat = neck_feat
+
+        neck = []
+        if embedding_dim > 0:
+            neck.append(nn.Conv2d(feat_dim, embedding_dim, 1, 1, bias=False))
+            feat_dim = embedding_dim
+
+        if with_bnneck:
+            neck.append(get_norm(norm_type, feat_dim, bias_freeze=True))
+
+        self.bottleneck = nn.Sequential(*neck)
+        self.bottleneck.apply(weights_init_kaiming)
+
+        # Linear layer
+        self.register_parameter('weight', nn.Parameter(torch.Tensor(num_classes, feat_dim)))
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+
+        # Cls layer
+        assert hasattr(any_softmax, cls_type), "Expected cls types are {}, " \
+                                               "but got {}".format(any_softmax.__all__, cls_type)
+        self.cls_layer = getattr(any_softmax, cls_type)(num_classes, scale, margin)
+
+    @classmethod
+    def from_config(cls, cfg):
         # fmt: off
         feat_dim      = cfg.MODEL.BACKBONE.FEAT_DIM
         embedding_dim = cfg.MODEL.HEADS.EMBEDDING_DIM
@@ -23,75 +98,53 @@ class EmbeddingHead(nn.Module):
         neck_feat     = cfg.MODEL.HEADS.NECK_FEAT
         pool_type     = cfg.MODEL.HEADS.POOL_LAYER
         cls_type      = cfg.MODEL.HEADS.CLS_LAYER
+        scale         = cfg.MODEL.HEADS.SCALE
+        margin        = cfg.MODEL.HEADS.MARGIN
         with_bnneck   = cfg.MODEL.HEADS.WITH_BNNECK
         norm_type     = cfg.MODEL.HEADS.NORM
-
-        if pool_type == 'fastavgpool':   self.pool_layer = FastGlobalAvgPool2d()
-        elif pool_type == 'avgpool':     self.pool_layer = nn.AdaptiveAvgPool2d(1)
-        elif pool_type == 'maxpool':     self.pool_layer = nn.AdaptiveMaxPool2d(1)
-        elif pool_type == 'gempoolP':    self.pool_layer = GeneralizedMeanPoolingP()
-        elif pool_type == 'gempool':     self.pool_layer = GeneralizedMeanPooling()
-        elif pool_type == "avgmaxpool":  self.pool_layer = AdaptiveAvgMaxPool2d()
-        elif pool_type == 'clipavgpool': self.pool_layer = ClipGlobalAvgPool2d()
-        elif pool_type == "identity":    self.pool_layer = nn.Identity()
-        elif pool_type == "flatten":     self.pool_layer = Flatten()
-        else:                            raise KeyError(f"{pool_type} is not supported!")
         # fmt: on
-
-        self.neck_feat = neck_feat
-
-        bottleneck = []
-        if embedding_dim > 0:
-            bottleneck.append(nn.Conv2d(feat_dim, embedding_dim, 1, 1, bias=False))
-            feat_dim = embedding_dim
-
-        if with_bnneck:
-            bottleneck.append(get_norm(norm_type, feat_dim, bias_freeze=True))
-
-        self.bottleneck = nn.Sequential(*bottleneck)
-
-        # classification layer
-        # fmt: off
-        if cls_type == 'linear':          self.classifier = nn.Linear(feat_dim, num_classes, bias=False)
-        elif cls_type == 'arcSoftmax':    self.classifier = ArcSoftmax(cfg, feat_dim, num_classes)
-        elif cls_type == 'circleSoftmax': self.classifier = CircleSoftmax(cfg, feat_dim, num_classes)
-        elif cls_type == 'cosSoftmax':    self.classifier = CosSoftmax(cfg, feat_dim, num_classes)
-        else:                             raise KeyError(f"{cls_type} is not supported!")
-        # fmt: on
-
-        self.bottleneck.apply(weights_init_kaiming)
-        self.classifier.apply(weights_init_classifier)
+        return {
+            'feat_dim': feat_dim,
+            'embedding_dim': embedding_dim,
+            'num_classes': num_classes,
+            'neck_feat': neck_feat,
+            'pool_type': pool_type,
+            'cls_type': cls_type,
+            'scale': scale,
+            'margin': margin,
+            'with_bnneck': with_bnneck,
+            'norm_type': norm_type
+        }
 
     def forward(self, features, targets=None):
         """
         See :class:`ReIDHeads.forward`.
         """
-        global_feat = self.pool_layer(features)
-        bn_feat = self.bottleneck(global_feat)
-        bn_feat = bn_feat[..., 0, 0]
+        pool_feat = self.pool_layer(features)
+        neck_feat = self.bottleneck(pool_feat)
+        neck_feat = neck_feat[..., 0, 0]
 
         # Evaluation
         # fmt: off
-        if not self.training: return bn_feat
+        if not self.training: return neck_feat
         # fmt: on
 
         # Training
-        if self.classifier.__class__.__name__ == 'Linear':
-            cls_outputs = self.classifier(bn_feat)
-            pred_class_logits = F.linear(bn_feat, self.classifier.weight)
+        if self.cls_layer.__class__.__name__ == 'Linear':
+            logits = F.linear(neck_feat, self.weights)
         else:
-            cls_outputs = self.classifier(bn_feat, targets)
-            pred_class_logits = self.classifier.s * F.linear(F.normalize(bn_feat),
-                                                             F.normalize(self.classifier.weight))
+            logits = F.linear(F.normalize(neck_feat), F.normalize(self.weight))
+
+        cls_outputs = self.cls_layer(logits, targets)
 
         # fmt: off
-        if self.neck_feat == "before":  feat = global_feat[..., 0, 0]
-        elif self.neck_feat == "after": feat = bn_feat
+        if self.neck_feat == 'before':  feat = pool_feat[..., 0, 0]
+        elif self.neck_feat == 'after': feat = neck_feat
         else:                           raise KeyError(f"{self.neck_feat} is invalid for MODEL.HEADS.NECK_FEAT")
         # fmt: on
 
         return {
             "cls_outputs": cls_outputs,
-            "pred_class_logits": pred_class_logits,
+            "pred_class_logits": logits * self.cls_layer.s,
             "features": feat,
         }
