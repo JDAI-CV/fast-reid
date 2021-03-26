@@ -16,22 +16,26 @@ def build_transforms(cfg, is_train=True):
     if is_train:
         size_train = cfg.INPUT.SIZE_TRAIN
 
+        # crop
+        do_crop = cfg.INPUT.CROP.ENABLED
+        crop_size = cfg.INPUT.CROP.SIZE
+
         # augmix augmentation
-        do_augmix = cfg.INPUT.DO_AUGMIX
-        augmix_prob = cfg.INPUT.AUGMIX_PROB
+        do_augmix = cfg.INPUT.AUGMIX.ENABLED
+        augmix_prob = cfg.INPUT.AUGMIX.PROB
 
         # auto augmentation
-        do_autoaug = cfg.INPUT.DO_AUTOAUG
-        autoaug_prob = cfg.INPUT.AUTOAUG_PROB
+        do_autoaug = cfg.INPUT.AUTOAUG.ENABLED
+        autoaug_prob = cfg.INPUT.AUTOAUG.PROB
 
         # horizontal filp
-        do_flip = cfg.INPUT.DO_FLIP
-        flip_prob = cfg.INPUT.FLIP_PROB
+        do_flip = cfg.INPUT.FLIP.ENABLED
+        flip_prob = cfg.INPUT.FLIP.PROB
 
         # padding
-        do_pad = cfg.INPUT.DO_PAD
-        padding = cfg.INPUT.PADDING
-        padding_mode = cfg.INPUT.PADDING_MODE
+        do_pad = cfg.INPUT.PADDING.ENABLED
+        padding_size = cfg.INPUT.PADDING.SIZE
+        padding_mode = cfg.INPUT.PADDING.MODE
 
         # color jitter
         do_cj = cfg.INPUT.CJ.ENABLED
@@ -42,7 +46,7 @@ def build_transforms(cfg, is_train=True):
         cj_hue = cfg.INPUT.CJ.HUE
 
         # random affine
-        do_affine = cfg.INPUT.DO_AFFINE
+        do_affine = cfg.INPUT.AFFINE.ENABLED
 
         # random erasing
         do_rea = cfg.INPUT.REA.ENABLED
@@ -56,11 +60,14 @@ def build_transforms(cfg, is_train=True):
         if do_autoaug:
             res.append(T.RandomApply([AutoAugment()], p=autoaug_prob))
 
-        res.append(T.Resize(size_train, interpolation=3))
+        if do_crop:
+            res.append(T.RandomResizedCrop(size=crop_size, interpolation=3))
+        else:
+            res.append(T.Resize(size_train, interpolation=3))
         if do_flip:
             res.append(T.RandomHorizontalFlip(p=flip_prob))
         if do_pad:
-            res.extend([T.Pad(padding, padding_mode=padding_mode), T.RandomCrop(size_train)])
+            res.extend([T.Pad(padding_size, padding_mode=padding_mode), T.RandomCrop(size_train)])
         if do_cj:
             res.append(T.RandomApply([T.ColorJitter(cj_brightness, cj_contrast, cj_saturation, cj_hue)], p=cj_prob))
         if do_affine:
@@ -75,6 +82,11 @@ def build_transforms(cfg, is_train=True):
             res.append(RandomPatch(prob_happen=rpt_prob))
     else:
         size_test = cfg.INPUT.SIZE_TEST
-        res.append(T.Resize(size_test, interpolation=3))
+        do_crop = cfg.INPUT.CROP.ENABLED
+        crop_size = cfg.INPUT.CROP.SIZE
+
+        res.append(T.Resize(size_test[0] if len(size_test) == 1 else size_test, interpolation=3))
+        if do_crop:
+            res.append(T.CenterCrop(size=crop_size))
         res.append(ToTensor())
     return T.Compose(res)

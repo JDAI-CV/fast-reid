@@ -10,6 +10,7 @@ import time
 from collections import Counter
 
 import torch
+from torch import nn
 from torch.nn.parallel import DistributedDataParallel
 
 from fastreid.evaluation.testing import flatten_results_dict

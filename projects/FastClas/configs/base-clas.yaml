@@ -10,11 +10,12 @@ MODEL:
     PRETRAIN: True
 
   HEADS:
-    NAME: ClsHead
+    NAME: ClasHead
     WITH_BNNECK: False
     EMBEDDING_DIM: 0
-    POOL_LAYER: fastavgpool
-    CLS_LAYER: linear
+    POOL_LAYER: FastGlobalAvgPool
+    CLS_LAYER: Linear
+    NUM_CLASSES: 2
 
   LOSSES:
     NAME: ("CrossEntropyLoss",)
@@ -24,26 +25,34 @@ MODEL:
       SCALE: 1.
 
 INPUT:
-  SIZE_TEST: [256,]
-  CROP_SIZE: 224
-  DO_FLIP: True
+  SIZE_TEST: [256, 256]
+  CROP:
+    ENABLED: True
+    SIZE: [224, 224]
+  FLIP:
+    ENABLED: True
 
-  DO_AUGMIX: False
-  DO_AUTOAUG: False
-  DO_PAD: False
+  AUGMIX:
+    ENABLED: False
+  AUTOAUG:
+    ENABLED: False
+  PADDING:
+    ENABLED: False
   CJ:
     ENABLED: False
-  DO_AFFINE: False
+  AFFINE:
+    ENABLED: False
   REA:
     ENABLED: False
 
 DATALOADER:
-  PK_SAMPLER: False
+  SAMPLER_TRAIN: TrainingSampler
   NUM_WORKERS: 8
 
 SOLVER:
   MAX_EPOCH: 100
-  FP16_ENABLED: True
+  AMP:
+    ENABLED: True
 
   OPT: SGD
   SCHED: CosineAnnealingLR

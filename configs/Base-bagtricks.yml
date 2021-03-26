@@ -37,16 +37,17 @@ INPUT:
   REA:
     ENABLED: True
     PROB: 0.5
-  DO_PAD: True
+  PADDING:
+    ENABLED: True
 
 DATALOADER:
-  PK_SAMPLER: True
-  NAIVE_WAY: True
+  SAMPLER_TRAIN: NaiveIdentitySampler
   NUM_INSTANCE: 4
   NUM_WORKERS: 8
 
 SOLVER:
-  FP16_ENABLED: True
+  AMP:
+    ENABLED: True
   OPT: Adam
   MAX_EPOCH: 120
   BASE_LR: 0.00035

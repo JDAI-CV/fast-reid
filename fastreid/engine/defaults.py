@@ -16,6 +16,7 @@ from collections import OrderedDict
 
 import torch
 import torch.nn.functional as F
+from torch.nn.parallel import DistributedDataParallel
 
 from fastreid.data import build_reid_test_loader, build_reid_train_loader
 from fastreid.evaluation import (ReidEvaluator,
@@ -31,8 +32,6 @@ from fastreid.utils.file_io import PathManager
 from fastreid.utils.logger import setup_logger
 from . import hooks
 from .train_loop import TrainerBase, AMPTrainer, SimpleTrainer
-from torch.nn.parallel import DistributedDataParallel
-
 
 __all__ = ["default_argument_parser", "default_setup", "DefaultPredictor", "DefaultTrainer"]
 
@@ -217,7 +216,7 @@ class DefaultTrainer(TrainerBase):
                 find_unused_parameters=True
             )
 
-        self._trainer = (AMPTrainer if cfg.SOLVER.FP16_ENABLED else SimpleTrainer)(
+        self._trainer = (AMPTrainer if cfg.SOLVER.AMP.ENABLED else SimpleTrainer)(
             model, data_loader, optimizer
         )
 
@@ -414,7 +413,7 @@ class DefaultTrainer(TrainerBase):
         """
         logger = logging.getLogger(__name__)
         logger.info("Prepare training set")
-        return build_reid_train_loader(cfg)
+        return build_reid_train_loader(cfg, combineall=cfg.DATASETS.COMBINEALL)
 
     @classmethod
     def build_test_loader(cls, cfg, dataset_name):
@@ -453,7 +452,7 @@ class DefaultTrainer(TrainerBase):
                 )
                 results[dataset_name] = {}
                 continue
-            results_i = inference_on_dataset(model, data_loader, evaluator, flip_test=cfg.TEST.FLIP_ENABLED)
+            results_i = inference_on_dataset(model, data_loader, evaluator, flip_test=cfg.TEST.FLIP.ENABLED)
             results[dataset_name] = results_i
 
             if comm.is_main_process():
