@@ -81,4 +81,4 @@ DATASETS:
   NAMES: ("Hymenoptera",)
   TESTS: ("Hymenoptera",)
 
-OUTPUT_DIR: projects/FastCls/logs/baseline
+OUTPUT_DIR: projects/FastClas/logs/baseline

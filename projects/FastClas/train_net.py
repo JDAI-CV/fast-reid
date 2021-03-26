@@ -5,8 +5,10 @@
 @contact: sherlockliao01@gmail.com
 """
 
+import json
 import logging
 import sys
+import os
 
 sys.path.append('.')
 
@@ -14,7 +16,8 @@ from fastreid.config import get_cfg
 from fastreid.engine import default_argument_parser, default_setup, launch
 from fastreid.data.build import build_reid_train_loader, build_reid_test_loader
 from fastreid.evaluation.clas_evaluator import ClasEvaluator
-from fastreid.utils.checkpoint import Checkpointer
+from fastreid.utils.checkpoint import Checkpointer, PathManager
+from fastreid.utils import comm
 from fastreid.engine import DefaultTrainer
 
 from fastcls import *
@@ -32,7 +35,16 @@ class Trainer(DefaultTrainer):
         """
         logger = logging.getLogger("fastreid.clas_dataset")
         logger.info("Prepare training set")
-        return build_reid_train_loader(cfg, Dataset=ClasDataset)
+        data_loader = build_reid_train_loader(cfg, Dataset=ClasDataset)
+
+        # Save index to class dictionary
+        output_dir = cfg.OUTPUT_DIR
+        if comm.is_main_process() and output_dir:
+            path = os.path.join(output_dir, "idx2class.json")
+            with PathManager.open(path, "w") as f:
+                json.dump(data_loader.dataset.idx_to_class, f)
+
+        return data_loader
 
     @classmethod
     def build_test_loader(cls, cfg, dataset_name):
@@ -42,7 +54,6 @@ class Trainer(DefaultTrainer):
         It now calls :func:`fastreid.data.build_reid_test_loader`.
         Overwrite it if you'd like a different data loader.
         """
-
         return build_reid_test_loader(cfg, dataset_name, Dataset=ClasDataset)
 
     @classmethod
