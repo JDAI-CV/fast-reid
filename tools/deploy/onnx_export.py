@@ -144,7 +144,8 @@ if __name__ == '__main__':
         cfg.MODEL.HEADS.POOL_LAYER = 'avgpool'
     model = build_model(cfg)
     Checkpointer(model).load(cfg.MODEL.WEIGHTS)
-    model.backbone.deploy(True)
+    if hasattr(model.backbone, 'deploy'):
+        model.backbone.deploy(True)
     model.eval()
     logger.info(model)
 
