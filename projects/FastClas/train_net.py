@@ -12,6 +12,8 @@ sys.path.append('.')
 
 from fastreid.config import get_cfg
 from fastreid.engine import default_argument_parser, default_setup, launch
+from fastreid.data.build import build_reid_train_loader, build_reid_test_loader
+from fastreid.evaluation.clas_evaluator import ClasEvaluator
 from fastreid.utils.checkpoint import Checkpointer
 from fastreid.engine import DefaultTrainer
 
@@ -28,9 +30,9 @@ class Trainer(DefaultTrainer):
         It now calls :func:`fastreid.data.build_reid_train_loader`.
         Overwrite it if you'd like a different data loader.
         """
-        logger = logging.getLogger("fastreid.cls_dataset")
+        logger = logging.getLogger("fastreid.clas_dataset")
         logger.info("Prepare training set")
-        return build_cls_train_loader(cfg)
+        return build_reid_train_loader(cfg, Dataset=ClasDataset)
 
     @classmethod
     def build_test_loader(cls, cfg, dataset_name):
@@ -41,12 +43,12 @@ class Trainer(DefaultTrainer):
         Overwrite it if you'd like a different data loader.
         """
 
-        return build_cls_test_loader(cfg, dataset_name)
+        return build_reid_test_loader(cfg, dataset_name, Dataset=ClasDataset)
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_dir=None):
-        data_loader = cls.build_test_loader(cfg, dataset_name)
-        return data_loader, ClsEvaluator(cfg, output_dir)
+        data_loader, _ = cls.build_test_loader(cfg, dataset_name)
+        return data_loader, ClasEvaluator(cfg, output_dir)
 
 
 def setup(args):
@@ -54,7 +56,6 @@ def setup(args):
     Create configs and perform basic setups.
     """
     cfg = get_cfg()
-    add_cls_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()

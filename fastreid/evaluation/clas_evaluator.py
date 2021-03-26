@@ -5,15 +5,16 @@
 """
 
 import copy
+import itertools
 import logging
 from collections import OrderedDict
 
 import torch
 
-from fastreid.evaluation import DatasetEvaluator
 from fastreid.utils import comm
+from .evaluator import DatasetEvaluator
 
-logger = logging.getLogger("fastreid.cls_evaluator")
+logger = logging.getLogger(__name__)
 
 
 def accuracy(output, target, topk=(1,)):
@@ -33,40 +34,44 @@ def accuracy(output, target, topk=(1,)):
         return res
 
 
-class ClsEvaluator(DatasetEvaluator):
+class ClasEvaluator(DatasetEvaluator):
     def __init__(self, cfg, output_dir=None):
         self.cfg = cfg
         self._output_dir = output_dir
 
-        self.pred_logits = []
-        self.labels = []
+        self._cpu_device = torch.device('cpu')
+
+        self._predictions = []
 
     def reset(self):
-        self.pred_logits = []
-        self.labels = []
+        self._predictions = []
 
     def process(self, inputs, outputs):
-        self.pred_logits.append(outputs.cpu())
-        self.labels.extend(inputs["targets"])
+        predictions = {
+            "logits": outputs.to(self._cpu_device, torch.float32),
+            "labels": inputs["targets"],
+        }
+        self._predictions.append(predictions)
 
     def evaluate(self):
         if comm.get_world_size() > 1:
             comm.synchronize()
-            pred_logits = comm.gather(self.pred_logits)
-            pred_logits = sum(pred_logits, [])
+            predictions = comm.gather(self._predictions, dst=0)
+            predictions = list(itertools.chain(*predictions))
 
-            labels = comm.gather(self.labels)
-            labels = sum(labels, [])
-
-            # fmt: off
             if not comm.is_main_process(): return {}
-            # fmt: on
+
         else:
-            pred_logits = self.pred_logits
-            labels = self.labels
+            predictions = self._predictions
+
+        pred_logits = []
+        labels = []
+        for prediction in predictions:
+            pred_logits.append(prediction['logits'])
+            labels.append(prediction['labels'])
 
         pred_logits = torch.cat(pred_logits, dim=0)
-        labels = torch.stack(labels)
+        labels = torch.cat(labels, dim=0)
 
         # measure accuracy and record loss
         acc1, = accuracy(pred_logits, labels, topk=(1,))

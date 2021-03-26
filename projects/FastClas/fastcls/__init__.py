@@ -4,8 +4,5 @@
 @contact: sherlockliao01@gmail.com
 """
 
-
-def add_cls_config(cfg):
-    _C = cfg
-
-    _C.INPUT.CROP_SIZE = 224
+from .bee_ant import *
+from .dataset import ClasDataset

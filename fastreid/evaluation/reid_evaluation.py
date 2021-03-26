@@ -112,7 +112,7 @@ class ReidEvaluator(DatasetEvaluator):
         self._results['mINP'] = mINP * 100
         self._results["metric"] = (mAP + cmc[0]) / 2 * 100
 
-        if self.cfg.TEST.ROC_ENABLED:
+        if self.cfg.TEST.ROC.ENABLED:
             scores, labels = evaluate_roc(dist, query_pids, gallery_pids, query_camids, gallery_camids)
             fprs, tprs, thres = metrics.roc_curve(labels, scores)
 

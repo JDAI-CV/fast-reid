@@ -140,18 +140,22 @@ _C.INPUT.SIZE_TRAIN = [256, 128]
 # Size of the image during test
 _C.INPUT.SIZE_TEST = [256, 128]
 
+# `True` if cropping is used for data augmentation during training
+_C.INPUT.CROP = CN({"ENABLED": False})
+# Size of the image cropped
+_C.INPUT.CROP.SIZE = [224, 224]
+
 # Random probability for image horizontal flip
-_C.INPUT.DO_FLIP = True
-_C.INPUT.FLIP_PROB = 0.5
+_C.INPUT.FLIP = CN({"ENABLED": True})
+_C.INPUT.FLIP.PROB = 0.5
 
 # Value of padding size
-_C.INPUT.DO_PAD = True
-_C.INPUT.PADDING_MODE = 'constant'
-_C.INPUT.PADDING = 10
+_C.INPUT.PADDING = CN({"ENABLED": True})
+_C.INPUT.PADDING.MODE = 'constant'
+_C.INPUT.PADDING.SIZE = 10
 
 # Random color jitter
-_C.INPUT.CJ = CN()
-_C.INPUT.CJ.ENABLED = False
+_C.INPUT.CJ = CN({"ENABLED": False})
 _C.INPUT.CJ.PROB = 0.5
 _C.INPUT.CJ.BRIGHTNESS = 0.15
 _C.INPUT.CJ.CONTRAST = 0.15
@@ -159,24 +163,22 @@ _C.INPUT.CJ.SATURATION = 0.1
 _C.INPUT.CJ.HUE = 0.1
 
 # Random Affine
-_C.INPUT.DO_AFFINE = False
+_C.INPUT.AFFINE = CN({"ENABLED": False})
 
 # Auto augmentation
-_C.INPUT.DO_AUTOAUG = False
-_C.INPUT.AUTOAUG_PROB = 0.0
+_C.INPUT.AUTOAUG = CN({"ENABLED": False})
+_C.INPUT.AUTOAUG.PROB = 0.0
 
 # Augmix augmentation
-_C.INPUT.DO_AUGMIX = False
-_C.INPUT.AUGMIX_PROB = 0.0
+_C.INPUT.AUGMIX = CN({"ENABLED": False})
+_C.INPUT.AUGMIX.PROB = 0.0
 
 # Random Erasing
-_C.INPUT.REA = CN()
-_C.INPUT.REA.ENABLED = False
+_C.INPUT.REA = CN({"ENABLED": False})
 _C.INPUT.REA.PROB = 0.5
 _C.INPUT.REA.VALUE = [0.485*255, 0.456*255, 0.406*255]
 # Random Patch
-_C.INPUT.RPT = CN()
-_C.INPUT.RPT.ENABLED = False
+_C.INPUT.RPT = CN({"ENABLED": False})
 _C.INPUT.RPT.PROB = 0.5
 
 # -----------------------------------------------------------------------------
@@ -194,10 +196,8 @@ _C.DATASETS.COMBINEALL = False
 # DataLoader
 # -----------------------------------------------------------------------------
 _C.DATALOADER = CN()
-# P/K Sampler for data loading
-_C.DATALOADER.PK_SAMPLER = True
-# Naive sampler which don't consider balanced identity sampling
-_C.DATALOADER.NAIVE_WAY = True
+# Options: TrainingSampler, NaiveIdentitySampler, BalancedIdentitySampler
+_C.DATALOADER.SAMPLER_TRAIN = "NaiveIdentitySampler"
 # Number of instance for each person
 _C.DATALOADER.NUM_INSTANCE = 4
 _C.DATALOADER.NUM_WORKERS = 8
@@ -208,7 +208,7 @@ _C.DATALOADER.NUM_WORKERS = 8
 _C.SOLVER = CN()
 
 # AUTOMATIC MIXED PRECISION
-_C.SOLVER.FP16_ENABLED = False
+_C.SOLVER.AMP = CN({"ENABLED": False})
 
 # Optimizer
 _C.SOLVER.OPT = "Adam"
@@ -273,26 +273,23 @@ _C.TEST.EVAL_PERIOD = 20
 # Number of images per batch in one process.
 _C.TEST.IMS_PER_BATCH = 64
 _C.TEST.METRIC = "cosine"
-_C.TEST.ROC_ENABLED = False
-_C.TEST.FLIP_ENABLED = False
+_C.TEST.ROC = CN({"ENABLED": False})
+_C.TEST.FLIP = CN({"ENABLED": False})
 
 # Average query expansion
-_C.TEST.AQE = CN()
-_C.TEST.AQE.ENABLED = False
+_C.TEST.AQE = CN({"ENABLED": False})
 _C.TEST.AQE.ALPHA = 3.0
 _C.TEST.AQE.QE_TIME = 1
 _C.TEST.AQE.QE_K = 5
 
 # Re-rank
-_C.TEST.RERANK = CN()
-_C.TEST.RERANK.ENABLED = False
+_C.TEST.RERANK = CN({"ENABLED": False})
 _C.TEST.RERANK.K1 = 20
 _C.TEST.RERANK.K2 = 6
 _C.TEST.RERANK.LAMBDA = 0.3
 
 # Precise batchnorm
-_C.TEST.PRECISE_BN = CN()
-_C.TEST.PRECISE_BN.ENABLED = False
+_C.TEST.PRECISE_BN = CN({"ENABLED": False})
 _C.TEST.PRECISE_BN.DATASET = 'Market1501'
 _C.TEST.PRECISE_BN.NUM_ITER = 300
 
