@@ -16,11 +16,13 @@ class ClasDataset(Dataset):
         self.img_items = img_items
         self.transform = transform
 
-        pid_set = set()
+        classes = set()
         for i in img_items:
-            pid_set.add(i[1])
+            classes.add(i[1])
 
-        self.pids = sorted(list(pid_set))
+        self.classes = sorted(list(classes))
+        self.class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+        self.idx_to_class = {idx: clas for clas, idx in self.class_to_idx.items()}
 
     def __len__(self):
         return len(self.img_items)
@@ -28,16 +30,16 @@ class ClasDataset(Dataset):
     def __getitem__(self, index):
         img_item = self.img_items[index]
         img_path = img_item[0]
-        pid = img_item[1]
+        label = self.class_to_idx[img_item[1]]
         img = read_image(img_path)
         if self.transform is not None: img = self.transform(img)
 
         return {
             "images": img,
-            "targets": pid,
+            "targets": label,
             "img_paths": img_path,
         }
 
     @property
     def num_classes(self):
-        return len(self.pids)
+        return len(self.classes)

@@ -34,8 +34,6 @@ class Hymenoptera(ImageDataset):
         ]
         self.check_before_run(required_files)
 
-        self.classes, self.class_to_idx = self._find_classes(train_dir)
-
         train = self.process_dir(train_dir)
         val = self.process_dir(val_dir)
 
@@ -47,23 +45,5 @@ class Hymenoptera(ImageDataset):
         for dir_name in all_dirs:
             all_imgs = glob.glob(os.path.join(data_dir, dir_name, "*.jpg"))
             for img_name in all_imgs:
-                data.append([img_name, self.class_to_idx[dir_name], '0'])
+                data.append([img_name, dir_name, '0'])
         return data
-
-    def _find_classes(self, dir: str):
-        """
-        Finds the class folders in a dataset.
-
-        Args:
-            dir (string): Root directory path.
-
-        Returns:
-            tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
-
-        Ensures:
-            No class is a subdirectory of another.
-        """
-        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
-        classes.sort()
-        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
-        return classes, class_to_idx
