@@ -102,8 +102,8 @@ class Dataset(object):
             for img_path, pid, camid in data:
                 if pid in self._junk_pids:
                     continue
-                pid = self.dataset_name + "_" + str(pid)
-                camid = self.dataset_name + "_" + str(camid)
+                pid = self.dataset_name + "_test_" + str(pid)
+                camid = self.dataset_name + "_test_" + str(camid)
                 combined.append((img_path, pid, camid))
 
         _combine_data(self.query)
