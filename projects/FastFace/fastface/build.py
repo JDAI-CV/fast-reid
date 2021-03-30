@@ -27,8 +27,6 @@ class FaceCommDataset(CommDataset):
 
 
 def build_face_test_loader(cfg, dataset_name, **kwargs):
-    cfg = cfg.clone()
-
     dataset = DATASET_REGISTRY.get(dataset_name)(root=_root, **kwargs)
     if comm.is_main_process():
         dataset.show_test()
@@ -46,4 +44,3 @@ def build_face_test_loader(cfg, dataset_name, **kwargs):
         pin_memory=True,
     )
     return test_loader, test_set.labels
-

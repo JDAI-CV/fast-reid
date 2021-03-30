@@ -10,14 +10,7 @@ import sys
 from collections import OrderedDict
 
 import torch
-
-try:
-    import apex
-    from apex import amp
-    from apex.parallel import DistributedDataParallel
-except ImportError:
-    raise ImportError("Please install apex from https://www.github.com/nvidia/apex to run this example if you want to"
-                      "train with DDP")
+from torch.nn.parallel import DistributedDataParallel
 
 sys.path.append('.')
 
@@ -78,8 +71,6 @@ def do_train(cfg, model, resume=False):
     model.train()
     optimizer = build_optimizer(cfg, model)
 
-    optimizer_ckpt = dict(optimizer=optimizer)
-
     iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
     scheduler = build_lr_scheduler(cfg, optimizer, iters_per_epoch)
 
@@ -87,7 +78,7 @@ def do_train(cfg, model, resume=False):
         model,
         cfg.OUTPUT_DIR,
         save_to_disk=comm.is_main_process(),
-        **optimizer_ckpt,
+        optimizer=optimizer
         **scheduler
     )
 

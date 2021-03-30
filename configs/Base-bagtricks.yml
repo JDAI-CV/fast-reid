@@ -14,7 +14,7 @@ MODEL:
     NAME: EmbeddingHead
     NORM: BN
     WITH_BNNECK: True
-    POOL_LAYER: GLobalAvgPool
+    POOL_LAYER: GlobalAvgPool
     NECK_FEAT: before
     CLS_LAYER: Linear
 

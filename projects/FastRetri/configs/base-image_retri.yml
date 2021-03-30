@@ -14,8 +14,8 @@ MODEL:
     NORM: syncBN
     NECK_FEAT: after
     EMBEDDING_DIM: 0
-    POOL_LAYER: gempool
-    CLS_LAYER: linear
+    POOL_LAYER: GeneralizedMeanPooling
+    CLS_LAYER: Linear
 
   LOSSES:
     NAME: ("CrossEntropyLoss",)
@@ -27,9 +27,15 @@ MODEL:
 INPUT:
   SIZE_TRAIN: [256, 256]
   SIZE_TEST: [256, 256]
-  CROP_SIZE: 224
-  SCALE: (0.16, 1.)
-  RATIO: (0.75, 1.33333)
+
+  CROP:
+    ENABLED: True
+    SIZE: [224,]
+    SCALE: [0.16, 1.]
+    RATIO: [0.75, 1.33333]
+
+  PADDING:
+    ENABLED: False
 
   CJ:
     ENABLED: False
@@ -39,12 +45,13 @@ INPUT:
     HUE: 0.1
 
 DATALOADER:
-  PK_SAMPLER: False
+  SAMPLER_TRAIN: TrainingSampler
   NUM_WORKERS: 8
 
 SOLVER:
   MAX_EPOCH: 100
-  FP16_ENABLED: True
+  AMP:
+    ENABLED: False
 
   OPT: SGD
   SCHED: CosineAnnealingLR
@@ -68,3 +75,5 @@ SOLVER:
 TEST:
   EVAL_PERIOD: 10
   IMS_PER_BATCH: 256
+
+CUDNN_BENCHMARK: True

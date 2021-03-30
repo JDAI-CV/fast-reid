@@ -12,8 +12,17 @@ sys.path.append('.')
 from fastreid.config import get_cfg
 from fastreid.engine import default_argument_parser, default_setup, launch
 from fastreid.utils.checkpoint import Checkpointer
+from fastreid.engine.defaults import DefaultTrainer
 
 from fastretri import *
+
+
+class Trainer(DefaultTrainer):
+
+    @classmethod
+    def build_evaluator(cls, cfg, dataset_name, output_dir=None):
+        data_loader, num_query = cls.build_test_loader(cfg, dataset_name)
+        return data_loader, RetriEvaluator(cfg, num_query, output_dir)
 
 
 def setup(args):

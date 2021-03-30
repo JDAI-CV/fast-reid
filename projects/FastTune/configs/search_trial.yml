@@ -20,8 +20,8 @@ MODEL:
     NORM: BN
     NECK_FEAT: after
     EMBEDDING_DIM: 0
-    POOL_LAYER: gempool
-    CLS_LAYER: circleSoftmax
+    POOL_LAYER: GeneralizedMeanPooling
+    CLS_LAYER: CircleSoftmax
     SCALE: 64
     MARGIN: 0.35
 
@@ -41,21 +41,28 @@ MODEL:
 INPUT:
   SIZE_TRAIN: [ 256, 128 ]
   SIZE_TEST: [ 256, 128 ]
-  DO_AUTOAUG: True
+
+  AUTOAUG:
+    ENABLED: True
+    PROB: 0.1
+
   REA:
     ENABLED: True
+
   CJ:
     ENABLED: True
-  DO_PAD: True
+
+  PADDING:
+    ENABLED: True
 
 DATALOADER:
-  PK_SAMPLER: True
-  NAIVE_WAY: False
+  SAMPLER_TRAIN: NaiveIdentitySampler
   NUM_INSTANCE: 16
   NUM_WORKERS: 8
 
 SOLVER:
-  FP16_ENABLED: False
+  AMP:
+    ENABLED: False
   MAX_EPOCH: 60
   OPT: Adam
   SCHED: CosineAnnealingLR

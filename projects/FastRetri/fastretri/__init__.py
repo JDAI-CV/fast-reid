@@ -6,5 +6,4 @@
 
 from .config import add_retri_config
 from .datasets import *
-from .trainer import Trainer
 from .retri_evaluator import RetriEvaluator

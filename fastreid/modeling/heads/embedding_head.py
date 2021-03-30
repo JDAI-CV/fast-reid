@@ -81,12 +81,17 @@ class EmbeddingHead(nn.Module):
         self.bottleneck.apply(weights_init_kaiming)
 
         # Linear layer
-        self.register_parameter('weight', nn.Parameter(torch.Tensor(num_classes, feat_dim)))
-        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
-
-        # Cls layer
         assert hasattr(any_softmax, cls_type), "Expected cls types are {}, " \
                                                "but got {}".format(any_softmax.__all__, cls_type)
+        self.weight = nn.Parameter(torch.Tensor(num_classes, feat_dim))
+        # Initialize weight parameters
+        if cls_type == "Linear":
+            nn.init.normal_(self.weight, std=0.001)
+        elif cls_type == "CircleSoftmax":
+            nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        elif cls_type == "ArcSoftmax" or cls_type == "CosSoftmax":
+            nn.init.xavier_uniform_(self.weigth)
+
         self.cls_layer = getattr(any_softmax, cls_type)(num_classes, scale, margin)
 
     @classmethod
@@ -131,7 +136,7 @@ class EmbeddingHead(nn.Module):
 
         # Training
         if self.cls_layer.__class__.__name__ == 'Linear':
-            logits = F.linear(neck_feat, self.weights)
+            logits = F.linear(neck_feat, self.weight)
         else:
             logits = F.linear(F.normalize(neck_feat), F.normalize(self.weight))
 
