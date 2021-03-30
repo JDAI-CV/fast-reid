@@ -144,6 +144,10 @@ _C.INPUT.SIZE_TEST = [256, 128]
 _C.INPUT.CROP = CN({"ENABLED": False})
 # Size of the image cropped
 _C.INPUT.CROP.SIZE = [224, 224]
+# Size of the origin size cropped
+_C.INPUT.CROP.SCALE = [0.16, 1]
+# Aspect ratio of the origin aspect ratio cropped
+_C.INPUT.CROP.RATIO = [3./4., 4./3.]
 
 # Random probability for image horizontal flip
 _C.INPUT.FLIP = CN({"ENABLED": True})

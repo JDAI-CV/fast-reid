@@ -140,8 +140,8 @@ if __name__ == '__main__':
 
     cfg.defrost()
     cfg.MODEL.BACKBONE.PRETRAIN = False
-    if cfg.MODEL.HEADS.POOL_LAYER == 'fastavgpool':
-        cfg.MODEL.HEADS.POOL_LAYER = 'avgpool'
+    if cfg.MODEL.HEADS.POOL_LAYER == 'FastGlobalAvgPool':
+        cfg.MODEL.HEADS.POOL_LAYER = 'GlobalAvgPool'
     model = build_model(cfg)
     Checkpointer(model).load(cfg.MODEL.WEIGHTS)
     if hasattr(model.backbone, 'deploy'):

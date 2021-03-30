@@ -13,7 +13,8 @@ INPUT:
     SATURATION: 0.3
     HUE: 0.1
 
-  RATIO: (1., 1.)
+  CROP:
+    RATIO: (1., 1.)
 
 SOLVER:
   MAX_EPOCH: 100

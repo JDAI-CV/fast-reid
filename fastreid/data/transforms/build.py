@@ -19,6 +19,8 @@ def build_transforms(cfg, is_train=True):
         # crop
         do_crop = cfg.INPUT.CROP.ENABLED
         crop_size = cfg.INPUT.CROP.SIZE
+        crop_scale = cfg.INPUT.CROP.SCALE
+        crop_ratio = cfg.INPUT.CROP.RATIO
 
         # augmix augmentation
         do_augmix = cfg.INPUT.AUGMIX.ENABLED
@@ -60,14 +62,19 @@ def build_transforms(cfg, is_train=True):
         if do_autoaug:
             res.append(T.RandomApply([AutoAugment()], p=autoaug_prob))
 
+        if size_train[0] > 0:
+            res.append(T.Resize(size_train[0] if len(size_train) == 1 else size_train, interpolation=3))
+
         if do_crop:
-            res.append(T.RandomResizedCrop(size=crop_size, interpolation=3))
-        else:
-            res.append(T.Resize(size_train, interpolation=3))
+            res.append(T.RandomResizedCrop(size=crop_size[0] if len(crop_size) == 1 else crop_size,
+                                           interpolation=3,
+                                           scale=crop_scale, ratio=crop_ratio))
+        if do_pad:
+            res.extend([T.Pad(padding_size, padding_mode=padding_mode),
+                        T.RandomCrop(size_train[0] if len(size_train) == 1 else size_train)])
         if do_flip:
             res.append(T.RandomHorizontalFlip(p=flip_prob))
-        if do_pad:
-            res.extend([T.Pad(padding_size, padding_mode=padding_mode), T.RandomCrop(size_train)])
+
         if do_cj:
             res.append(T.RandomApply([T.ColorJitter(cj_brightness, cj_contrast, cj_saturation, cj_hue)], p=cj_prob))
         if do_affine:
@@ -85,8 +92,9 @@ def build_transforms(cfg, is_train=True):
         do_crop = cfg.INPUT.CROP.ENABLED
         crop_size = cfg.INPUT.CROP.SIZE
 
-        res.append(T.Resize(size_test[0] if len(size_test) == 1 else size_test, interpolation=3))
+        if size_test[0] > 0:
+            res.append(T.Resize(size_test[0] if len(size_test) == 1 else size_test, interpolation=3))
         if do_crop:
-            res.append(T.CenterCrop(size=crop_size))
+            res.append(T.CenterCrop(size=crop_size[0] if len(crop_size) == 1 else crop_size))
         res.append(ToTensor())
     return T.Compose(res)

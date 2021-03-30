@@ -9,8 +9,8 @@ MODEL:
     NORM: BN
     NECK_FEAT: after
     EMBEDDING_DIM: 512
-    POOL_LAYER: flatten
-    CLS_LAYER: circleSoftmax
+    POOL_LAYER: Flatten
+    CLS_LAYER: CircleSoftmax
     SCALE: 256
     MARGIN: 0.25
 
@@ -28,23 +28,29 @@ DATASETS:
 INPUT:
   SIZE_TRAIN: [112, 112]
   SIZE_TEST: [112, 112]
-  DO_AUGMIX: False
-  DO_AUTOAUG: False
+  AUGMIX:
+    ENABLED: False
+  AUTOAUG:
+    ENABLED: False
 
   CJ:
     ENABLED: False
 
-  DO_FLIP: True
-  FLIP_PROB: 0.5
-  DO_PAD: False
+  FLIP:
+    ENABLED: True
+    PROB: 0.5
+
+  PADDING:
+    ENABLED: False
 
 DATALOADER:
-  PK_SAMPLER: False
+  SAMPLER_TRAIN: TrainingSampler
   NUM_WORKERS: 8
 
 SOLVER:
   MAX_EPOCH: 16
-  FP16_ENABLED: False
+  AMP:
+    ENABLED: False
 
   OPT: SGD
   BASE_LR: 0.1
@@ -66,3 +72,5 @@ SOLVER:
 TEST:
   EVAL_PERIOD: 2
   IMS_PER_BATCH: 1024
+
+CUDNN_BENCHMARK: True

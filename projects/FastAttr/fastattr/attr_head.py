@@ -5,71 +5,45 @@
 """
 
 import torch
+import torch.nn.functional as F
 from torch import nn
 
-from fastreid.layers import *
+from fastreid.modeling.heads import EmbeddingHead
 from fastreid.modeling.heads.build import REID_HEADS_REGISTRY
-from fastreid.utils.weight_init import weights_init_kaiming, weights_init_classifier
+from fastreid.utils.weight_init import weights_init_kaiming
 
 
 @REID_HEADS_REGISTRY.register()
-class AttrHead(nn.Module):
+class AttrHead(EmbeddingHead):
     def __init__(self, cfg):
-        super().__init__()
-        # fmt: off
-        feat_dim      = cfg.MODEL.BACKBONE.FEAT_DIM
-        num_classes   = cfg.MODEL.HEADS.NUM_CLASSES
-        pool_type     = cfg.MODEL.HEADS.POOL_LAYER
-        cls_type      = cfg.MODEL.HEADS.CLS_LAYER
-        with_bnneck   = cfg.MODEL.HEADS.WITH_BNNECK
+        super().__init__(cfg)
+        num_classes = cfg.MODEL.HEADS.NUM_CLASSES
 
-        if pool_type == 'fastavgpool':   self.pool_layer = FastGlobalAvgPool2d()
-        elif pool_type == 'avgpool':     self.pool_layer = nn.AdaptiveAvgPool2d(1)
-        elif pool_type == 'maxpool':     self.pool_layer = nn.AdaptiveMaxPool2d(1)
-        elif pool_type == 'gempoolP':    self.pool_layer = GeneralizedMeanPoolingP()
-        elif pool_type == 'gempool':     self.pool_layer = GeneralizedMeanPooling()
-        elif pool_type == "avgmaxpool":  self.pool_layer = AdaptiveAvgMaxPool2d()
-        elif pool_type == 'clipavgpool': self.pool_layer = ClipGlobalAvgPool2d()
-        elif pool_type == "identity":    self.pool_layer = nn.Identity()
-        elif pool_type == "flatten":     self.pool_layer = Flatten()
-        else:                            raise KeyError(f"{pool_type} is not supported!")
-
-        # Classification layer
-        if cls_type == 'linear':          self.classifier = nn.Linear(feat_dim, num_classes, bias=False)
-        elif cls_type == 'arcSoftmax':    self.classifier = ArcSoftmax(cfg, feat_dim, num_classes)
-        elif cls_type == 'circleSoftmax': self.classifier = CircleSoftmax(cfg, feat_dim, num_classes)
-        elif cls_type == 'cosSoftmax':     self.classifier = CosSoftmax(cfg, feat_dim, num_classes)
-        else:                             raise KeyError(f"{cls_type} is not supported!")
-        # fmt: on
-
-        bottleneck = []
-        if with_bnneck:
-            bottleneck.append(nn.BatchNorm1d(num_classes))
-
-        self.bottleneck = nn.Sequential(*bottleneck)
-
-        self.bottleneck.apply(weights_init_kaiming)
-        self.classifier.apply(weights_init_classifier)
+        self.bnneck = nn.BatchNorm1d(num_classes)
+        self.bnneck.apply(weights_init_kaiming)
 
     def forward(self, features, targets=None):
         """
         See :class:`ReIDHeads.forward`.
         """
-        global_feat = self.pool_layer(features)
-        global_feat = global_feat[..., 0, 0]
+        pool_feat = self.pool_layer(features)
+        neck_feat = self.bottleneck(pool_feat)
+        neck_feat = neck_feat[..., 0, 0]
 
-        classifier_name = self.classifier.__class__.__name__
-        # fmt: off
-        if classifier_name == 'Linear': cls_outputs = self.classifier(global_feat)
-        else:                           cls_outputs = self.classifier(global_feat, targets)
-        # fmt: on
-
-        cls_outputs = self.bottleneck(cls_outputs)
-
-        if not self.training:
-            cls_outputs = torch.sigmoid(cls_outputs)
-            return cls_outputs
+        if self.cls_layer.__class__.__name__ == 'Linear':
+            logits = F.linear(neck_feat, self.weight)
         else:
-            return {
-                "cls_outputs": cls_outputs,
-            }
+            logits = F.linear(F.normalize(neck_feat), F.normalize(self.weight))
+
+        # Evaluation
+        if not self.training:
+            logits = self.bnneck(logits * self.cls_layer.s)
+            cls_outptus = torch.sigmoid(logits)
+            return cls_outptus
+
+        cls_outputs = self.cls_layer(logits, targets)
+        cls_outputs = self.bnneck(cls_outputs)
+
+        return {
+            'cls_outputs': cls_outputs,
+        }

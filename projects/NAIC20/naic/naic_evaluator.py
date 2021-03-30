@@ -102,7 +102,7 @@ class NaicEvaluator(ReidEvaluator):
 
         results = defaultdict(list)
 
-        topk_indices = partition_arg_topK(dist, K=200, axis=1)
+        topk_indices = partition_arg_topK(dist, K=200, axis=1)[:, :200]
         for i in range(topk_indices.shape[0]):
             results[query_pids[i]].extend(gallery_pids[topk_indices[i]])
 

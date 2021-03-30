@@ -69,8 +69,8 @@ if __name__ == '__main__':
 
     cfg.defrost()
     cfg.MODEL.BACKBONE.PRETRAIN = False
-    if cfg.MODEL.HEADS.POOL_LAYER == 'fastavgpool':
-        cfg.MODEL.HEADS.POOL_LAYER = 'avgpool'
+    if cfg.MODEL.HEADS.POOL_LAYER == 'FastGlobalAvgPool':
+        cfg.MODEL.HEADS.POOL_LAYER = 'GlobalAvgPool'
     cfg.MODEL.BACKBONE.WITH_NL = False
 
     model = build_model(cfg)
