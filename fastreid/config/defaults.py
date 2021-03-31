@@ -47,7 +47,7 @@ _C.MODEL.BACKBONE.WITH_SE = False
 # If use Non-local block in backbone
 _C.MODEL.BACKBONE.WITH_NL = False
 # If use ImageNet pretrain model
-_C.MODEL.BACKBONE.PRETRAIN = True
+_C.MODEL.BACKBONE.PRETRAIN = False
 # Pretrain model path
 _C.MODEL.BACKBONE.PRETRAIN_PATH = ''
 
@@ -63,14 +63,14 @@ _C.MODEL.HEADS.NUM_CLASSES = 0
 # Embedding dimension in head
 _C.MODEL.HEADS.EMBEDDING_DIM = 0
 # If use BNneck in embedding
-_C.MODEL.HEADS.WITH_BNNECK = True
+_C.MODEL.HEADS.WITH_BNNECK = False
 # Triplet feature using feature before(after) bnneck
 _C.MODEL.HEADS.NECK_FEAT = "before"  # options: before, after
 # Pooling layer type
-_C.MODEL.HEADS.POOL_LAYER = "avgpool"
+_C.MODEL.HEADS.POOL_LAYER = "GlobalAvgPool"
 
 # Classification layer type
-_C.MODEL.HEADS.CLS_LAYER = "linear"  # "arcSoftmax" or "circleSoftmax"
+_C.MODEL.HEADS.CLS_LAYER = "Linear"  # ArcSoftmax" or "CircleSoftmax"
 
 # Margin and Scale for margin-based classification layer
 _C.MODEL.HEADS.MARGIN = 0.15
@@ -100,7 +100,7 @@ _C.MODEL.LOSSES.FL.SCALE = 1.0
 _C.MODEL.LOSSES.TRI = CN()
 _C.MODEL.LOSSES.TRI.MARGIN = 0.3
 _C.MODEL.LOSSES.TRI.NORM_FEAT = False
-_C.MODEL.LOSSES.TRI.HARD_MINING = True
+_C.MODEL.LOSSES.TRI.HARD_MINING = False
 _C.MODEL.LOSSES.TRI.SCALE = 1.0
 
 # Circle Loss options
@@ -150,11 +150,11 @@ _C.INPUT.CROP.SCALE = [0.16, 1]
 _C.INPUT.CROP.RATIO = [3./4., 4./3.]
 
 # Random probability for image horizontal flip
-_C.INPUT.FLIP = CN({"ENABLED": True})
+_C.INPUT.FLIP = CN({"ENABLED": False})
 _C.INPUT.FLIP.PROB = 0.5
 
 # Value of padding size
-_C.INPUT.PADDING = CN({"ENABLED": True})
+_C.INPUT.PADDING = CN({"ENABLED": False})
 _C.INPUT.PADDING.MODE = 'constant'
 _C.INPUT.PADDING.SIZE = 10
 
@@ -201,7 +201,7 @@ _C.DATASETS.COMBINEALL = False
 # -----------------------------------------------------------------------------
 _C.DATALOADER = CN()
 # Options: TrainingSampler, NaiveIdentitySampler, BalancedIdentitySampler
-_C.DATALOADER.SAMPLER_TRAIN = "NaiveIdentitySampler"
+_C.DATALOADER.SAMPLER_TRAIN = "TrainingSampler"
 # Number of instance for each person
 _C.DATALOADER.NUM_INSTANCE = 4
 _C.DATALOADER.NUM_WORKERS = 8
@@ -224,7 +224,7 @@ _C.SOLVER.BIAS_LR_FACTOR = 1.
 _C.SOLVER.HEADS_LR_FACTOR = 1.
 
 _C.SOLVER.MOMENTUM = 0.9
-_C.SOLVER.NESTEROV = True
+_C.SOLVER.NESTEROV = False
 
 _C.SOLVER.WEIGHT_DECAY = 0.0005
 _C.SOLVER.WEIGHT_DECAY_BIAS = 0.

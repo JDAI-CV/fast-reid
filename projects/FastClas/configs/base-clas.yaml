@@ -26,24 +26,13 @@ MODEL:
 
 INPUT:
   SIZE_TEST: [256, 256]
+
   CROP:
     ENABLED: True
     SIZE: [224, 224]
+
   FLIP:
     ENABLED: True
-
-  AUGMIX:
-    ENABLED: False
-  AUTOAUG:
-    ENABLED: False
-  PADDING:
-    ENABLED: False
-  CJ:
-    ENABLED: False
-  AFFINE:
-    ENABLED: False
-  REA:
-    ENABLED: False
 
 DATALOADER:
   SAMPLER_TRAIN: TrainingSampler

@@ -19,6 +19,9 @@ TEST:
     K2: 3
     LAMBDA: 0.8
 
+  FLIP:
+    ENABLED: True
+
   SAVE_DISTMAT: True
 
 OUTPUT_DIR: projects/NAIC20/logs/r34_ibn-128x256-submit

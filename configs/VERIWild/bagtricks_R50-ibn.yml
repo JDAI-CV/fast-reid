@@ -9,7 +9,7 @@ MODEL:
     WITH_IBN: True
 
   HEADS:
-    POOL_LAYER: gempool
+    POOL_LAYER: GeneralizedMeanPooling
 
   LOSSES:
     TRI:

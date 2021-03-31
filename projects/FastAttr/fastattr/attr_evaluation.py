@@ -12,7 +12,7 @@ import torch
 from fastreid.evaluation.evaluator import DatasetEvaluator
 from fastreid.utils import comm
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("fastreid.attr_evaluation")
 
 
 class AttrEvaluator(DatasetEvaluator):
