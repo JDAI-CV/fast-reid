@@ -13,10 +13,10 @@ from fastreid.data.data_utils import read_image
 class AttrDataset(Dataset):
     """Image Person Attribute Dataset"""
 
-    def __init__(self, img_items, attr_dict, transform=None):
+    def __init__(self, img_items, transform, attr_dict):
         self.img_items = img_items
-        self.attr_dict = attr_dict
         self.transform = transform
+        self.attr_dict = attr_dict
 
     def __len__(self):
         return len(self.img_items)
@@ -24,6 +24,7 @@ class AttrDataset(Dataset):
     def __getitem__(self, index):
         img_path, labels = self.img_items[index]
         img = read_image(img_path)
+
         if self.transform is not None: img = self.transform(img)
 
         labels = torch.as_tensor(labels)

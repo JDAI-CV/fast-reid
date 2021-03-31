@@ -14,8 +14,8 @@ MODEL:
   HEADS:
     NAME: AttrHead
     WITH_BNNECK: True
-    POOL_LAYER: fastavgpool
-    CLS_LAYER: linear
+    POOL_LAYER: FastGlobalAvgPool
+    CLS_LAYER: Linear
     NUM_CLASSES: 26
 
   LOSSES:
@@ -28,11 +28,15 @@ MODEL:
 INPUT:
   SIZE_TRAIN: [ 256, 192 ]
   SIZE_TEST: [ 256, 192 ]
-  REA:
-    ENABLED: False
-  DO_PAD: True
+
+  FLIP:
+    ENABLED: True
+
+  PADDING:
+    ENABLED: True
 
 DATALOADER:
+  SAMPLER_TRAIN: TrainingSampler
   NUM_WORKERS: 8
 
 SOLVER:

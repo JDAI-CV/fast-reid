@@ -20,7 +20,7 @@ from fastreid.utils.checkpoint import Checkpointer, PathManager
 from fastreid.utils import comm
 from fastreid.engine import DefaultTrainer
 
-from fastcls import *
+from fastclas import *
 
 
 class Trainer(DefaultTrainer):

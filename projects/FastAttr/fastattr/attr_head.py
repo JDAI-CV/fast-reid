@@ -28,22 +28,16 @@ class AttrHead(EmbeddingHead):
         """
         pool_feat = self.pool_layer(features)
         neck_feat = self.bottleneck(pool_feat)
-        neck_feat = neck_feat[..., 0, 0]
+        neck_feat = neck_feat.view(neck_feat.size(0), -1)
 
-        if self.cls_layer.__class__.__name__ == 'Linear':
-            logits = F.linear(neck_feat, self.weight)
-        else:
-            logits = F.linear(F.normalize(neck_feat), F.normalize(self.weight))
+        logits = F.linear(neck_feat, self.weight)
+        logits = self.bnneck(logits)
 
         # Evaluation
         if not self.training:
-            logits = self.bnneck(logits * self.cls_layer.s)
             cls_outptus = torch.sigmoid(logits)
             return cls_outptus
 
-        cls_outputs = self.cls_layer(logits, targets)
-        cls_outputs = self.bnneck(cls_outputs)
-
         return {
-            'cls_outputs': cls_outputs,
+            "cls_outputs": logits,
         }

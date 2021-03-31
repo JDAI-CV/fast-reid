@@ -34,9 +34,14 @@ MODEL:
 INPUT:
   SIZE_TRAIN: [ 256, 128 ]
   SIZE_TEST: [ 256, 128 ]
+
   REA:
     ENABLED: True
     PROB: 0.5
+
+  FLIP:
+    ENABLED: True
+
   PADDING:
     ENABLED: True
 

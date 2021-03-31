@@ -20,9 +20,6 @@ _root = os.getenv("FASTREID_DATASETS", "datasets")
 
 
 def build_attr_train_loader(cfg):
-    cfg = cfg.clone()
-    cfg.defrost()
-
     train_items = list()
     attr_dict = None
     for d in cfg.DATASETS.NAMES:
@@ -30,13 +27,13 @@ def build_attr_train_loader(cfg):
         if comm.is_main_process():
             dataset.show_train()
         if attr_dict is not None:
-            assert attr_dict == dataset.attr_dict, "attr_dict in {} does not match with previous ones".format(d)
+            assert attr_dict == dataset.attr_dict, f"attr_dict in {d} does not match with previous ones"
         else:
             attr_dict = dataset.attr_dict
         train_items.extend(dataset.train)
 
     train_transforms = build_transforms(cfg, is_train=True)
-    train_set = AttrDataset(train_items, attr_dict, train_transforms)
+    train_set = AttrDataset(train_items, train_transforms, attr_dict)
 
     num_workers = cfg.DATALOADER.NUM_WORKERS
     mini_batch_size = cfg.SOLVER.IMS_PER_BATCH // comm.get_world_size()
@@ -55,16 +52,14 @@ def build_attr_train_loader(cfg):
 
 
 def build_attr_test_loader(cfg, dataset_name):
-    cfg = cfg.clone()
-    cfg.defrost()
-
     dataset = DATASET_REGISTRY.get(dataset_name)(root=_root, combineall=cfg.DATASETS.COMBINEALL)
+    attr_dict = dataset.attr_dict
     if comm.is_main_process():
         dataset.show_test()
     test_items = dataset.test
 
     test_transforms = build_transforms(cfg, is_train=False)
-    test_set = AttrDataset(test_items, dataset.attr_dict, test_transforms)
+    test_set = AttrDataset(test_items, test_transforms, attr_dict)
 
     mini_batch_size = cfg.TEST.IMS_PER_BATCH // comm.get_world_size()
     data_sampler = samplers.InferenceSampler(len(test_set))

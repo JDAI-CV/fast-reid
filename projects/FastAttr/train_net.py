@@ -3,14 +3,12 @@
 @author:  xingyu liao
 @contact: sherlockliao01@gmail.com
 """
-import logging
 import sys
 
 sys.path.append('.')
 
 from fastreid.config import get_cfg
 from fastreid.engine import DefaultTrainer
-from fastreid.modeling import build_model
 from fastreid.engine import default_argument_parser, default_setup, launch
 from fastreid.utils.checkpoint import Checkpointer
 
@@ -18,22 +16,28 @@ from fastattr import *
 
 
 class Trainer(DefaultTrainer):
+    sample_weights = None
 
-    def build_model(self, cfg):
+    @classmethod
+    def build_model(cls, cfg):
         """
         Returns:
             torch.nn.Module:
         It now calls :func:`fastreid.modeling.build_model`.
         Overwrite it if you'd like a different model.
         """
-        model = build_model(cfg, sample_weights=self.sample_weights)
-        logger = logging.getLogger("fastreid.attr_model")
-        logger.info("Model:\n{}".format(model))
+        model = DefaultTrainer.build_model(cfg)
+        if cfg.MODEL.LOSSES.BCE.WEIGHT_ENABLED and \
+                Trainer.sample_weights is not None:
+            setattr(model, "sample_weights", Trainer.sample_weights.to(model.device))
+        else:
+            setattr(model, "sample_weights", None)
         return model
 
-    def build_train_loader(self, cfg):
+    @classmethod
+    def build_train_loader(cls, cfg):
         data_loader = build_attr_train_loader(cfg)
-        self.sample_weights = data_loader.dataset.sample_weights
+        Trainer.sample_weights = data_loader.dataset.sample_weights
         return data_loader
 
     @classmethod

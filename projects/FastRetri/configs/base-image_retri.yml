@@ -34,8 +34,8 @@ INPUT:
     SCALE: [0.16, 1.]
     RATIO: [0.75, 1.33333]
 
-  PADDING:
-    ENABLED: False
+  FLIP:
+    ENABLED: True
 
   CJ:
     ENABLED: False
@@ -43,6 +43,7 @@ INPUT:
     CONTRAST: 0.3
     SATURATION: 0.1
     HUE: 0.1
+
 
 DATALOADER:
   SAMPLER_TRAIN: TrainingSampler
