@@ -9,8 +9,9 @@ import torch.nn.functional as F
 from torch import nn
 
 from fastreid.layers import *
+from fastreid.modeling.heads import EmbeddingHead
 from fastreid.modeling.heads.build import REID_HEADS_REGISTRY
-from fastreid.utils.weight_init import weights_init_classifier, weights_init_kaiming
+from fastreid.utils.weight_init import weights_init_kaiming
 
 
 class OcclusionUnit(nn.Module):
@@ -20,7 +21,7 @@ class OcclusionUnit(nn.Module):
         self.MaxPool2 = nn.MaxPool2d(kernel_size=4, stride=2, padding=0)
         self.MaxPool3 = nn.MaxPool2d(kernel_size=6, stride=2, padding=0)
         self.MaxPool4 = nn.MaxPool2d(kernel_size=8, stride=2, padding=0)
-        self.mask_layer = nn.Linear(in_planes, 1, bias=False)
+        self.mask_layer = nn.Linear(in_planes, 1, bias=True)
 
     def forward(self, x):
         SpaFeat1 = self.MaxPool1(x)  # shape: [n, c, h, w]
@@ -36,10 +37,13 @@ class OcclusionUnit(nn.Module):
         SpatialFeatAll = SpatialFeatAll.transpose(1, 2)  # shape: [n, c, m]
         y = self.mask_layer(SpatialFeatAll)
         mask_weight = torch.sigmoid(y[:, :, 0])
-
+        # mask_score = torch.sigmoid(mask_weight[:, :48])
         feat_dim = SpaFeat1.size(2) * SpaFeat1.size(3)
         mask_score = F.normalize(mask_weight[:, :feat_dim], p=1, dim=1)
+        #       mask_score_norm = mask_score
+        # mask_weight_norm = torch.sigmoid(mask_weight)
         mask_weight_norm = F.normalize(mask_weight, p=1, dim=1)
+
         mask_score = mask_score.unsqueeze(1)
 
         SpaFeat1 = SpaFeat1.transpose(1, 2)
@@ -50,61 +54,39 @@ class OcclusionUnit(nn.Module):
         return global_feats, mask_weight, mask_weight_norm
 
 
+class Flatten(nn.Module):
+    def forward(self, input):
+        return input.view(input.size(0), -1)
+
+
 @REID_HEADS_REGISTRY.register()
-class DSRHead(nn.Module):
+class DSRHead(EmbeddingHead):
     def __init__(self, cfg):
-        super().__init__()
+        super().__init__(cfg)
 
-        # fmt: off
-        feat_dim      = cfg.MODEL.BACKBONE.FEAT_DIM
-        num_classes   = cfg.MODEL.HEADS.NUM_CLASSES
-        neck_feat     = cfg.MODEL.HEADS.NECK_FEAT
-        pool_type     = cfg.MODEL.HEADS.POOL_LAYER
-        cls_type      = cfg.MODEL.HEADS.CLS_LAYER
-        norm_type     = cfg.MODEL.HEADS.NORM
-
-        if pool_type == 'fastavgpool':   self.pool_layer = FastGlobalAvgPool2d()
-        elif pool_type == 'avgpool':     self.pool_layer = nn.AdaptiveAvgPool2d(1)
-        elif pool_type == 'maxpool':     self.pool_layer = nn.AdaptiveMaxPool2d(1)
-        elif pool_type == 'gempoolP':    self.pool_layer = GeneralizedMeanPoolingP()
-        elif pool_type == 'gempool':     self.pool_layer = GeneralizedMeanPooling()
-        elif pool_type == "avgmaxpool":  self.pool_layer = AdaptiveAvgMaxPool2d()
-        elif pool_type == 'clipavgpool': self.pool_layer = ClipGlobalAvgPool2d()
-        elif pool_type == "identity":    self.pool_layer = nn.Identity()
-        elif pool_type == "flatten":     self.pool_layer = Flatten()
-        else:                            raise KeyError(f"{pool_type} is not supported!")
-        # fmt: on
-
-        self.neck_feat = neck_feat
-
+        feat_dim = cfg.MODEL.BACKBONE.FEAT_DIM
+        with_bnneck = cfg.MODEL.HEADS.WITH_BNNECK
+        norm_type = cfg.MODEL.HEADS.NORM
+        num_classes = cfg.MODEL.HEADS.NUM_CLASSES
+        embedding_dim = cfg.MODEL.HEADS.EMBEDDING_DIM
         self.occ_unit = OcclusionUnit(in_planes=feat_dim)
         self.MaxPool1 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
         self.MaxPool2 = nn.MaxPool2d(kernel_size=4, stride=2, padding=0)
         self.MaxPool3 = nn.MaxPool2d(kernel_size=6, stride=2, padding=0)
         self.MaxPool4 = nn.MaxPool2d(kernel_size=8, stride=2, padding=0)
 
-        self.bnneck = get_norm(norm_type, feat_dim, bias_freeze=True)
-        self.bnneck.apply(weights_init_kaiming)
+        occ_neck = []
+        if embedding_dim > 0:
+            occ_neck.append(nn.Conv2d(feat_dim, embedding_dim, 1, 1, bias=False))
+            feat_dim = embedding_dim
 
-        self.bnneck_occ = get_norm(norm_type, feat_dim, bias_freeze=True)
+        if with_bnneck:
+            occ_neck.append(get_norm(norm_type, feat_dim, bias_freeze=True))
+
+        self.bnneck_occ = nn.Sequential(*occ_neck)
         self.bnneck_occ.apply(weights_init_kaiming)
 
-        # identity classification layer
-        if cls_type == 'linear':
-            self.classifier = nn.Linear(feat_dim, num_classes, bias=False)
-            self.classifier_occ = nn.Linear(feat_dim, num_classes, bias=False)
-        elif cls_type == 'arcSoftmax':
-            self.classifier = ArcSoftmax(cfg, feat_dim, num_classes)
-            self.classifier_occ = ArcSoftmax(cfg, feat_dim, num_classes)
-        elif cls_type == 'circleSoftmax':
-            self.classifier = CircleSoftmax(cfg, feat_dim, num_classes)
-            self.classifier_occ = CircleSoftmax(cfg, feat_dim, num_classes)
-        else:
-            raise KeyError(f"{cls_type} is invalid, please choose from "
-                           f"'linear', 'arcSoftmax' and 'circleSoftmax'.")
-
-        self.classifier.apply(weights_init_classifier)
-        self.classifier_occ.apply(weights_init_classifier)
+        self.weight_occ = nn.Parameter(torch.normal(0, 0.01, (num_classes, feat_dim)))
 
     def forward(self, features, targets=None):
         """
@@ -122,6 +104,7 @@ class DSRHead(nn.Module):
         SpatialFeatAll = torch.cat((Feat1, Feat2, Feat3, Feat4), dim=2)
 
         foreground_feat, mask_weight, mask_weight_norm = self.occ_unit(features)
+        # print(time.time() - st)
         bn_foreground_feat = self.bnneck_occ(foreground_feat)
         bn_foreground_feat = bn_foreground_feat[..., 0, 0]
 
@@ -131,23 +114,24 @@ class DSRHead(nn.Module):
 
         # Training
         global_feat = self.pool_layer(features)
-        bn_feat = self.bnneck(global_feat)
+        bn_feat = self.bottleneck(global_feat)
         bn_feat = bn_feat[..., 0, 0]
 
-        if self.classifier.__class__.__name__ == 'Linear':
-            cls_outputs = self.classifier(bn_feat)
-            fore_cls_outputs = self.classifier_occ(bn_foreground_feat)
-            pred_class_logits = F.linear(bn_feat, self.classifier.weight)
+        if self.cls_layer.__class__.__name__ == 'Linear':
+            pred_class_logits = F.linear(bn_feat, self.weight)
+            fore_pred_class_logits = F.linear(bn_foreground_feat, self.weight_occ)
         else:
-            cls_outputs = self.classifier(bn_feat, targets)
-            fore_cls_outputs = self.classifier_occ(bn_foreground_feat, targets)
-            pred_class_logits = self.classifier.s * F.linear(F.normalize(bn_feat),
-                                                             F.normalize(self.classifier.weight))
+            pred_class_logits = F.linear(F.normalize(bn_feat), F.normalize(self.weight))
+            fore_pred_class_logits = F.linear(F.normalize(bn_foreground_feat), F.normalize(self.weight_occ))
 
+        cls_outputs = self.cls_layer(pred_class_logits, targets)
+        fore_cls_outputs = self.cls_layer(fore_pred_class_logits, targets)
+
+        # pdb.set_trace()
         return {
             "cls_outputs": cls_outputs,
             "fore_cls_outputs": fore_cls_outputs,
-            "pred_class_logits": pred_class_logits,
-            "global_features": global_feat[..., 0, 0],
+            "pred_class_logits": pred_class_logits * self.cls_layer.s,
+            "features": global_feat[..., 0, 0],
             "foreground_features": foreground_feat[..., 0, 0],
         }

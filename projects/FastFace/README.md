@@ -20,6 +20,7 @@ We do data wrangling following [InsightFace_Pytorch](https://github.com/TreB1eN/
 ## Dependencies
 
 - bcolz
+- mxnet (optional) if you want to read `.rec` directly
 
 ## Experiment Results
 
@@ -30,3 +31,5 @@ We refer to [insightface_pytorch](https://github.com/TreB1eN/InsightFace_Pytorch
 | [insightface_pytorch](https://github.com/TreB1eN/InsightFace_Pytorch) | 99.52 | 99.62 | 95.04 | 96.22 | 95.57 | 91.07 | 93.86 |
 | ir50_se | 99.70 | 99.60 | 96.43 | 97.87 | 95.95 | 91.10 | 94.32 |
 | ir100_se | 99.65 | 99.69 | 97.10 |  97.98 | 96.00 | 91.53 | 94.62 |
+| ir50_se_0.1 |  |  |  |   |  |  |  |
+| ir100_se_0.1 |  |  |  |  |  |  |  |

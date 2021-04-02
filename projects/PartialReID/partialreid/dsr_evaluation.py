@@ -10,11 +10,9 @@ from collections import OrderedDict
 import numpy as np
 import torch
 import torch.nn.functional as F
-from sklearn import metrics
 
 from fastreid.evaluation.evaluator import DatasetEvaluator
 from fastreid.evaluation.rank import evaluate_rank
-from fastreid.evaluation.roc import evaluate_roc
 from fastreid.utils import comm
 from .dsr_distance import compute_dsr_dist
 
@@ -46,7 +44,7 @@ class DsrEvaluator(DatasetEvaluator):
         self.features.append(F.normalize(outputs[0]).cpu())
         outputs1 = F.normalize(outputs[1].data).cpu()
         self.spatial_features.append(outputs1)
-        self.scores.append(outputs[2])
+        self.scores.append(outputs[2].cpu())
 
     def evaluate(self):
         if comm.get_world_size() > 1:
@@ -101,28 +99,28 @@ class DsrEvaluator(DatasetEvaluator):
         gallery_features = gallery_features.numpy()
         if self.cfg.TEST.DSR.ENABLED:
             logger.info("Testing with DSR setting")
-            dist = compute_dsr_dist(spatial_features[:self._num_query], spatial_features[self._num_query:], dist,
-                                    scores[:self._num_query])
-            cmc, all_AP, all_INP = evaluate_rank(dist, query_features, gallery_features, query_pids, gallery_pids,
-                                                 query_camids, gallery_camids, use_distmat=True)
+            dsr_dist = compute_dsr_dist(spatial_features[:self._num_query], spatial_features[self._num_query:], dist,
+                                        scores[:self._num_query])
+
+            max_value = 0
+            k = 0
+            for i in range(0, 101):
+                lamb = 0.01 * i
+                dist1 = (1 - lamb) * dist + lamb * dsr_dist
+                cmc, all_AP, all_INP = evaluate_rank(dist1, query_pids, gallery_pids, query_camids, gallery_camids)
+                if (cmc[0] > max_value):
+                    k = lamb
+                    max_value = cmc[0]
+            dist1 = (1 - k) * dist + k * dsr_dist
+            cmc, all_AP, all_INP = evaluate_rank(dist1, query_pids, gallery_pids, query_camids, gallery_camids)
         else:
-            cmc, all_AP, all_INP = evaluate_rank(dist, query_features, gallery_features, query_pids, gallery_pids,
-                                                 query_camids, gallery_camids, use_distmat=False)
+            cmc, all_AP, all_INP = evaluate_rank(dist, query_pids, gallery_pids, query_camids, gallery_camids)
+
         mAP = np.mean(all_AP)
         mINP = np.mean(all_INP)
-
         for r in [1, 5, 10]:
-            self._results['Rank-{}'.format(r)] = cmc[r - 1]
-        self._results['mAP'] = mAP
-        self._results['mINP'] = mINP
-
-        if self.cfg.TEST.ROC_ENABLED:
-            scores, labels = evaluate_roc(dist, query_features, gallery_features,
-                                          query_pids, gallery_pids, query_camids, gallery_camids)
-            fprs, tprs, thres = metrics.roc_curve(labels, scores)
-
-            for fpr in [1e-4, 1e-3, 1e-2]:
-                ind = np.argmin(np.abs(fprs - fpr))
-                self._results["TPR@FPR={:.0e}".format(fpr)] = tprs[ind]
+            self._results['Rank-{}'.format(r)] = cmc[r - 1] * 100
+        self._results['mAP'] = mAP * 100
+        self._results['mINP'] = mINP * 100
 
         return copy.deepcopy(self._results)

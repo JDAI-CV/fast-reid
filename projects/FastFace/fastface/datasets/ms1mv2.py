@@ -21,11 +21,9 @@ class MS1MV2(ImageDataset):
         self.dataset_dir = os.path.join(self.root, self.dataset_dir)
 
         required_files = [self.dataset_dir]
-
         self.check_before_run(required_files)
 
         train = self.process_dirs()
-
         super().__init__(train, [], [], **kwargs)
 
     def process_dirs(self):

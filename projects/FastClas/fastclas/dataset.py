@@ -12,7 +12,7 @@ from fastreid.data.data_utils import read_image
 class ClasDataset(Dataset):
     """Image Person ReID Dataset"""
 
-    def __init__(self, img_items, transform=None, relabel=True):
+    def __init__(self, img_items, transform=None):
         self.img_items = img_items
         self.transform = transform
 

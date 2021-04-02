@@ -7,10 +7,10 @@
 from fastreid.config import CfgNode as CN
 
 
-def add_attr_config(cfg):
+def add_face_cfg(cfg):
     _C = cfg
 
-    _C.MODEL.LOSSES.BCE = CN({"WEIGHT_ENABLED": True})
-    _C.MODEL.LOSSES.BCE.SCALE = 1.
+    _C.DATASETS.REC_PATH = ""
 
-    _C.TEST.THRES = 0.5
+    _C.MODEL.HEADS.PFC = CN({"ENABLED": False})
+    _C.MODEL.HEADS.PFC.SAMPLE_RATE = 0.1

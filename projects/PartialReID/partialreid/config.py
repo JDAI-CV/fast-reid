@@ -10,6 +10,4 @@ from fastreid.config import CfgNode as CN
 def add_partialreid_config(cfg):
     _C = cfg
 
-    _C.TEST.DSR = CN()
-    _C.TEST.DSR.ENABLED = True
-
+    _C.TEST.DSR = CN({"ENABLED": True})

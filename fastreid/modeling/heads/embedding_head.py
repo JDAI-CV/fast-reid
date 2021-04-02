@@ -83,15 +83,7 @@ class EmbeddingHead(nn.Module):
         # Linear layer
         assert hasattr(any_softmax, cls_type), "Expected cls types are {}, " \
                                                "but got {}".format(any_softmax.__all__, cls_type)
-        self.weight = nn.Parameter(torch.Tensor(num_classes, feat_dim))
-        # Initialize weight parameters
-        if cls_type == "Linear":
-            nn.init.normal_(self.weight, std=0.001)
-        elif cls_type == "CircleSoftmax":
-            nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
-        elif cls_type == "ArcSoftmax" or cls_type == "CosSoftmax":
-            nn.init.xavier_uniform_(self.weigth)
-
+        self.weight = nn.Parameter(torch.normal(0, 0.01, (num_classes, feat_dim)))
         self.cls_layer = getattr(any_softmax, cls_type)(num_classes, scale, margin)
 
     @classmethod

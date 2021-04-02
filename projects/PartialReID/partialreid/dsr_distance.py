@@ -2,8 +2,8 @@
 Notice the input/output shape of methods, so that you can better understand
 the meaning of these methods."""
 
-import torch
 import numpy as np
+import torch
 
 
 def normalize(nparray, order=2, axis=0):
@@ -46,7 +46,7 @@ def compute_dsr_dist(array1, array2, distmat, scores):
             Proj_M = torch.FloatTensor(M[index[i, j]])
             Proj_M = Proj_M.cuda()
             a = torch.matmul(g, torch.matmul(Proj_M, q)) - q
-            dist[i, index[i, j]] = ((torch.pow(a, 2).sum(0).sqrt()) * scores[i]).sum()
+            dist[i, index[i, j]] = ((torch.pow(a, 2).sum(0).sqrt()) * scores[i].cuda()).sum()
     dist = dist.cpu()
     dist = dist.numpy()
 

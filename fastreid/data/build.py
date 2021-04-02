@@ -26,21 +26,19 @@ __all__ = [
 _root = os.getenv("FASTREID_DATASETS", "datasets")
 
 
-def _train_loader_from_config(cfg, *, Dataset=None, transforms=None, sampler=None, **kwargs):
+def _train_loader_from_config(cfg, *, train_set=None, transforms=None, sampler=None, **kwargs):
     if transforms is None:
         transforms = build_transforms(cfg, is_train=True)
 
-    if Dataset is None:
-        Dataset = CommDataset
+    if train_set is None:
+        train_items = list()
+        for d in cfg.DATASETS.NAMES:
+            data = DATASET_REGISTRY.get(d)(root=_root, **kwargs)
+            if comm.is_main_process():
+                data.show_train()
+            train_items.extend(data.train)
 
-    train_items = list()
-    for d in cfg.DATASETS.NAMES:
-        data = DATASET_REGISTRY.get(d)(root=_root, **kwargs)
-        if comm.is_main_process():
-            data.show_train()
-        train_items.extend(data.train)
-
-    train_set = Dataset(train_items, transforms, relabel=True)
+        train_set = CommDataset(train_items, transforms, relabel=True)
 
     if sampler is None:
         sampler_name = cfg.DATALOADER.SAMPLER_TRAIN
@@ -92,24 +90,25 @@ def build_reid_train_loader(
     return train_loader
 
 
-def _test_loader_from_config(cfg, dataset_name, *, Dataset=None, transforms=None, **kwargs):
+def _test_loader_from_config(cfg, *, dataset_name=None, test_set=None, num_query=0, transforms=None, **kwargs):
     if transforms is None:
         transforms = build_transforms(cfg, is_train=False)
 
-    if Dataset is None:
-        Dataset = CommDataset
+    if test_set is None:
+        assert dataset_name is not None, "dataset_name must be explicitly passed in when test_set is not provided"
+        data = DATASET_REGISTRY.get(dataset_name)(root=_root, **kwargs)
+        if comm.is_main_process():
+            data.show_test()
+        test_items = data.query + data.gallery
+        test_set = CommDataset(test_items, transforms, relabel=False)
 
-    data = DATASET_REGISTRY.get(dataset_name)(root=_root, **kwargs)
-    if comm.is_main_process():
-        data.show_test()
-    test_items = data.query + data.gallery
-
-    test_set = Dataset(test_items, transforms, relabel=False)
+        # Update query number
+        num_query = len(data.query)
 
     return {
         "test_set": test_set,
         "test_batch_size": cfg.TEST.IMS_PER_BATCH,
-        "num_query": len(data.query),
+        "num_query": num_query,
     }
 
 

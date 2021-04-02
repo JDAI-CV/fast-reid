@@ -12,58 +12,35 @@ from fastreid.modeling.meta_arch.build import META_ARCH_REGISTRY
 @META_ARCH_REGISTRY.register()
 class PartialBaseline(Baseline):
 
-    def losses(self, outs):
+    def losses(self, outputs, gt_labels):
         r"""
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
         """
-        # fmt: off
-        outputs           = outs["outputs"]
-        gt_labels         = outs["targets"]
-        # model predictions
-        pred_class_logits = outputs['pred_class_logits'].detach()
-        cls_outputs       = outputs["cls_outputs"]
-        fore_cls_outputs  = outputs["fore_cls_outputs"]
-        global_feat       = outputs["global_features"]
-        fore_feat         = outputs["foreground_features"]
-        # fmt: on
+        loss_dict = super().losses(outputs, gt_labels)
 
-        # Log prediction accuracy
-        log_accuracy(pred_class_logits, gt_labels)
+        fore_cls_outputs = outputs["fore_cls_outputs"]
+        fore_feat = outputs["foreground_features"]
 
-        loss_dict = {}
-        loss_names = self._cfg.MODEL.LOSSES.NAME
+        loss_names = self.loss_kwargs['loss_names']
 
-        if "CrossEntropyLoss" in loss_names:
-            loss_dict['loss_avg_branch_cls'] = cross_entropy_loss(
-                cls_outputs,
-                gt_labels,
-                self._cfg.MODEL.LOSSES.CE.EPSILON,
-                self._cfg.MODEL.LOSSES.CE.ALPHA,
-            ) * self._cfg.MODEL.LOSSES.CE.SCALE
-
-            loss_dict['loss_fore_branch_cls'] = cross_entropy_loss(
+        if 'CrossEntropyLoss' in loss_names:
+            ce_kwargs = self.loss_kwargs.get('ce')
+            loss_dict['loss_fore_cls'] = cross_entropy_loss(
                 fore_cls_outputs,
                 gt_labels,
-                self._cfg.MODEL.LOSSES.CE.EPSILON,
-                self._cfg.MODEL.LOSSES.CE.ALPHA,
-            ) * self._cfg.MODEL.LOSSES.CE.SCALE
+                ce_kwargs.get('eps'),
+                ce_kwargs.get('alpha')
+            ) * ce_kwargs.get('scale')
 
-        if "TripletLoss" in loss_names:
-            loss_dict['loss_avg_branch_triplet'] = triplet_loss(
-                global_feat,
-                gt_labels,
-                self._cfg.MODEL.LOSSES.TRI.MARGIN,
-                self._cfg.MODEL.LOSSES.TRI.NORM_FEAT,
-                self._cfg.MODEL.LOSSES.TRI.HARD_MINING,
-            ) * self._cfg.MODEL.LOSSES.TRI.SCALE
-
-            loss_dict['loss_fore_branch_triplet'] = triplet_loss(
+        if 'TripletLoss' in loss_names:
+            tri_kwargs = self.loss_kwargs.get('tri')
+            loss_dict['loss_fore_triplet'] = triplet_loss(
                 fore_feat,
                 gt_labels,
-                self._cfg.MODEL.LOSSES.TRI.MARGIN,
-                self._cfg.MODEL.LOSSES.TRI.NORM_FEAT,
-                self._cfg.MODEL.LOSSES.TRI.HARD_MINING,
-            ) * self._cfg.MODEL.LOSSES.TRI.SCALE
-        return loss_dict
+                tri_kwargs.get('margin'),
+                tri_kwargs.get('norm_feat'),
+                tri_kwargs.get('hard_mining')
+            ) * tri_kwargs.get('scale')
 
+        return loss_dict

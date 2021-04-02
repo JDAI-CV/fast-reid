@@ -360,6 +360,7 @@ class EvalHook(HookBase):
                     )
             self.trainer.storage.put_scalars(**flattened_results, smoothing_hint=False)
 
+        torch.cuda.empty_cache()
         # Evaluation may take different time among workers.
         # A barrier make them start the next iteration together.
         comm.synchronize()

@@ -11,7 +11,6 @@ MODEL:
 
 SOLVER:
   OPT: SGD
-  NESTEROV: True
   BASE_LR: 0.01
   ETA_MIN_LR: 7.7e-5
 
