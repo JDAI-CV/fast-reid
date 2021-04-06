@@ -1,5 +1,19 @@
 # Changelog
 
+### v1.2 (06/04/2021)
+
+#### New Features
+
+- Multiple machine training support
+- [RepVGG](https://github.com/DingXiaoH/RepVGG) backbone 
+- [Partial FC](projects/FastFace)
+
+#### Improvements
+
+- Torch2trt pipeline 
+- Decouple linear transforms and softmax
+- config decorator
+
 ### v1.1 (29/01/2021)
 
 #### New Features

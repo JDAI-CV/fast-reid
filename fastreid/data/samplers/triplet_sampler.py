@@ -119,6 +119,82 @@ class BalancedIdentitySampler(Sampler):
                     batch_indices = []
 
 
+class SetReWeightSampler(Sampler):
+    def __init__(self, data_source: str, mini_batch_size: int, num_instances: int, set_weight: list,
+                 seed: Optional[int] = None):
+        self.data_source = data_source
+        self.num_instances = num_instances
+        self.num_pids_per_batch = mini_batch_size // self.num_instances
+
+        self.set_weight = set_weight
+
+        self._rank = comm.get_rank()
+        self._world_size = comm.get_world_size()
+        self.batch_size = mini_batch_size * self._world_size
+
+        assert self.batch_size % (sum(self.set_weight) * self.num_instances) == 0 and \
+               self.batch_size > sum(
+            self.set_weight) * self.num_instances, "Batch size must be divisible by the sum set weight"
+
+        self.index_pid = dict()
+        self.pid_cam = defaultdict(list)
+        self.pid_index = defaultdict(list)
+
+        self.cam_pid = defaultdict(list)
+
+        for index, info in enumerate(data_source):
+            pid = info[1]
+            camid = info[2]
+            self.index_pid[index] = pid
+            self.pid_cam[pid].append(camid)
+            self.pid_index[pid].append(index)
+            self.cam_pid[camid].append(pid)
+
+        # Get sampler prob for each cam
+        self.set_pid_prob = defaultdict(list)
+        for camid, pid_list in self.cam_pid.items():
+            index_per_pid = []
+            for pid in pid_list:
+                index_per_pid.append(len(self.pid_index[pid]))
+            cam_image_number = sum(index_per_pid)
+            prob = [i / cam_image_number for i in index_per_pid]
+            self.set_pid_prob[camid] = prob
+
+        self.pids = sorted(list(self.pid_index.keys()))
+        self.num_identities = len(self.pids)
+
+        if seed is None:
+            seed = comm.shared_random_seed()
+        self._seed = int(seed)
+
+        self._rank = comm.get_rank()
+        self._world_size = comm.get_world_size()
+
+    def __iter__(self):
+        start = self._rank
+        yield from itertools.islice(self._infinite_indices(), start, None, self._world_size)
+
+    def _infinite_indices(self):
+        np.random.seed(self._seed)
+        while True:
+            batch_indices = []
+            for camid in range(len(self.cam_pid.keys())):
+                select_pids = np.random.choice(self.cam_pid[camid], size=self.set_weight[camid], replace=False,
+                                               p=self.set_pid_prob[camid])
+                for pid in select_pids:
+                    index_list = self.pid_index[pid]
+                    if len(index_list) > self.num_instances:
+                        select_indexs = np.random.choice(index_list, size=self.num_instances, replace=False)
+                    else:
+                        select_indexs = np.random.choice(index_list, size=self.num_instances, replace=True)
+
+                    batch_indices += select_indexs
+            np.random.shuffle(batch_indices)
+
+            if len(batch_indices) == self.batch_size:
+                yield from reorder_index(batch_indices, self._world_size)
+
+
 class NaiveIdentitySampler(Sampler):
     """
     Randomly sample N identities, then for each identity,

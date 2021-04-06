@@ -53,6 +53,9 @@ def _train_loader_from_config(cfg, *, train_set=None, transforms=None, sampler=N
             sampler = samplers.NaiveIdentitySampler(train_set.img_items, mini_batch_size, num_instance)
         elif sampler_name == "BalancedIdentitySampler":
             sampler = samplers.BalancedIdentitySampler(train_set.img_items, mini_batch_size, num_instance)
+        elif sampler_name == "SetReWeightSampler":
+            set_weight = cfg.DATALOADER.SET_WEIGHT
+            sampler = samplers.SetReWeightSampler(train_set.img_items, mini_batch_size, num_instance, set_weight)
         else:
             raise ValueError("Unknown training sampler: {}".format(sampler_name))
 

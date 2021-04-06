@@ -206,6 +206,9 @@ _C.DATALOADER.SAMPLER_TRAIN = "TrainingSampler"
 _C.DATALOADER.NUM_INSTANCE = 4
 _C.DATALOADER.NUM_WORKERS = 8
 
+# For set re-weight
+_C.DATALOADER.SET_WEIGHT = []
+
 # ---------------------------------------------------------------------------- #
 # Solver
 # ---------------------------------------------------------------------------- #
