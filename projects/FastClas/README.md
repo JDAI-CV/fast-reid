@@ -1,4 +1,4 @@
-# FastCls in FastReID
+# FastClas in FastReID
 
 This project provides a baseline and example for image classification based on fastreid.
 

@@ -20,8 +20,9 @@ class ClasDataset(Dataset):
         for i in img_items:
             classes.add(i[1])
 
-        self.classes = sorted(list(classes))
-        self.class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+        self.classes = list(classes)
+        self.classes.sort()
+        self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
         self.idx_to_class = {idx: clas for clas, idx in self.class_to_idx.items()}
 
     def __len__(self):
