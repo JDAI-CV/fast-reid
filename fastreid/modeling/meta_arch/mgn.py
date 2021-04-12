@@ -210,7 +210,7 @@ class MGN(nn.Module):
 
         if self.training:
             assert "targets" in batched_inputs, "Person ID annotation are missing in training!"
-            targets = batched_inputs["targets"].long().to(self.device)
+            targets = batched_inputs["targets"]
 
             if targets.sum() < 0: targets.zero_()
 
