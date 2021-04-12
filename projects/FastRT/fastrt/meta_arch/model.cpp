@@ -1,6 +1,9 @@
 #include "fastrt/model.h"
 #include "fastrt/calibrator.h"
 
+#ifdef BUILD_INT8
+#include "fastrt/config.h"
+#endif 
 
 namespace fastrt {
 
@@ -73,23 +76,17 @@ namespace fastrt {
 #if defined(BUILD_FP16) && defined(BUILD_INT8)
         std::cout << "Flag confilct! BUILD_FP16 and BUILD_INT8 can't be both True!" << std::endl;
         return null;
-#endif
-#ifdef BUILD_FP16
+#endif 
+#if defined(BUILD_FP16)
         std::cout << "[Build fp16]" << std::endl;
         config->setFlag(BuilderFlag::kFP16);
-#endif 
-#ifdef BUILD_INT8
+#elif defined(BUILD_INT8)
         std::cout << "[Build int8]" << std::endl;
         std::cout << "Your platform support int8: " << (builder->platformHasFastInt8() ? "true" : "false") << std::endl;
-        assert(builder->platformHasFastInt8());
+        TRTASSERT(builder->platformHasFastInt8());
         config->setFlag(BuilderFlag::kINT8);
-        int w = _engineCfg.input_w;
-        int h = _engineCfg.input_h;
-        char*p = (char*)_engineCfg.input_name.data();
-
-        //path must end with /
-        Int8EntropyCalibrator2* calibrator = new Int8EntropyCalibrator2(1, w, h, 
-            "/data/person_reid/data/Market-1501-v15.09.15/bounding_box_test/", "int8calib.table", p);
+        Int8EntropyCalibrator2* calibrator = new Int8EntropyCalibrator2(1, _engineCfg.input_w, _engineCfg.input_h, 
+            INT8_CALIBRATE_DATASET_PATH.c_str(), "int8calib.table", _engineCfg.input_name.c_str());
         config->setInt8Calibrator(calibrator);
 #endif 
         auto engine = make_holder(builder->buildEngineWithConfig(*network, *config));
