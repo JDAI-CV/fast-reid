@@ -109,7 +109,7 @@ class FaceTrainer(DefaultTrainer):
     @classmethod
     def build_train_loader(cls, cfg):
         path_imgrec = cfg.DATASETS.REC_PATH
-        if path_imgrec is not "":
+        if path_imgrec != "":
             transforms = build_transforms(cfg, is_train=True)
             train_set = MXFaceDataset(path_imgrec, transforms)
             return build_reid_train_loader(cfg, train_set=train_set)
