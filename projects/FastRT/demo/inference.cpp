@@ -16,7 +16,7 @@ static const std::string WEIGHTS_PATH = "../sbs_R50-ibn.wts";
 static const std::string ENGINE_PATH = "./sbs_R50-ibn.engine";
 
 static const int MAX_BATCH_SIZE = 4;
-static const int INPUT_H = 256;
+static const int INPUT_H = 384;
 static const int INPUT_W = 128;
 static const int OUTPUT_SIZE = 2048;
 static const int DEVICE_ID = 0;
