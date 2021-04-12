@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     cmake \
     wget \
-    python3.7 python3.7-dev python3-pip 
+    python3.7-dev python3-pip 
 
 RUN add-apt-repository -y ppa:timsc/opencv-3.4 && \
     apt-get update && \
@@ -23,7 +23,7 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && \
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1 && \
     update-alternatives --set python3 /usr/bin/python3.7
 
-RUN pip3 install pytest opencv-python 
+RUN pip install pytest opencv-python 
 
 RUN cd /usr/local/src && \
     wget https://github.com/pybind/pybind11/archive/v2.2.3.tar.gz && \
