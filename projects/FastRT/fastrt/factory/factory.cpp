@@ -29,6 +29,11 @@ namespace fastrt {
                 /* cfg.MODEL.BACKBONE.DEPTH: 34x */  
                 std::cout << "[createBackboneModule]: backbone_sbsR34_distill" << std::endl;
                 return make_unique<backbone_sbsR34_distill>(modelCfg);
+            case FastreidBackboneType::r18_distill: 
+                /* cfg.MODEL.META_ARCHITECTURE: Distiller */ 
+                /* cfg.MODEL.BACKBONE.DEPTH: 18x */  
+                std::cout << "[createBackboneModule]: backbone_sbsR18_distill" << std::endl;
+                return make_unique<backbone_sbsR18_distill>(modelCfg);
             default:
                 std::cerr << "[Backbone is not supported.]" << std::endl;
                 return nullptr;

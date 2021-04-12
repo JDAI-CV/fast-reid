@@ -7,6 +7,16 @@
 using namespace nvinfer1;
 
 namespace fastrt {
+    class backbone_sbsR18_distill : public Module {
+    private:
+        FastreidConfig& _modelCfg;
+    public:
+        backbone_sbsR18_distill(FastreidConfig& modelCfg) : _modelCfg(modelCfg){}
+        ~backbone_sbsR18_distill() = default;
+        ILayer* topology(INetworkDefinition *network, 
+            std::map<std::string, Weights>& weightMap, 
+            ITensor& input) override; 
+    };
 
     class backbone_sbsR34_distill : public Module {
     private:
