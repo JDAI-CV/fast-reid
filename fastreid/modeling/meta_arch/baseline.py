@@ -102,7 +102,7 @@ class Baseline(nn.Module):
 
         if self.training:
             assert "targets" in batched_inputs, "Person ID annotation are missing in training!"
-            targets = batched_inputs["targets"].to(self.device)
+            targets = batched_inputs["targets"]
 
             # PreciseBN flag, When do preciseBN on different dataset, the number of classes in new dataset
             # may be larger than that in the original dataset, so the circle/arcface will
@@ -121,9 +121,9 @@ class Baseline(nn.Module):
         Normalize and batch the input images.
         """
         if isinstance(batched_inputs, dict):
-            images = batched_inputs['images'].to(self.device)
+            images = batched_inputs['images']
         elif isinstance(batched_inputs, torch.Tensor):
-            images = batched_inputs.to(self.device)
+            images = batched_inputs
         else:
             raise TypeError("batched_inputs must be dict or torch.Tensor, but get {}".format(type(batched_inputs)))
 
