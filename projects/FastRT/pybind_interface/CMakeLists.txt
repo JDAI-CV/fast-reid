@@ -1,7 +1,7 @@
 SET(APP_PROJECT_NAME ReID)
 
 # pybind
-add_subdirectory(pybind11)
+find_package(pybind11)
 
 find_package(CUDA REQUIRED)
 # include and link dirs of cuda and tensorrt, you need adapt them if yours are different

@@ -48,34 +48,37 @@ So we don't use any parsers here.
    ``` 
    mkdir build
    cd build
-   cmake -DBUILD_FASTRT_ENGINE=ON -DBUILD_DEMO=ON -DBUILD_FP16=ON ..
+   cmake -DBUILD_FASTRT_ENGINE=ON \
+         -DBUILD_DEMO=ON \
+         -DBUILD_FP16=ON ..
    make
    ```
    
-   then go to [step 5](#step5)  
+   then go to [step 5](#step5) 
 
 8. (Optional) You can use INT8 quantization for speed up
 
-   First, modify the source code to specify your calibrate dataset path. In `FastRT/fastrt/meta_arch/model.cpp`, line 91.
-   ```
-   Int8EntropyCalibrator2* calibrator = new Int8EntropyCalibrator2(1, w, h, PATH_TO_YOUR_DATASET, "int8calib.table", p);
-   ```
-   Then build.
+   prepare CALIBRATE DATASET and set the path via cmake. (The path must end with /)
+
    ``` 
    mkdir build
    cd build
-   cmake -DBUILD_FASTRT_ENGINE=ON -DBUILD_DEMO=ON -DBUILD_INT8=ON ..
+   cmake -DBUILD_FASTRT_ENGINE=ON \
+         -DBUILD_DEMO=ON \
+         -DBUILD_INT8=ON \
+         -DINT8_CALIBRATE_DATASET_PATH="/data/Market-1501-v15.09.15/bounding_box_test/" ..
    make
    ```
-   
-   then go to [step 5](#step5)  
+   then go to [step 5](#step5)
 
 9. (Optional) Build tensorrt model as shared libs
 
    ``` 
    mkdir build
    cd build
-   cmake -DBUILD_FASTRT_ENGINE=ON -DBUILD_DEMO=OFF -DBUILD_FP16=ON ..
+   cmake -DBUILD_FASTRT_ENGINE=ON \
+         -DBUILD_DEMO=OFF \
+         -DBUILD_FP16=ON ..
    make
    make install
    ```
@@ -87,31 +90,37 @@ So we don't use any parsers here.
    make
    ```
 
-   then go to [step 5](#step5)  
+   then go to [step 5](#step5)
    
 10. (Optional) Build tensorrt model with python interface, then you can use FastRT model in python.
-   First get the pybind lib, run `git submodule update --init --recursive`.
 
-   ``` 
-   mkdir build
-   cd build
-   cmake -DBUILD_FASTRT_ENGINE=ON -DBUILD_DEMO=ON -DBUILD_PYTHON_INTERFACE=ON -DPYTHON_EXECUTABLE=$(which python) ..
-   make
-   ```
-   You should get a so file `FastRT/build/pybind_interface/ReID.cpython-36m-x86_64-linux-gnu.so`. 
+    ``` 
+    mkdir build
+    cd build
+    cmake -DBUILD_FASTRT_ENGINE=ON \
+        -DBUILD_DEMO=ON \
+        -DBUILD_PYTHON_INTERFACE=ON ..
+    make
+    ```
+    
+    You should get a so file `FastRT/build/pybind_interface/ReID.cpython-37m-x86_64-linux-gnu.so`. 
    
-   Then go to [step 5](#step5) to create engine file. After that you can import this so file in python, and deserialize engine file to infer in python. You can find use example in `pybind_interface/test.py` and `pybind_interface/market_benchmark.py`.
-   ``` 
-   from PATH_TO_SO_FILE import ReID
-   model = ReID(GPU_ID)
-   model.build(PATH_TO_YOUR_ENGINEFILE)
-   numpy_feature = np.array([model.infer(CV2_FRAME)])
-   ```
-   
-   
+    Then go to [step 5](#step5) to create engine file.
 
-   
+    After that you can import this so file in python, and deserialize engine file to infer in python. 
 
+    You can find use example in `pybind_interface/test.py` and `pybind_interface/market_benchmark.py`.
+    
+    ``` 
+    from PATH_TO_SO_FILE import ReID
+    model = ReID(GPU_ID)
+    model.build(PATH_TO_YOUR_ENGINEFILE)
+    numpy_feature = np.array([model.infer(CV2_FRAME)])
+    ```
+    
+    * `pybind_interface/test.py` use `pybind_interface/docker/trt7cu100/Dockerfile` (without pytorch installed)
+    * `pybind_interface/market_benchmark.py` use `pybind_interface/docker/trt7cu102_torch160/Dockerfile` (with pytorch installed)
+    
 ### <a name="ConfigSection"></a>`Tensorrt Model Config`
 
 Edit `FastRT/demo/inference.cpp`, according to your model config
@@ -124,7 +133,7 @@ static const std::string WEIGHTS_PATH = "../sbs_R50-ibn.wts";
 static const std::string ENGINE_PATH = "./sbs_R50-ibn.engine";
 
 static const int MAX_BATCH_SIZE = 4;
-static const int INPUT_H = 256;
+static const int INPUT_H = 384;
 static const int INPUT_W = 128;
 static const int OUTPUT_SIZE = 2048;
 static const int DEVICE_ID = 0;
@@ -144,7 +153,7 @@ static const std::string WEIGHTS_PATH = "../sbs_R50.wts";
 static const std::string ENGINE_PATH = "./sbs_R50.engine"; 
 
 static const int MAX_BATCH_SIZE = 4;
-static const int INPUT_H = 256;
+static const int INPUT_H = 384;
 static const int INPUT_W = 128;
 static const int OUTPUT_SIZE = 2048;
 static const int DEVICE_ID = 0;
@@ -164,7 +173,7 @@ static const std::string WEIGHTS_PATH = "../sbs_r34_distill.wts";
 static const std::string ENGINE_PATH = "./sbs_r34_distill.engine";
 
 static const int MAX_BATCH_SIZE = 4;
-static const int INPUT_H = 256;
+static const int INPUT_H = 384;
 static const int INPUT_W = 128;
 static const int OUTPUT_SIZE = 512;
 static const int DEVICE_ID = 0;
@@ -184,7 +193,7 @@ static const std::string WEIGHTS_PATH = "../kd_r34_distill.wts";
 static const std::string ENGINE_PATH = "./kd_r34_distill.engine"; 
 
 static const int MAX_BATCH_SIZE = 4;
-static const int INPUT_H = 256;
+static const int INPUT_H = 384;
 static const int INPUT_W = 128;
 static const int OUTPUT_SIZE = 512;
 static const int DEVICE_ID = 0;

@@ -7,12 +7,12 @@ import time
 
 
 if __name__ == '__main__':
-    iter_ = 20000
+    iter_ = 10
     m = ReID(0)
-    m.build("../build/kd_r18_distill.engine")
+    m.build("../build/sbs_R50-ibn.engine")
     print("build done")
     
-    frame = cv2.imread("/data/sunp/algorithm/2020_1015_time/pytorchtotensorrt_reid/test/query/0001/0001_c1s1_001051_00.jpg")
+    frame = cv2.imread("../data/Market-1501-v15.09.15/calib_set/-1_c1s2_009916_03.jpg")
     m.infer(frame)
     t0 = time.time()
 

@@ -23,7 +23,7 @@ from fastreid.evaluation.rank import eval_market1501
 from build.pybind_interface.ReID import ReID
 
 
-FEATURE_DIM = 512
+FEATURE_DIM = 2048
 GPU_ID = 0
 
 def map(wrapper):
@@ -61,5 +61,5 @@ def map(wrapper):
 
 if __name__ == '__main__':
 	infer = ReID(GPU_ID)
-	infer.build("../build/kd_r18_distill.engine")
+	infer.build("../build/sbs_R50-ibn.engine")
 	map(infer)
