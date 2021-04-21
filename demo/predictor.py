@@ -6,11 +6,11 @@
 
 import atexit
 import bisect
+from collections import deque
 
 import cv2
 import torch
 import torch.multiprocessing as mp
-from collections import deque
 
 from fastreid.engine import DefaultPredictor
 
@@ -70,16 +70,16 @@ class FeatureExtractionDemo(object):
                 if cnt >= buffer_size:
                     batch = batch_data.popleft()
                     predictions = self.predictor.get()
-                    yield predictions, batch["targets"].numpy(), batch["camids"].numpy()
+                    yield predictions, batch["targets"].cpu().numpy(), batch["camids"].cpu().numpy()
 
             while len(batch_data):
                 batch = batch_data.popleft()
                 predictions = self.predictor.get()
-                yield predictions, batch["targets"].numpy(), batch["camids"].numpy()
+                yield predictions, batch["targets"].cpu().numpy(), batch["camids"].cpu().numpy()
         else:
             for batch in data_loader:
                 predictions = self.predictor(batch["images"])
-                yield predictions, batch["targets"].numpy(), batch["camids"].numpy()
+                yield predictions, batch["targets"].cpu().numpy(), batch["camids"].cpu().numpy()
 
 
 class AsyncPredictor:

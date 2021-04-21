@@ -21,8 +21,10 @@ from fastreid.utils.logger import setup_logger
 from fastreid.utils.file_io import PathManager
 
 from predictor import FeatureExtractionDemo
+
 # import some modules added in project like this below
-# from projects.PartialReID.partialreid import *
+# sys.path.append('../projects/PartialReID')
+# from partialreid import *
 
 cudnn.benchmark = True
 setup_logger(name="fastreid")
@@ -84,4 +86,4 @@ if __name__ == '__main__':
             img = cv2.imread(path)
             feat = demo.run_on_image(img)
             feat = feat.numpy()
-            np.save(os.path.join(args.output, path.replace('.jpg', '.npy').split('/')[-1]), feat)
+            np.save(os.path.join(args.output, os.path.basename(path) + '.npy'), feat)

@@ -24,7 +24,8 @@ from fastreid.utils.visualizer import Visualizer
 
 # import some modules added in project
 # for example, add partial reid like this below
-# from projects.PartialReID.partialreid import *
+# sys.path.append("projects/PartialReID")
+# from partialreid import *
 
 cudnn.benchmark = True
 setup_logger(name="fastreid")
@@ -35,6 +36,7 @@ logger = logging.getLogger('fastreid.visualize_result')
 def setup_cfg(args):
     # load config from file and command-line arguments
     cfg = get_cfg()
+    # add_partialreid_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()
@@ -100,7 +102,7 @@ def get_parser():
 if __name__ == '__main__':
     args = get_parser().parse_args()
     cfg = setup_cfg(args)
-    test_loader, num_query = build_reid_test_loader(cfg, args.dataset_name)
+    test_loader, num_query = build_reid_test_loader(cfg, dataset_name=args.dataset_name)
     demo = FeatureExtractionDemo(cfg, parallel=args.parallel)
 
     logger.info("Start extracting image features")
