@@ -149,7 +149,7 @@ class DefaultPredictor:
         Returns:
             predictions (torch.tensor): the output features of the model
         """
-        inputs = {"images": image}
+        inputs = {"images": image.to(self.model.device)}
         with torch.no_grad():  # https://github.com/sphinx-doc/sphinx/issues/4258
             predictions = self.model(inputs)
             # Normalize feature to compute cosine distance

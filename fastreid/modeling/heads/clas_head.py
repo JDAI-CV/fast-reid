@@ -25,12 +25,12 @@ class ClasHead(EmbeddingHead):
             logits = F.linear(F.normalize(neck_feat), F.normalize(self.weight))
 
         # Evaluation
-        if not self.training: return logits * self.cls_layer.s
+        if not self.training: return logits.mul_(self.cls_layer.s)
 
         cls_outputs = self.cls_layer(logits, targets)
 
         return {
             "cls_outputs": cls_outputs,
-            "pred_class_logits": logits * self.cls_layer.s,
+            "pred_class_logits": logits.mul_(self.cls_layer.s),
             "features": neck_feat,
         }

@@ -7,7 +7,7 @@
 import copy
 import itertools
 from collections import defaultdict
-from typing import Optional
+from typing import Optional, List
 
 import numpy as np
 from torch.utils.data.sampler import Sampler
@@ -39,7 +39,7 @@ def reorder_index(batch_indices, world_size):
 
 
 class BalancedIdentitySampler(Sampler):
-    def __init__(self, data_source: str, mini_batch_size: int, num_instances: int, seed: Optional[int] = None):
+    def __init__(self, data_source: List, mini_batch_size: int, num_instances: int, seed: Optional[int] = None):
         self.data_source = data_source
         self.num_instances = num_instances
         self.num_pids_per_batch = mini_batch_size // self.num_instances

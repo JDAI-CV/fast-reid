@@ -38,7 +38,6 @@ class ClasEvaluator(DatasetEvaluator):
     def __init__(self, cfg, output_dir=None):
         self.cfg = cfg
         self._output_dir = output_dir
-
         self._cpu_device = torch.device('cpu')
 
         self._predictions = []
@@ -49,7 +48,7 @@ class ClasEvaluator(DatasetEvaluator):
     def process(self, inputs, outputs):
         predictions = {
             "logits": outputs.to(self._cpu_device, torch.float32),
-            "labels": inputs["targets"],
+            "labels": inputs["targets"].to(self._cpu_device),
         }
         self._predictions.append(predictions)
 

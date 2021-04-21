@@ -142,6 +142,6 @@ class EmbeddingHead(nn.Module):
 
         return {
             "cls_outputs": cls_outputs,
-            "pred_class_logits": logits * self.cls_layer.s,
+            "pred_class_logits": logits.mul(self.cls_layer.s),
             "features": feat,
         }
