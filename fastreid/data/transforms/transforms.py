@@ -11,7 +11,7 @@ import random
 from collections import deque
 
 import numpy as np
-from PIL import Image
+import torch
 
 from .functional import to_tensor, augmentations
 
@@ -55,8 +55,7 @@ class RandomPatch(object):
     """
 
     def __init__(self, prob_happen=0.5, pool_capacity=50000, min_sample_size=100,
-                 patch_min_area=0.01, patch_max_area=0.5, patch_min_ratio=0.1,
-                 prob_rotate=0.5, prob_flip_leftright=0.5,
+                 patch_min_area=0.01, patch_max_area=0.5, patch_min_ratio=0.1, prob_flip_leftright=0.5,
                  ):
         self.prob_happen = prob_happen
 
@@ -64,7 +63,6 @@ class RandomPatch(object):
         self.patch_max_area = patch_max_area
         self.patch_min_ratio = patch_min_ratio
 
-        self.prob_rotate = prob_rotate
         self.prob_flip_leftright = prob_flip_leftright
 
         self.patchpool = deque(maxlen=pool_capacity)
@@ -83,23 +81,18 @@ class RandomPatch(object):
 
     def transform_patch(self, patch):
         if random.uniform(0, 1) > self.prob_flip_leftright:
-            patch = patch.transpose(Image.FLIP_LEFT_RIGHT)
-        if random.uniform(0, 1) > self.prob_rotate:
-            patch = patch.rotate(random.randint(-10, 10))
+            patch = torch.flip(patch, dims=[2])
         return patch
 
     def __call__(self, img):
-        if isinstance(img, np.ndarray):
-            img = Image.fromarray(img.astype(np.uint8))
-
-        W, H = img.size  # original image size
+        _, H, W = img.size()  # original image size
 
         # collect new patch
         w, h = self.generate_wh(W, H)
         if w is not None and h is not None:
             x1 = random.randint(0, W - w)
             y1 = random.randint(0, H - h)
-            new_patch = img.crop((x1, y1, x1 + w, y1 + h))
+            new_patch = img[..., y1:y1 + h, x1:x1 + w]
             self.patchpool.append(new_patch)
 
         if len(self.patchpool) < self.min_sample_size:
@@ -110,11 +103,11 @@ class RandomPatch(object):
 
         # paste a randomly selected patch on a random position
         patch = random.sample(self.patchpool, 1)[0]
-        patchW, patchH = patch.size
+        _, patchH, patchW = patch.size()
         x1 = random.randint(0, W - patchW)
         y1 = random.randint(0, H - patchH)
         patch = self.transform_patch(patch)
-        img.paste(patch, (x1, y1))
+        img[..., y1:y1 + patchH, x1:x1 + patchW] = patch
 
         return img
 
