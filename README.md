@@ -24,7 +24,8 @@ Support many tasks beyond reid, such image retrieval and face recognition. See [
 - Can be used as a library to support [different projects](projects) on top of it. We'll open source more research projects in this way.
 - Remove [ignite](https://github.com/pytorch/ignite)(a high-level library) dependency and powered by [PyTorch](https://pytorch.org/).
 
-We write a [chinese blog](https://l1aoxingyu.github.io/blogpages/reid/2020/05/29/fastreid.html) about this toolbox.
+We write a [fastreid intro](https://l1aoxingyu.github.io/blogpages/reid/fastreid/2020/05/29/fastreid.html) 
+and [fastreid v1.0](https://l1aoxingyu.github.io/blogpages/reid/fastreid/2021/04/28/fastreid-v1.html) about this toolbox.
 
 ## Changelog
 

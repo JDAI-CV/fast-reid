@@ -257,7 +257,7 @@ class LRScheduler(HookBase):
     def after_epoch(self):
         next_iter = self.trainer.iter + 1
         next_epoch = self.trainer.epoch + 1
-        if next_iter > self.trainer.warmup_iters and next_epoch >= self.trainer.delay_epochs:
+        if next_iter > self.trainer.warmup_iters and next_epoch > self.trainer.delay_epochs:
             self._scheduler["lr_sched"].step()
 
 
