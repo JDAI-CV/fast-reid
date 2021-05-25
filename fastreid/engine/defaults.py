@@ -213,7 +213,6 @@ class DefaultTrainer(TrainerBase):
             # for part of the parameters is not updated.
             model = DistributedDataParallel(
                 model, device_ids=[comm.get_local_rank()], broadcast_buffers=False,
-                find_unused_parameters=True
             )
 
         self._trainer = (AMPTrainer if cfg.SOLVER.AMP.ENABLED else SimpleTrainer)(
@@ -305,9 +304,9 @@ class DefaultTrainer(TrainerBase):
 
         ret.append(hooks.LayerFreeze(
             self.model,
+            self.optimizer,
             cfg.MODEL.FREEZE_LAYERS,
             cfg.SOLVER.FREEZE_ITERS,
-            cfg.SOLVER.FREEZE_FC_ITERS,
         ))
 
         # Do PreciseBN before checkpointer, because it updates the model and need to
