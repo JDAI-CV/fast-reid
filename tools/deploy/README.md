@@ -18,14 +18,16 @@ This is a tiny example for converting fastreid-baseline in `meta_arch` to Caffe 
 1. Run `caffe_export.py` to get the converted Caffe model,
 
     ```bash
-    python caffe_export.py --config-file root-path/market1501/bagtricks_R50/config.yml --name baseline_R50 --output outputs/caffe_model --opts MODEL.WEIGHTS root-path/logs/market1501/bagtricks_R50/model_final.pth
+    python tools/deploy/caffe_export.py --config-file configs/market1501/bagtricks_R50/config.yml --name baseline_R50 --output caffe_R50_model --opts MODEL.WEIGHTS logs/market1501/bagtricks_R50/model_final.pth
     ```
 
-    then you can check the Caffe model and prototxt in `outputs/caffe_model`.
+    then you can check the Caffe model and prototxt in `./caffe_R50_model`.
 
-2. Change `prototxt` following next two steps:
+2. Change `prototxt` following next three steps:
 
-   1) Modify `avg_pooling` in `baseline_R50.prototxt`
+   1) Modify `MaxPooling` in `baseline_R50.prototxt` and delete `ceil_mode: false`.
+   
+   2) Add `avg_pooling` in `baseline_R50.prototxt`
 
         ```prototxt
         layer {

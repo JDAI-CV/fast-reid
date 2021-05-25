@@ -14,7 +14,7 @@ import numpy as np
 import tqdm
 from torch.backends import cudnn
 
-sys.path.append('..')
+sys.path.append('.')
 
 from fastreid.config import get_cfg
 from fastreid.utils.logger import setup_logger
@@ -86,4 +86,4 @@ if __name__ == '__main__':
             img = cv2.imread(path)
             feat = demo.run_on_image(img)
             feat = feat.numpy()
-            np.save(os.path.join(args.output, os.path.basename(path) + '.npy'), feat)
+            np.save(os.path.join(args.output, os.path.basename(path).split('.')[0] + '.npy'), feat)

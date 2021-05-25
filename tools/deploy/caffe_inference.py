@@ -91,5 +91,5 @@ if __name__ == "__main__":
             net.blobs["blob1"].data[...] = image
             feat = net.forward()["output"]
             feat = normalize(feat[..., 0, 0], axis=1)
-            np.save(os.path.join(args.output, path.replace('.jpg', '.npy').split('/')[-1]), feat)
+            np.save(os.path.join(args.output, os.path.basename(path).split('.')[0] + '.npy'), feat)
 

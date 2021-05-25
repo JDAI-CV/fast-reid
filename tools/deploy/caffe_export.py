@@ -10,7 +10,7 @@ import sys
 
 import torch
 
-sys.path.append('../../')
+sys.path.append('.')
 
 import pytorch_to_caffe
 from fastreid.config import get_cfg
@@ -20,8 +20,8 @@ from fastreid.utils.checkpoint import Checkpointer
 from fastreid.utils.logger import setup_logger
 
 # import some modules added in project like this below
-# sys.path.append('../projects/FastCls')
-# from fastcls import *
+# sys.path.append("projects/PartialReID")
+# from partialreid import *
 
 setup_logger(name='fastreid')
 logger = logging.getLogger("fastreid.caffe_export")
@@ -29,7 +29,6 @@ logger = logging.getLogger("fastreid.caffe_export")
 
 def setup_cfg(args):
     cfg = get_cfg()
-    # add_cls_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()
@@ -69,8 +68,7 @@ if __name__ == '__main__':
 
     cfg.defrost()
     cfg.MODEL.BACKBONE.PRETRAIN = False
-    if cfg.MODEL.HEADS.POOL_LAYER == 'FastGlobalAvgPool':
-        cfg.MODEL.HEADS.POOL_LAYER = 'GlobalAvgPool'
+    cfg.MODEL.HEADS.POOL_LAYER = "Identity"
     cfg.MODEL.BACKBONE.WITH_NL = False
 
     model = build_model(cfg)

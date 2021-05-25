@@ -4,6 +4,7 @@
 @contact: sherlockliao01@gmail.com
 """
 
+import logging
 import os
 import argparse
 import io
@@ -15,7 +16,7 @@ import torch
 from onnxsim import simplify
 from torch.onnx import OperatorExportTypes
 
-sys.path.append('../../')
+sys.path.append('.')
 
 from fastreid.config import get_cfg
 from fastreid.modeling.meta_arch import build_model
@@ -24,10 +25,12 @@ from fastreid.utils.checkpoint import Checkpointer
 from fastreid.utils.logger import setup_logger
 
 # import some modules added in project like this below
-# sys.path.append('../../projects/FastDistill')
+# sys.path.append("projects/FastDistill")
 # from fastdistill import *
 
-logger = setup_logger(name='onnx_export')
+
+setup_logger(name="fastreid")
+logger = logging.getLogger("fastreid.onnx_export")
 
 
 def setup_cfg(args):
@@ -149,7 +152,7 @@ if __name__ == '__main__':
     model.eval()
     logger.info(model)
 
-    inputs = torch.randn(args.batch_size, 3, cfg.INPUT.SIZE_TEST[0], cfg.INPUT.SIZE_TEST[1])
+    inputs = torch.randn(args.batch_size, 3, cfg.INPUT.SIZE_TEST[0], cfg.INPUT.SIZE_TEST[1]).to(model.device)
     onnx_model = export_onnx_model(model, inputs)
 
     model_simp, check = simplify(onnx_model)
