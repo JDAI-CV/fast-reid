@@ -60,7 +60,7 @@ class Distiller(Baseline):
             for param in model_self.parameters():
                 param.requires_grad_(False)
 
-            if cfg_self.MODEL.WEIGHTS is not '':
+            if cfg_self.MODEL.WEIGHTS != '':
                 logger.info("Loading self distillation model weights ...")
                 Checkpointer(model_self).load(cfg_self.MODEL.WEIGHTS)
             else:
