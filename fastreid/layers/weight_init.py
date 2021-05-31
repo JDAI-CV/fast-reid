@@ -8,7 +8,7 @@ import math
 import warnings
 
 import torch
-from torch import nn
+from torch import nn, Tensor
 
 
 def weights_init_kaiming(m):
