@@ -23,7 +23,7 @@ class Linear(nn.Module):
         self.m = margin
 
     def forward(self, logits, targets):
-        return logits
+        return logits.mul_(self.s)
 
     def extra_repr(self):
         return f"num_classes={self.num_classes}, scale={self.s}, margin={self.m}"

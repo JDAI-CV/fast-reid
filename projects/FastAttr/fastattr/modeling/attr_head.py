@@ -10,7 +10,7 @@ from torch import nn
 
 from fastreid.modeling.heads import EmbeddingHead
 from fastreid.modeling.heads.build import REID_HEADS_REGISTRY
-from fastreid.utils.weight_init import weights_init_kaiming
+from fastreid.layers.weight_init import weights_init_kaiming
 
 
 @REID_HEADS_REGISTRY.register()

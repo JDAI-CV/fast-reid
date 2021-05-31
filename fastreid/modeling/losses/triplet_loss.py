@@ -42,7 +42,7 @@ def hard_example_mining(dist_mat, is_pos, is_neg):
     dist_ap, _ = torch.max(dist_mat * is_pos, dim=1)
     # `dist_an` means distance(anchor, negative)
     # both `dist_an` and `relative_n_inds` with shape [N]
-    dist_an, _ = torch.min(dist_mat * is_neg + is_pos * 99999999., dim=1)
+    dist_an, _ = torch.min(dist_mat * is_neg + is_pos * 1e9, dim=1)
 
     return dist_ap, dist_an
 

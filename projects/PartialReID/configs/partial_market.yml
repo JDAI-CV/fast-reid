@@ -26,7 +26,7 @@ MODEL:
     TRI:
       MARGIN: 0.3
       SCALE: 1.0
-      HARD_MINING: True
+      HARD_MINING: False
 
 DATASETS:
   NAMES: ("Market1501",)
@@ -44,7 +44,6 @@ DATALOADER:
   NUM_INSTANCE: 4
   NUM_WORKERS: 8
 
-  
 SOLVER:
   AMP:
     ENABLED: False
@@ -71,4 +70,4 @@ TEST:
 
 CUDNN_BENCHMARK: True
 
-OUTPUT_DIR: "projects/PartialReID/logs/test_partial"
+OUTPUT_DIR: projects/PartialReID/logs/test_partial

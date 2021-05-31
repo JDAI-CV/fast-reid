@@ -28,7 +28,6 @@ from fastreid.utils.logger import setup_logger
 # sys.path.append("projects/FastDistill")
 # from fastdistill import *
 
-
 setup_logger(name="fastreid")
 logger = logging.getLogger("fastreid.onnx_export")
 

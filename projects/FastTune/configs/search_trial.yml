@@ -55,9 +55,6 @@ INPUT:
   PADDING:
     ENABLED: True
 
-  FLIP:
-    ENABLED: True
-
 DATALOADER:
   SAMPLER_TRAIN: NaiveIdentitySampler
   NUM_INSTANCE: 16

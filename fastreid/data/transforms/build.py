@@ -78,8 +78,8 @@ def build_transforms(cfg, is_train=True):
         if do_cj:
             res.append(T.RandomApply([T.ColorJitter(cj_brightness, cj_contrast, cj_saturation, cj_hue)], p=cj_prob))
         if do_affine:
-            res.append(T.RandomAffine(degrees=0, translate=None, scale=[0.9, 1.1], shear=None, resample=False,
-                                      fillcolor=128))
+            res.append(T.RandomAffine(degrees=10, translate=None, scale=[0.9, 1.1], shear=0.1, resample=False,
+                                      fillcolor=0))
         if do_augmix:
             res.append(AugMix(prob=augmix_prob))
         res.append(ToTensor())

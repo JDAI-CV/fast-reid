@@ -12,18 +12,22 @@ from fastreid.data.data_utils import read_image
 class ClasDataset(Dataset):
     """Image Person ReID Dataset"""
 
-    def __init__(self, img_items, transform=None):
+    def __init__(self, img_items, transform=None, idx_to_class=None):
         self.img_items = img_items
         self.transform = transform
 
-        classes = set()
-        for i in img_items:
-            classes.add(i[1])
+        if idx_to_class is not None:
+            self.idx_to_class = idx_to_class
+            self.class_to_idx = {clas_name: int(i) for i, clas_name in self.idx_to_class.items()}
+            self.classes = sorted(list(self.idx_to_class.values()))
+        else:
+            classes = set()
+            for i in img_items:
+                classes.add(i[1])
 
-        self.classes = list(classes)
-        self.classes.sort()
-        self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
-        self.idx_to_class = {idx: clas for clas, idx in self.class_to_idx.items()}
+            self.classes = sorted(list(classes))
+            self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
+            self.idx_to_class = {idx: clas for clas, idx in self.class_to_idx.items()}
 
     def __len__(self):
         return len(self.img_items)
