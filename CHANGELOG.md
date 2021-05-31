@@ -2,9 +2,15 @@
 
 ### v1.3
 
-#### Improvements
+#### New Features
+- Vision Transformer backbone, see config in `configs/Market1501/bagtricks_vit.yml`
+- Self-Distillation with EMA update
+- Gradient Clip
 
+#### Improvements
 - Faster dataloader with pre-fetch thread and cuda stream
+- Optimize DDP training speed by removing `find_unused_parameters` in DDP
+
 
 ### v1.2 (06/04/2021)
 

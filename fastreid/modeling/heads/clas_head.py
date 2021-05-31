@@ -27,7 +27,7 @@ class ClasHead(EmbeddingHead):
         # Evaluation
         if not self.training: return logits.mul_(self.cls_layer.s)
 
-        cls_outputs = self.cls_layer(logits, targets)
+        cls_outputs = self.cls_layer(logits.clone(), targets)
 
         return {
             "cls_outputs": cls_outputs,
