@@ -8,6 +8,7 @@ FastReID is a research platform that implements state-of-the-art re-identificati
 
 ## What's New
 
+- [May 2021] Vision Transformer backbone supported, see `configs/Market1501/bagtricks_vit.yml`.
 - [Apr 2021] Partial FC supported in [FastFace](projects/FastFace)!
 - [Jan 2021] TRT network definition APIs in [FastRT](projects/FastRT) has been released! 
 Thanks for [Darren](https://github.com/TCHeish)'s contribution.
