@@ -449,13 +449,11 @@ class PreciseBN(HookBase):
 
 
 class LayerFreeze(HookBase):
-    def __init__(self, model, optimizer, freeze_layers, freeze_iters):
+    def __init__(self, model, freeze_layers, freeze_iters):
         self._logger = logging.getLogger(__name__)
-
         if isinstance(model, DistributedDataParallel):
             model = model.module
         self.model = model
-        self.optimizer = optimizer
 
         self.freeze_layers = freeze_layers
         self.freeze_iters = freeze_iters
@@ -481,24 +479,6 @@ class LayerFreeze(HookBase):
                 # Change BN in freeze layers to eval mode
                 module.eval()
 
-        def zero_freeze_grad():
-            for group in self.optimizer.param_groups:
-                if group["name"].split('.')[0] in self.freeze_layers:
-                    for p in group["params"]:
-                        if p.grad is not None:
-                            p.grad = None
-
-        origin_step = self.optimizer.step
-        self.origin_step = origin_step
-
-        @torch.no_grad()
-        def step(closure=None):
-            zero_freeze_grad()
-            loss = origin_step(closure)
-            return loss
-
-        self.optimizer.step = step
-
         self.is_frozen = True
         freeze_layers = ", ".join(self.freeze_layers)
         self._logger.info(f'Freeze layer group "{freeze_layers}" training for {self.freeze_iters:d} iterations')
@@ -507,8 +487,6 @@ class LayerFreeze(HookBase):
         for name, module in self.model.named_children():
             if name in self.freeze_layers:
                 module.train()
-
-        self.optimizer.step = self.origin_step
 
         self.is_frozen = False
 

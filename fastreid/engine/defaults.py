@@ -152,10 +152,8 @@ class DefaultPredictor:
         inputs = {"images": image.to(self.model.device)}
         with torch.no_grad():  # https://github.com/sphinx-doc/sphinx/issues/4258
             predictions = self.model(inputs)
-            # Normalize feature to compute cosine distance
-            features = F.normalize(predictions)
-            features = features.cpu().data
-            return features
+        return predictions
+
 
 
 class DefaultTrainer(TrainerBase):
@@ -281,17 +279,6 @@ class DefaultTrainer(TrainerBase):
             hooks.LRScheduler(self.optimizer, self.scheduler),
         ]
 
-        # if cfg.SOLVER.SWA.ENABLED:
-        #     ret.append(
-        #         hooks.SWA(
-        #             cfg.SOLVER.MAX_ITER,
-        #             cfg.SOLVER.SWA.PERIOD,
-        #             cfg.SOLVER.SWA.LR_FACTOR,
-        #             cfg.SOLVER.SWA.ETA_MIN_LR,
-        #             cfg.SOLVER.SWA.LR_SCHED,
-        #         )
-        #     )
-
         if cfg.TEST.PRECISE_BN.ENABLED and hooks.get_bn_modules(self.model):
             logger.info("Prepare precise BN dataset")
             ret.append(hooks.PreciseBN(
@@ -302,12 +289,12 @@ class DefaultTrainer(TrainerBase):
                 cfg.TEST.PRECISE_BN.NUM_ITER,
             ))
 
-        ret.append(hooks.LayerFreeze(
-            self.model,
-            self.optimizer,
-            cfg.MODEL.FREEZE_LAYERS,
-            cfg.SOLVER.FREEZE_ITERS,
-        ))
+        if len(cfg.MODEL.FREEZE_LAYERS) > 0 and cfg.SOLVER.FREEZE_ITERS > 0:
+            ret.append(hooks.LayerFreeze(
+                self.model,
+                cfg.MODEL.FREEZE_LAYERS,
+                cfg.SOLVER.FREEZE_ITERS,
+            ))
 
         # Do PreciseBN before checkpointer, because it updates the model and need to
         # be saved by checkpointer.
