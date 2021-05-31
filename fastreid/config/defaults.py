@@ -23,7 +23,7 @@ _C.MODEL = CN()
 _C.MODEL.DEVICE = "cuda"
 _C.MODEL.META_ARCHITECTURE = "Baseline"
 
-_C.MODEL.FREEZE_LAYERS = ['']
+_C.MODEL.FREEZE_LAYERS = []
 
 # MoCo memory size
 _C.MODEL.QUEUE_SIZE = 8192
@@ -46,6 +46,12 @@ _C.MODEL.BACKBONE.WITH_IBN = False
 _C.MODEL.BACKBONE.WITH_SE = False
 # If use Non-local block in backbone
 _C.MODEL.BACKBONE.WITH_NL = False
+# Vision Transformer options
+_C.MODEL.BACKBONE.SIE_COE = 3.0
+_C.MODEL.BACKBONE.STRIDE_SIZE = (16, 16)
+_C.MODEL.BACKBONE.DROP_PATH_RATIO = 0.1
+_C.MODEL.BACKBONE.DROP_RATIO = 0.0
+_C.MODEL.BACKBONE.ATT_DROP_RATE = 0.0
 # If use ImageNet pretrain model
 _C.MODEL.BACKBONE.PRETRAIN = False
 # Pretrain model path
@@ -128,8 +134,10 @@ _C.MODEL.PIXEL_STD = [0.229*255, 0.224*255, 0.225*255]
 # -----------------------------------------------------------------------------
 
 _C.KD = CN()
-_C.KD.MODEL_CONFIG = ['',]
-_C.KD.MODEL_WEIGHTS = ['',]
+_C.KD.MODEL_CONFIG = []
+_C.KD.MODEL_WEIGHTS = []
+_C.KD.EMA = CN({"ENABLED": False})
+_C.KD.EMA.MOMENTUM = 0.999
 
 # -----------------------------------------------------------------------------
 # INPUT
@@ -223,14 +231,25 @@ _C.SOLVER.OPT = "Adam"
 _C.SOLVER.MAX_EPOCH = 120
 
 _C.SOLVER.BASE_LR = 3e-4
-_C.SOLVER.BIAS_LR_FACTOR = 1.
+
+# This LR is applied to the last classification layer if
+# you want to 10x higher than BASE_LR.
 _C.SOLVER.HEADS_LR_FACTOR = 1.
 
 _C.SOLVER.MOMENTUM = 0.9
 _C.SOLVER.NESTEROV = False
 
 _C.SOLVER.WEIGHT_DECAY = 0.0005
-_C.SOLVER.WEIGHT_DECAY_BIAS = 0.
+# The weight decay that's applied to parameters of normalization layers
+# (typically the affine transformation)
+_C.SOLVER.WEIGHT_DECAY_NORM = 0.0
+
+# The previous detection code used a 2x higher LR and 0 WD for bias.
+# This is not useful (at least for recent models). You should avoid
+# changing these and they exists only to reproduce previous model
+# training if desired.
+_C.SOLVER.BIAS_LR_FACTOR = 1.0
+_C.SOLVER.WEIGHT_DECAY_BIAS = _C.SOLVER.WEIGHT_DECAY
 
 # Multi-step learning rate options
 _C.SOLVER.SCHED = "MultiStepLR"
@@ -251,33 +270,31 @@ _C.SOLVER.WARMUP_METHOD = "linear"
 # Backbone freeze iters
 _C.SOLVER.FREEZE_ITERS = 0
 
-# FC freeze iters
-_C.SOLVER.FREEZE_FC_ITERS = 0
-
-
-# SWA options
-# _C.SOLVER.SWA = CN()
-# _C.SOLVER.SWA.ENABLED = False
-# _C.SOLVER.SWA.ITER = 10
-# _C.SOLVER.SWA.PERIOD = 2
-# _C.SOLVER.SWA.LR_FACTOR = 10.
-# _C.SOLVER.SWA.ETA_MIN_LR = 3.5e-6
-# _C.SOLVER.SWA.LR_SCHED = False
-
 _C.SOLVER.CHECKPOINT_PERIOD = 20
 
 # Number of images per batch across all machines.
-# This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
-# see 2 images per batch
+# This is global, so if we have 8 GPUs and IMS_PER_BATCH = 256, each GPU will
+# see 32 images per batch
 _C.SOLVER.IMS_PER_BATCH = 64
 
-# This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
-# see 2 images per batch
+# Gradient clipping
+_C.SOLVER.CLIP_GRADIENTS = CN({"ENABLED": False})
+# Type of gradient clipping, currently 2 values are supported:
+# - "value": the absolute values of elements of each gradients are clipped
+# - "norm": the norm of the gradient for each parameter is clipped thus
+#   affecting all elements in the parameter
+_C.SOLVER.CLIP_GRADIENTS.CLIP_TYPE = "norm"
+# Maximum absolute value used for clipping gradients
+_C.SOLVER.CLIP_GRADIENTS.CLIP_VALUE = 5.0
+# Floating point number p for L-p norm to be used with the "norm"
+# gradient clipping type; for L-inf, please specify .inf
+_C.SOLVER.CLIP_GRADIENTS.NORM_TYPE = 2.0
+
 _C.TEST = CN()
 
 _C.TEST.EVAL_PERIOD = 20
 
-# Number of images per batch in one process.
+# Number of images per batch across all machines.
 _C.TEST.IMS_PER_BATCH = 64
 _C.TEST.METRIC = "cosine"
 _C.TEST.ROC = CN({"ENABLED": False})

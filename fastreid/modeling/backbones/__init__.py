@@ -14,3 +14,4 @@ from .regnet import build_regnet_backbone, build_effnet_backbone
 from .shufflenet import build_shufflenetv2_backbone
 from .mobilenet import build_mobilenetv2_backbone
 from .repvgg import build_repvgg_backbone
+from .vision_transformer import build_vit_backbone
