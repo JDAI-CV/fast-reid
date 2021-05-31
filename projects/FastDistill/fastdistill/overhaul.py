@@ -90,6 +90,8 @@ class DistillerOverhaul(Distiller):
             t_outputs = []
             # teacher model forward
             with torch.no_grad():
+                if self.ema_enabled:
+                    self._momentum_update_key_encoder(self.ema_momentum)
                 for model_t in self.model_ts:
                     t_feats, t_feat = model_t.backbone.extract_feature(images, preReLU=True)
                     t_output = model_t.heads(t_feat, targets)
