@@ -7,4 +7,4 @@
 from .partial_fc import PartialFC
 from .face_baseline import FaceBaseline
 from .face_head import FaceHead
-from .resnet_ir import build_resnetIR_backbone
+from .iresnet import build_iresnet_backbone

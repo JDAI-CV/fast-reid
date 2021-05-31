@@ -3,13 +3,12 @@ _BASE_: face_base.yml
 MODEL:
 
   BACKBONE:
-    NAME: build_resnetIR_backbone
     DEPTH: 50x
     FEAT_DIM: 25088 # 512x7x7
-    WITH_SE: True
+    DROPOUT: 0.
 
   HEADS:
     PFC:
       ENABLED: True
 
-OUTPUT_DIR: projects/FastFace/logs/ir_se50-glink360k-pfc0.1
+OUTPUT_DIR: projects/FastFace/logs/pfc0.1_insightface

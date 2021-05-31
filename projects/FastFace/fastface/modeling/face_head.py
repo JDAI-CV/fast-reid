@@ -30,10 +30,4 @@ class FaceHead(EmbeddingHead):
             pool_feat = self.pool_layer(features)
             neck_feat = self.bottleneck(pool_feat)
             neck_feat = neck_feat[..., 0, 0]
-
-            if not self.training:
-                return neck_feat
-
-            return {
-                "features": neck_feat,
-            }
+            return neck_feat

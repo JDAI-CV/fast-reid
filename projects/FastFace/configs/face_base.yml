@@ -4,6 +4,9 @@ MODEL:
   PIXEL_MEAN: [127.5, 127.5, 127.5]
   PIXEL_STD: [127.5, 127.5, 127.5]
 
+  BACKBONE:
+    NAME: build_iresnet_backbone
+
   HEADS:
     NAME: FaceHead
     WITH_BNNECK: True
@@ -30,7 +33,7 @@ MODEL:
 DATASETS:
   REC_PATH: /export/home/DATA/Glint360k/train.rec
   NAMES: ("MS1MV2",)
-  TESTS: ("CPLFW", "VGG2_FP", "CALFW", "CFP_FF", "CFP_FP", "AgeDB_30", "LFW")
+  TESTS: ("CFP_FP", "AgeDB_30", "LFW")
 
 INPUT:
   SIZE_TRAIN: [0,]  # No need of resize
@@ -47,10 +50,10 @@ DATALOADER:
 SOLVER:
   MAX_EPOCH: 20
   AMP:
-    ENABLED: False
+    ENABLED: True
 
   OPT: SGD
-  BASE_LR: 0.1
+  BASE_LR: 0.05
   MOMENTUM: 0.9
 
   SCHED: MultiStepLR
@@ -59,10 +62,10 @@ SOLVER:
   BIAS_LR_FACTOR: 1.
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.0005
-  IMS_PER_BATCH: 512
+  IMS_PER_BATCH: 256
 
   WARMUP_FACTOR: 0.1
-  WARMUP_ITERS: 5000
+  WARMUP_ITERS: 0
 
   CHECKPOINT_PERIOD: 1
 

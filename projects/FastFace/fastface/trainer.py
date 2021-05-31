@@ -8,20 +8,23 @@ import os
 import time
 
 from torch.nn.parallel import DistributedDataParallel
+from torch.nn.utils import clip_grad_norm_
 
-from fastreid.engine import hooks
-from .face_data import TestFaceDataset
-from fastreid.data.datasets import DATASET_REGISTRY
 from fastreid.data.build import _root, build_reid_test_loader, build_reid_train_loader
+from fastreid.data.datasets import DATASET_REGISTRY
 from fastreid.data.transforms import build_transforms
+from fastreid.engine import hooks
 from fastreid.engine.defaults import DefaultTrainer, TrainerBase
-from fastreid.engine.train_loop import SimpleTrainer
+from fastreid.engine.train_loop import SimpleTrainer, AMPTrainer
 from fastreid.utils import comm
 from fastreid.utils.checkpoint import Checkpointer
 from fastreid.utils.logger import setup_logger
 from .face_data import MXFaceDataset
+from .face_data import TestFaceDataset
 from .face_evaluator import FaceEvaluator
 from .modeling import PartialFC
+from .pfc_checkpointer import PfcPeriodicCheckpointer, PfcCheckpointer
+from .utils_amp import MaxClipGradScaler
 
 
 class FaceTrainer(DefaultTrainer):
@@ -59,11 +62,17 @@ class FaceTrainer(DefaultTrainer):
             # for part of the parameters is not updated.
             model = DistributedDataParallel(
                 model, device_ids=[comm.get_local_rank()], broadcast_buffers=False,
-                find_unused_parameters=True
             )
 
-        self._trainer = PFCTrainer(model, data_loader, optimizer, self.pfc_module, self.pfc_optimizer) \
-            if cfg.MODEL.HEADS.PFC.ENABLED else SimpleTrainer(model, data_loader, optimizer)
+        if cfg.MODEL.HEADS.PFC.ENABLED:
+            mini_batch_size = cfg.SOLVER.IMS_PER_BATCH // comm.get_world_size()
+            grad_scaler = MaxClipGradScaler(mini_batch_size, 128 * mini_batch_size, growth_interval=100)
+            self._trainer = PFCTrainer(model, data_loader, optimizer,
+                                       self.pfc_module, self.pfc_optimizer, cfg.SOLVER.AMP.ENABLED, grad_scaler)
+        else:
+            self._trainer = (AMPTrainer if cfg.SOLVER.AMP.ENABLED else SimpleTrainer)(
+                model, data_loader, optimizer
+            )
 
         self.iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
         self.scheduler = self.build_lr_scheduler(cfg, optimizer, self.iters_per_epoch)
@@ -80,7 +89,7 @@ class FaceTrainer(DefaultTrainer):
         )
 
         if cfg.MODEL.HEADS.PFC.ENABLED:
-            self.pfc_checkpointer = Checkpointer(
+            self.pfc_checkpointer = PfcCheckpointer(
                 self.pfc_module,
                 cfg.OUTPUT_DIR,
                 optimizer=self.pfc_optimizer,
@@ -100,11 +109,22 @@ class FaceTrainer(DefaultTrainer):
         ret = super().build_hooks()
 
         if self.cfg.MODEL.HEADS.PFC.ENABLED:
+            # Make sure checkpointer is after writer
+            ret.insert(
+                len(ret) - 1,
+                PfcPeriodicCheckpointer(self.pfc_checkpointer, self.cfg.SOLVER.CHECKPOINT_PERIOD)
+            )
             # partial fc scheduler hook
             ret.append(
                 hooks.LRScheduler(self.pfc_optimizer, self.pfc_scheduler)
             )
         return ret
+
+    def resume_or_load(self, resume=True):
+        # Backbone loading state_dict
+        super().resume_or_load(resume)
+        # Partial-FC loading state_dict
+        self.pfc_checkpointer.resume_or_load('', resume=resume)
 
     @classmethod
     def build_train_loader(cls, cfg):
@@ -141,11 +161,14 @@ class PFCTrainer(SimpleTrainer):
     https://github.com/deepinsight/insightface/blob/master/recognition/arcface_torch/partial_fc.py
     """
 
-    def __init__(self, model, data_loader, optimizer, pfc_module, pfc_optimizer):
+    def __init__(self, model, data_loader, optimizer, pfc_module, pfc_optimizer, amp_enabled, grad_scaler):
         super().__init__(model, data_loader, optimizer)
 
         self.pfc_module = pfc_module
         self.pfc_optimizer = pfc_optimizer
+        self.amp_enabled = amp_enabled
+
+        self.grad_scaler = grad_scaler
 
     def run_step(self):
         assert self.model.training, "[PFCTrainer] model was changed to eval mode!"
@@ -156,18 +179,24 @@ class PFCTrainer(SimpleTrainer):
 
         features, targets = self.model(data)
 
-        self.optimizer.zero_grad()
-        self.pfc_optimizer.zero_grad()
-
         # Partial-fc backward
         f_grad, loss_v = self.pfc_module.forward_backward(features, targets, self.pfc_optimizer)
 
-        features.backward(f_grad)
+        if self.amp_enabled:
+            features.backward(self.grad_scaler.scale(f_grad))
+            self.grad_scaler.unscale_(self.optimizer)
+            clip_grad_norm_(self.model.parameters(), max_norm=5, norm_type=2)
+            self.grad_scaler.step(self.optimizer)
+            self.grad_scaler.update()
+        else:
+            features.backward(f_grad)
+            clip_grad_norm_(self.model.parameters(), max_norm=5, norm_type=2)
+            self.optimizer.step()
 
         loss_dict = {"loss_cls": loss_v}
         self._write_metrics(loss_dict, data_time)
 
-        self.optimizer.step()
         self.pfc_optimizer.step()
-
         self.pfc_module.update()
+        self.optimizer.zero_grad()
+        self.pfc_optimizer.zero_grad()

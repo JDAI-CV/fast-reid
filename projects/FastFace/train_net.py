@@ -14,7 +14,6 @@ from fastreid.engine import default_argument_parser, default_setup, launch
 from fastreid.utils.checkpoint import Checkpointer
 
 from fastface import *
-from fastface.datasets import *
 
 
 def setup(args):

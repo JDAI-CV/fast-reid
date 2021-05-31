@@ -23,7 +23,7 @@ class MS1MV2(ImageDataset):
         required_files = [self.dataset_dir]
         self.check_before_run(required_files)
 
-        train = self.process_dirs()
+        train = self.process_dirs()[:10000]
         super().__init__(train, [], [], **kwargs)
 
     def process_dirs(self):

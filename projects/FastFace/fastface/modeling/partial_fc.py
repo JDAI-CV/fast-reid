@@ -52,23 +52,6 @@ class PartialFC(nn.Module):
 
         self.cls_layer = getattr(any_softmax, cls_type)(num_classes, scale, margin)
 
-        """ TODO: consider resume training
-        if resume:
-            try:
-                self.weight: torch.Tensor = torch.load(self.weight_name)
-                logging.info("softmax weight resume successfully!")
-            except (FileNotFoundError, KeyError, IndexError):
-                self.weight = torch.normal(0, 0.01, (self.num_local, self.embedding_size), device=self.device)
-                logging.info("softmax weight resume fail!")
-
-            try:
-                self.weight_mom: torch.Tensor = torch.load(self.weight_mom_name)
-                logging.info("softmax weight mom resume successfully!")
-            except (FileNotFoundError, KeyError, IndexError):
-                self.weight_mom: torch.Tensor = torch.zeros_like(self.weight)
-                logging.info("softmax weight mom resume fail!")
-        else:
-        """
         self.weight = torch.normal(0, 0.01, (self.num_local, self.embedding_size), device=self.device)
         self.weight_mom: torch.Tensor = torch.zeros_like(self.weight)
         logger.info("softmax weight init successfully!")
