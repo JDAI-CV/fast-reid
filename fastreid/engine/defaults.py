@@ -15,7 +15,6 @@ import sys
 from collections import OrderedDict
 
 import torch
-import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel
 
 from fastreid.data import build_reid_test_loader, build_reid_train_loader
@@ -153,7 +152,6 @@ class DefaultPredictor:
         with torch.no_grad():  # https://github.com/sphinx-doc/sphinx/issues/4258
             predictions = self.model(inputs)
         return predictions
-
 
 
 class DefaultTrainer(TrainerBase):
@@ -488,5 +486,5 @@ class DefaultTrainer(TrainerBase):
 
 
 # Access basic attributes from the underlying trainer
-for _attr in ["model", "data_loader", "optimizer"]:
-    setattr(DefaultTrainer, _attr, property(lambda self, x=_attr: getattr(self._trainer, x)))
+for _attr in ["model", "data_loader", "optimizer", "grad_scaler"]:
+    setattr(DefaultTrainer, _attr, property(lambda self, x=_attr: getattr(self._trainer, x, None)))

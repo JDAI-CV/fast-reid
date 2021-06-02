@@ -226,6 +226,7 @@ class LRScheduler(HookBase):
         """
         self._optimizer = optimizer
         self._scheduler = scheduler
+        self._scale = 0
 
         # NOTE: some heuristics on what LR to summarize
         # summarize the param group with most parameters
@@ -246,13 +247,18 @@ class LRScheduler(HookBase):
                     self._best_param_group_id = i
                     break
 
+    def before_step(self):
+        if self.trainer.grad_scaler is not None:
+            self._scale = self.trainer.grad_scaler.get_scale()
+
     def after_step(self):
         lr = self._optimizer.param_groups[self._best_param_group_id]["lr"]
         self.trainer.storage.put_scalar("lr", lr, smoothing_hint=False)
 
         next_iter = self.trainer.iter + 1
         if next_iter <= self.trainer.warmup_iters:
-            self._scheduler["warmup_sched"].step()
+            if self.trainer.grad_scaler is None or self._scale == self.trainer.grad_scaler.get_scale():
+                self._scheduler["warmup_sched"].step()
 
     def after_epoch(self):
         next_iter = self.trainer.iter + 1
