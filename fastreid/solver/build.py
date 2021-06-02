@@ -149,7 +149,7 @@ def _generate_optimizer_class_with_freeze_layer(
 def maybe_add_freeze_layer(
         cfg: CfgNode, optimizer: Type[torch.optim.Optimizer]
 ) -> Type[torch.optim.Optimizer]:
-    if cfg.MODEL.FREEZE_LAYERS == [''] or cfg.SOLVER.FREEZE_ITERS == 0:
+    if len(cfg.MODEL.FREEZE_LAYERS) == 0 or cfg.SOLVER.FREEZE_ITERS == 0:
         return optimizer
 
     if isinstance(optimizer, torch.optim.Optimizer):
