@@ -1,6 +1,7 @@
 _BASE_: ../Base-SBS.yml
 
 MODEL:
+  WEIGHTS: weights/market_sbs_R101-ibn.pth
   BACKBONE:
     DEPTH: 101x
     WITH_IBN: True
