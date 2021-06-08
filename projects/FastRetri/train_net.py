@@ -9,10 +9,10 @@ import sys
 
 sys.path.append('.')
 
-from fastreid.config import get_cfg
-from fastreid.engine import default_argument_parser, default_setup, launch
-from fastreid.utils.checkpoint import Checkpointer
-from fastreid.engine.defaults import DefaultTrainer
+from processor.pipeline.reidentification.fastreid.fastreid.config import get_cfg
+from processor.pipeline.reidentification.fastreid.fastreid.engine import default_argument_parser, default_setup, launch
+from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import Checkpointer
+from processor.pipeline.reidentification.fastreid.fastreid.engine.defaults import DefaultTrainer
 
 from fastretri import *
 

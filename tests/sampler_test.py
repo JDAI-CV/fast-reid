@@ -1,7 +1,7 @@
 import unittest
 import sys
 sys.path.append('.')
-from fastreid.data.samplers import TrainingSampler
+from processor.pipeline.reidentification.fastreid.fastreid.data.samplers import TrainingSampler
 
 
 class SamplerTestCase(unittest.TestCase):

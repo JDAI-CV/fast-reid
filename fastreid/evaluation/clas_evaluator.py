@@ -11,7 +11,7 @@ from collections import OrderedDict
 
 import torch
 
-from fastreid.utils import comm
+from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
 from .evaluator import DatasetEvaluator
 
 logger = logging.getLogger(__name__)

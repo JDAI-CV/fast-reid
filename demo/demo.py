@@ -17,9 +17,9 @@ from torch.backends import cudnn
 
 sys.path.append('.')
 
-from fastreid.config import get_cfg
-from fastreid.utils.logger import setup_logger
-from fastreid.utils.file_io import PathManager
+from processor.pipeline.reidentification.fastreid.fastreid.config import get_cfg
+from processor.pipeline.reidentification.fastreid.fastreid.utils.logger import setup_logger
+from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
 
 from predictor import FeatureExtractionDemo
 

@@ -6,7 +6,7 @@
 
 from torch.utils.data import Dataset
 
-from fastreid.data.data_utils import read_image
+from processor.pipeline.reidentification.fastreid.fastreid.data.data_utils import read_image
 
 
 class ClasDataset(Dataset):

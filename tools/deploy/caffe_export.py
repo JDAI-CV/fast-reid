@@ -13,11 +13,11 @@ import torch
 sys.path.append('.')
 
 import pytorch_to_caffe
-from fastreid.config import get_cfg
-from fastreid.modeling.meta_arch import build_model
-from fastreid.utils.file_io import PathManager
-from fastreid.utils.checkpoint import Checkpointer
-from fastreid.utils.logger import setup_logger
+from processor.pipeline.reidentification.fastreid.fastreid.config import get_cfg
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.meta_arch import build_model
+from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
+from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import Checkpointer
+from processor.pipeline.reidentification.fastreid.fastreid.utils.logger import setup_logger
 
 # import some modules added in project like this below
 # sys.path.append("projects/PartialReID")

@@ -5,8 +5,8 @@ import os.path as osp
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)) + '/../../..')
 
-from fastreid.evaluation import evaluate_rank
-from fastreid.evaluation import evaluate_roc
+from processor.pipeline.reidentification.fastreid.fastreid.evaluation import evaluate_rank
+from processor.pipeline.reidentification.fastreid.fastreid.evaluation import evaluate_roc
 
 """
 Test the speed of cython-based evaluation code. The speed improvements

@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from scipy.stats import norm
 from torch import nn
 
-from fastreid.modeling.meta_arch import META_ARCH_REGISTRY, Distiller
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.meta_arch import META_ARCH_REGISTRY, Distiller
 
 logger = logging.getLogger("fastreid.meta_arch.overhaul_distiller")
 

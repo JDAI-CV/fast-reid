@@ -11,14 +11,14 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from fastreid.layers import (
+from processor.pipeline.reidentification.fastreid.fastreid.layers import (
     IBN,
     SELayer,
     get_norm,
 )
-from fastreid.modeling.backbones import BACKBONE_REGISTRY
-from fastreid.utils import comm
-from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.backbones import BACKBONE_REGISTRY
+from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
 
 logger = logging.getLogger("fastreid.overhaul.backbone")
 model_urls = {

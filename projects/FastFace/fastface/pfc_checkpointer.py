@@ -9,10 +9,10 @@ from typing import Any, Dict
 
 import torch
 
-from fastreid.engine.hooks import PeriodicCheckpointer
-from fastreid.utils import comm
-from fastreid.utils.checkpoint import Checkpointer
-from fastreid.utils.file_io import PathManager
+from processor.pipeline.reidentification.fastreid.fastreid.engine.hooks import PeriodicCheckpointer
+from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import Checkpointer
+from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
 
 
 class PfcPeriodicCheckpointer(PeriodicCheckpointer):

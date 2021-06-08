@@ -12,7 +12,7 @@ import cv2
 import torch
 import torch.multiprocessing as mp
 
-from fastreid.engine import DefaultPredictor
+from processor.pipeline.reidentification.fastreid.fastreid.engine import DefaultPredictor
 
 try:
     mp.set_start_method('spawn')

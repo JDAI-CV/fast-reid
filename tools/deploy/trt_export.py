@@ -14,7 +14,7 @@ from trt_calibrator import FeatEntropyCalibrator
 
 sys.path.append('.')
 
-from fastreid.utils.logger import setup_logger, PathManager
+from processor.pipeline.reidentification.fastreid.fastreid.utils.logger import setup_logger, PathManager
 
 logger = setup_logger(name="trt_export")
 
