@@ -185,7 +185,7 @@ def get_norm(norm, out_channels, **kwargs):
     """
     Args:
         norm (str or callable): either one of BN, GhostBN, FrozenBN, GN or SyncBN;
-            or a callable that thakes a channel number and returns
+            or a callable that takes a channel number and returns
             the normalization layer as a nn.Module
         out_channels: number of channels for normalization layer
 

@@ -159,7 +159,7 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
 
     cdef:
         long[:,:] indices = np.argsort(distmat, axis=1)
-        long[:,:] matches = (np.asarray(g_pids)[np.asarray(indices)] == np.asarray(q_pids)[:, np.newaxis]).astype(np.int64)
+        long[:] matches
 
         float[:,:] all_cmc = np.zeros((num_q, max_rank), dtype=np.float32)
         float[:] all_AP = np.zeros(num_q, dtype=np.float32)
@@ -192,14 +192,15 @@ cpdef eval_market1501_cy(float[:,:] distmat, long[:] q_pids, long[:]g_pids,
             order[g_idx] = indices[q_idx, g_idx]
         num_g_real = 0
         meet_condition = 0
+        matches = (np.asarray(g_pids)[np.asarray(order)] == q_pid).astype(np.int64)
 
         # remove gallery samples that have the same pid and camid with query
         for g_idx in range(num_g):
             if (g_pids[order[g_idx]] != q_pid) or (g_camids[order[g_idx]] != q_camid):
-                raw_cmc[num_g_real] = matches[q_idx][g_idx]
+                raw_cmc[num_g_real] = matches[g_idx]
                 num_g_real += 1
                 # this condition is true if query appear in gallery
-                if matches[q_idx][g_idx] > 1e-31:
+                if matches[g_idx] > 1e-31:
                     meet_condition = 1
 
         if not meet_condition:

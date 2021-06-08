@@ -107,9 +107,6 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
         print('Note: number of gallery samples is quite small, got {}'.format(num_g))
 
     indices = np.argsort(distmat, axis=1)
-
-    matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
-
     # compute cmc curve for each query
     all_cmc = []
     all_AP = []
@@ -127,7 +124,8 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
         keep = np.invert(remove)
 
         # compute cmc curve
-        raw_cmc = matches[q_idx][keep]  # binary vector, positions with value 1 are correct matches
+        matches = (g_pids[order] == q_pid).astype(np.int32)
+        raw_cmc = matches[keep]  # binary vector, positions with value 1 are correct matches
         if not np.any(raw_cmc):
             # this condition is true when query identity does not appear in gallery
             continue
@@ -163,7 +161,7 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
 
 def evaluate_py(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, use_metric_cuhk03):
     if use_metric_cuhk03:
-        return eval_cuhk03(distmat, g_pids, q_camids, g_camids, max_rank)
+        return eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
     else:
         return eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
 
@@ -176,7 +174,7 @@ def evaluate_rank(
         g_camids,
         max_rank=50,
         use_metric_cuhk03=False,
-        use_cython=True
+        use_cython=True,
 ):
     """Evaluates CMC rank.
     Args:
