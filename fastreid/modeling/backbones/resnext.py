@@ -259,6 +259,7 @@ def init_pretrained_weights(key):
     cached_file = os.path.join(model_dir, filename)
 
     if not os.path.exists(cached_file):
+        logger.info(f"Pretrain model don't exist, downloading from {model_urls[key]}")
         if comm.is_main_process():
             gdown.download(model_urls[key], cached_file, quiet=False)
 
