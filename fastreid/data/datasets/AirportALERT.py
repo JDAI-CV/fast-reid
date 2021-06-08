@@ -6,8 +6,8 @@
 
 import os
 
-from fastreid.data.datasets import DATASET_REGISTRY
-from fastreid.data.datasets.bases import ImageDataset
+from processor.pipeline.reidentification.fastreid.fastreid.data.datasets import DATASET_REGISTRY
+from processor.pipeline.reidentification.fastreid.fastreid.data.datasets.bases import ImageDataset
 
 __all__ = ['AirportALERT', ]
 

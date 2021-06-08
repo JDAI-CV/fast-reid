@@ -10,15 +10,15 @@ import time
 from torch.nn.parallel import DistributedDataParallel
 from torch.nn.utils import clip_grad_norm_
 
-from fastreid.data.build import _root, build_reid_test_loader, build_reid_train_loader
-from fastreid.data.datasets import DATASET_REGISTRY
-from fastreid.data.transforms import build_transforms
-from fastreid.engine import hooks
-from fastreid.engine.defaults import DefaultTrainer, TrainerBase
-from fastreid.engine.train_loop import SimpleTrainer, AMPTrainer
-from fastreid.utils import comm
-from fastreid.utils.checkpoint import Checkpointer
-from fastreid.utils.logger import setup_logger
+from processor.pipeline.reidentification.fastreid.fastreid.data.build import _root, build_reid_test_loader, build_reid_train_loader
+from processor.pipeline.reidentification.fastreid.fastreid.data.datasets import DATASET_REGISTRY
+from processor.pipeline.reidentification.fastreid.fastreid.data.transforms import build_transforms
+from processor.pipeline.reidentification.fastreid.fastreid.engine import hooks
+from processor.pipeline.reidentification.fastreid.fastreid.engine.defaults import DefaultTrainer, TrainerBase
+from processor.pipeline.reidentification.fastreid.fastreid.engine.train_loop import SimpleTrainer, AMPTrainer
+from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import Checkpointer
+from processor.pipeline.reidentification.fastreid.fastreid.utils.logger import setup_logger
 from .face_data import MXFaceDataset
 from .face_data import TestFaceDataset
 from .face_evaluator import FaceEvaluator

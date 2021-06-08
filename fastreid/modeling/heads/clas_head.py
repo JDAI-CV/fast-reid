@@ -6,7 +6,7 @@
 
 import torch.nn.functional as F
 
-from fastreid.modeling.heads import REID_HEADS_REGISTRY, EmbeddingHead
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.heads import REID_HEADS_REGISTRY, EmbeddingHead
 
 
 @REID_HEADS_REGISTRY.register()

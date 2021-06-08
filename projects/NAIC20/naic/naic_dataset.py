@@ -8,8 +8,8 @@ import glob
 import os
 from collections import defaultdict
 
-from fastreid.data.datasets import DATASET_REGISTRY
-from fastreid.data.datasets.bases import ImageDataset
+from processor.pipeline.reidentification.fastreid.fastreid.data.datasets import DATASET_REGISTRY
+from processor.pipeline.reidentification.fastreid.fastreid.data.datasets.bases import ImageDataset
 
 __all__ = ["NAIC20_R2", "NAIC20_R2CNV", "NAIC20_R1", "NAIC20_R1CNV", "NAIC19", "NAIC20_R2A", ]
 

@@ -10,9 +10,9 @@ import torch
 import torchvision
 #from torchsummary import summary
 
-from fastreid.config import get_cfg
-from fastreid.modeling.meta_arch import build_model
-from fastreid.utils.checkpoint import Checkpointer
+from processor.pipeline.reidentification.fastreid.fastreid.config import get_cfg
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.meta_arch import build_model
+from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import Checkpointer
 
 sys.path.append('./projects/FastDistill')
 from fastdistill import *

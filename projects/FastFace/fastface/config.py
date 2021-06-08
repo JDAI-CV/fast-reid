@@ -4,7 +4,7 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from fastreid.config import CfgNode as CN
+from processor.pipeline.reidentification.fastreid.fastreid.config import CfgNode as CN
 
 
 def add_face_cfg(cfg):

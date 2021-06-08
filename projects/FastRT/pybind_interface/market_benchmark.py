@@ -12,13 +12,13 @@ import torchvision.transforms as T
 
 sys.path.append('../../..')
 sys.path.append('../')
-from fastreid.config import get_cfg
-from fastreid.modeling.meta_arch import build_model
-from fastreid.utils.file_io import PathManager
-from fastreid.utils.checkpoint import Checkpointer
-from fastreid.utils.logger import setup_logger
-from fastreid.data import build_reid_train_loader, build_reid_test_loader
-from fastreid.evaluation.rank import eval_market1501
+from processor.pipeline.reidentification.fastreid.fastreid.config import get_cfg
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.meta_arch import build_model
+from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
+from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import Checkpointer
+from processor.pipeline.reidentification.fastreid.fastreid.utils.logger import setup_logger
+from processor.pipeline.reidentification.fastreid.fastreid.data import build_reid_train_loader, build_reid_test_loader
+from processor.pipeline.reidentification.fastreid.fastreid.evaluation.rank import eval_market1501
 
 from build.pybind_interface.ReID import ReID
 

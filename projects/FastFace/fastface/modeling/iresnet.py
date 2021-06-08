@@ -7,8 +7,8 @@
 import torch
 from torch import nn
 
-from fastreid.layers import get_norm
-from fastreid.modeling.backbones import BACKBONE_REGISTRY
+from processor.pipeline.reidentification.fastreid.fastreid.layers import get_norm
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.backbones import BACKBONE_REGISTRY
 
 
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):

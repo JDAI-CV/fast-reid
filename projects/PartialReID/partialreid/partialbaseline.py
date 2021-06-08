@@ -4,9 +4,9 @@
 @contact: sherlockliao01@gmail.com
 """
 
-from fastreid.modeling.losses import *
-from fastreid.modeling.meta_arch import Baseline
-from fastreid.modeling.meta_arch.build import META_ARCH_REGISTRY
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.losses import *
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.meta_arch import Baseline
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.meta_arch.build import META_ARCH_REGISTRY
 
 
 @META_ARCH_REGISTRY.register()

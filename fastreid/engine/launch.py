@@ -14,7 +14,7 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 
-from fastreid.utils import comm
+from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
 
 __all__ = ["launch"]
 

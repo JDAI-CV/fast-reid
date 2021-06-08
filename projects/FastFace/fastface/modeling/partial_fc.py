@@ -10,9 +10,9 @@ import torch.distributed as dist
 import torch.nn.functional as F
 from torch import nn
 
-from fastreid.layers import any_softmax
-from fastreid.modeling.losses.utils import concat_all_gather
-from fastreid.utils import comm
+from processor.pipeline.reidentification.fastreid.fastreid.layers import any_softmax
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.losses.utils import concat_all_gather
+from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
 
 logger = logging.getLogger('fastreid.partial_fc')
 

@@ -8,12 +8,12 @@ import copy
 import torch
 from torch import nn
 
-from fastreid.config import configurable
-from fastreid.layers import get_norm
-from fastreid.modeling.backbones import build_backbone
-from fastreid.modeling.backbones.resnet import Bottleneck
-from fastreid.modeling.heads import build_heads
-from fastreid.modeling.losses import *
+from processor.pipeline.reidentification.fastreid.fastreid.config import configurable
+from processor.pipeline.reidentification.fastreid.fastreid.layers import get_norm
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.backbones import build_backbone
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.backbones.resnet import Bottleneck
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.heads import build_heads
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.losses import *
 from .build import META_ARCH_REGISTRY
 
 

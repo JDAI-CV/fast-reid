@@ -7,8 +7,8 @@
 import json
 import os.path as osp
 
-from fastreid.data.datasets import DATASET_REGISTRY
-from fastreid.utils.file_io import PathManager
+from processor.pipeline.reidentification.fastreid.fastreid.data.datasets import DATASET_REGISTRY
+from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
 from .bases import ImageDataset
 
 

@@ -12,10 +12,10 @@ import logging
 import torch
 import torch.nn as nn
 
-from fastreid.layers import *
-from fastreid.modeling.backbones.build import BACKBONE_REGISTRY
-from fastreid.utils import comm
-from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
+from processor.pipeline.reidentification.fastreid.fastreid.layers import *
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.backbones.build import BACKBONE_REGISTRY
+from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
 from .config import cfg as effnet_cfg
 from .regnet import drop_connect, init_weights
 

@@ -12,7 +12,7 @@ import numbers
 import torch
 from torch.utils.data import Dataset
 
-from fastreid.data.common import CommDataset
+from processor.pipeline.reidentification.fastreid.fastreid.data.common import CommDataset
 
 logger = logging.getLogger("fastreid.face_data")
 

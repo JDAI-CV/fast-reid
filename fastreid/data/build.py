@@ -10,8 +10,8 @@ import os
 import torch
 from torch._six import container_abcs, string_classes, int_classes
 
-from fastreid.config import configurable
-from fastreid.utils import comm
+from processor.pipeline.reidentification.fastreid.fastreid.config import configurable
+from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
 from . import samplers
 from .common import CommDataset
 from .data_utils import DataLoaderX

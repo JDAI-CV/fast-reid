@@ -22,13 +22,13 @@ from ray.tune.suggest.hyperopt import HyperOptSearch
 
 sys.path.append('.')
 
-from fastreid.config import get_cfg, CfgNode
-from fastreid.engine import hooks
-from fastreid.modeling import build_model
-from fastreid.engine import DefaultTrainer, default_argument_parser, default_setup
-from fastreid.utils.events import CommonMetricPrinter
-from fastreid.utils import comm
-from fastreid.utils.file_io import PathManager
+from processor.pipeline.reidentification.fastreid.fastreid.config import get_cfg, CfgNode
+from processor.pipeline.reidentification.fastreid.fastreid.engine import hooks
+from processor.pipeline.reidentification.fastreid.fastreid.modeling import build_model
+from processor.pipeline.reidentification.fastreid.fastreid.engine import DefaultTrainer, default_argument_parser, default_setup
+from processor.pipeline.reidentification.fastreid.fastreid.utils.events import CommonMetricPrinter
+from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
 
 from autotuner import *
 

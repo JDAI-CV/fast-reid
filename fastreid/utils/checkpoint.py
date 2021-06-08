@@ -14,7 +14,7 @@ import torch.nn as nn
 from termcolor import colored
 from torch.nn.parallel import DistributedDataParallel, DataParallel
 
-from fastreid.utils.file_io import PathManager
+from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
 
 
 class _IncompatibleKeys(

@@ -5,8 +5,8 @@
 """
 
 from fastreid.config import configurable
-from fastreid.modeling.heads import EmbeddingHead
-from fastreid.modeling.heads.build import REID_HEADS_REGISTRY
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.heads import EmbeddingHead
+from processor.pipeline.reidentification.fastreid.fastreid.modeling.heads.build import REID_HEADS_REGISTRY
 
 
 @REID_HEADS_REGISTRY.register()
