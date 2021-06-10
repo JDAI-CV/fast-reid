@@ -63,7 +63,7 @@ class VeRiWild(ImageDataset):
         for idx, line in enumerate(img_list_lines):
             line = line.strip()
             vid = int(line.split('/')[0])
-            imgid = line.split('/')[1]
+            imgid = line.split('/')[1].split('.')[0]
             if is_train:
                 vid = self.dataset_name + '_' + str(vid)
             dataset.append((self.imgid2imgpath[imgid], vid, self.imgid2camid[imgid]))
