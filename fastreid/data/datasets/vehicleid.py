@@ -62,6 +62,10 @@ class VehicleID(ImageDataset):
             if is_train:
                 vid = self.dataset_name + '_' + str(vid)
             dataset.append((img_path, vid, imgid))
+            
+        # convert type of camids (imgid) from string to int
+        for idx, sample in enumerate(dataset):
+            dataset[idx] = (sample[0], sample[1], idx)
 
         if is_train: return dataset
         else:
