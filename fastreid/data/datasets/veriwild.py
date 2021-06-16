@@ -63,9 +63,11 @@ class VeRiWild(ImageDataset):
         for idx, line in enumerate(img_list_lines):
             line = line.strip()
             vid = int(line.split('/')[0])
-            imgid = line.split('/')[1].split('.')[0]
+            imgid = int(line.split('/')[1].split('.')[0])
+
             if is_train:
-                vid = self.dataset_name + '_' + str(vid)
+                vid = f'{self.dataset_name}_{vid}'
+
             dataset.append((self.imgid2imgpath[imgid], vid, self.imgid2camid[imgid]))
 
         assert len(dataset) == len(img_list_lines)
@@ -79,9 +81,9 @@ class VeRiWild(ImageDataset):
 
         for idx, line in enumerate(vehicle_info_lines[1:]):
             vid = line.strip().split('/')[0]
-            imgid = line.strip().split(';')[0].split('/')[1]
-            camid = line.strip().split(';')[1]
-            img_path = osp.join(self.image_dir, vid, imgid + '.jpg')
+            imgid = int(line.strip().split(';')[0].split('/')[1])
+            camid = int(line.strip().split(';')[1])
+            img_path = osp.join(self.image_dir, vid, f'{imgid}.jpg')
             imgid2vid[imgid] = vid
             imgid2camid[imgid] = camid
             imgid2imgpath[imgid] = img_path
