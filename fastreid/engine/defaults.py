@@ -151,7 +151,7 @@ class DefaultPredictor:
         inputs = {"images": image.to(self.model.device)}
         with torch.no_grad():  # https://github.com/sphinx-doc/sphinx/issues/4258
             predictions = self.model(inputs)
-        return predictions
+        return predictions.cpu()
 
 
 class DefaultTrainer(TrainerBase):
