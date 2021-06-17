@@ -62,11 +62,10 @@ class Market1501(ImageDataset):
             required_files.append(self.extra_gallery_dir)
         self.check_before_run(required_files)
 
-        train = self.process_dir(self.train_dir)
-        query = self.process_dir(self.query_dir, is_train=False)
-        gallery = self.process_dir(self.gallery_dir, is_train=False)
-        if self.market1501_500k:
-            gallery += self.process_dir(self.extra_gallery_dir, is_train=False)
+        train = lambda: self.process_dir(self.train_dir)
+        query = lambda: self.process_dir(self.query_dir, is_train=False)
+        gallery = lambda: self.process_dir(self.gallery_dir, is_train=False) + \
+                          (self.process_dir(self.extra_gallery_dir, is_train=False) if self.market1501_500k else [])
 
         super(Market1501, self).__init__(train, query, gallery, **kwargs)
 
