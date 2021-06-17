@@ -12,6 +12,7 @@ MODEL:
   HEADS:
     NAME: EmbeddingHead
     NORM: syncBN
+    WITH_BNNECK: True
     NECK_FEAT: after
     EMBEDDING_DIM: 0
     POOL_LAYER: GeneralizedMeanPooling
@@ -52,7 +53,7 @@ DATALOADER:
 SOLVER:
   MAX_EPOCH: 100
   AMP:
-    ENABLED: False
+    ENABLED: True
 
   OPT: SGD
   SCHED: CosineAnnealingLR
@@ -72,6 +73,9 @@ SOLVER:
   WARMUP_ITERS: 1000
 
   CHECKPOINT_PERIOD: 10
+
+  CLIP_GRADIENTS:
+    ENABLED: True
 
 TEST:
   EVAL_PERIOD: 10
