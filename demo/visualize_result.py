@@ -72,6 +72,7 @@ def get_parser():
     )
     parser.add_argument(
         "--num-vis",
+        type=int,
         default=100,
         help="number of query images to be visualized",
     )
@@ -87,6 +88,7 @@ def get_parser():
     )
     parser.add_argument(
         "--max-rank",
+        type=int,
         default=10,
         help="maximum number of rank list to be visualized",
     )
