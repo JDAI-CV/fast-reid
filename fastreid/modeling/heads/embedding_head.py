@@ -8,10 +8,17 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from processor.pipeline.reidentification.fastreid.fastreid.config import configurable
-from processor.pipeline.reidentification.fastreid.fastreid.layers import *
-from processor.pipeline.reidentification.fastreid.fastreid.layers import pooling, any_softmax
-from processor.pipeline.reidentification.fastreid.fastreid.layers.weight_init import weights_init_kaiming
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.config import configurable
+    from processor.pipeline.reidentification.fastreid.fastreid.layers import *
+    from processor.pipeline.reidentification.fastreid.fastreid.layers import pooling, any_softmax
+    from processor.pipeline.reidentification.fastreid.fastreid.layers.weight_init import weights_init_kaiming
+except ImportError:
+    from fastreid.config import configurable
+    from fastreid.layers import *
+    from fastreid.layers import pooling, any_softmax
+    from fastreid.layers.weight_init import weights_init_kaiming
+
 from .build import REID_HEADS_REGISTRY
 
 

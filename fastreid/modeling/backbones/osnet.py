@@ -12,9 +12,14 @@ import logging
 import torch
 from torch import nn
 
-from processor.pipeline.reidentification.fastreid.fastreid.layers import get_norm
-from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
-from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.layers import get_norm
+    from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
+except ImportError:
+    from fastreid.layers import get_norm
+    from fastreid.utils import comm
+    from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
 from .build import BACKBONE_REGISTRY
 
 logger = logging.getLogger(__name__)

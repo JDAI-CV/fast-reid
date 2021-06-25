@@ -13,15 +13,26 @@ import torch
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel
 
-from processor.pipeline.reidentification.fastreid.fastreid.evaluation.testing import flatten_results_dict
-from processor.pipeline.reidentification.fastreid.fastreid.solver import optim
-from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
-from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
-from processor.pipeline.reidentification.fastreid.fastreid.utils.events import EventStorage, EventWriter, get_event_storage
-from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
-from processor.pipeline.reidentification.fastreid.fastreid.utils.precision_bn import update_bn_stats, get_bn_modules
-from processor.pipeline.reidentification.fastreid.fastreid.utils.timer import Timer
-from .train_loop import HookBase
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.evaluation.testing import flatten_results_dict
+    from processor.pipeline.reidentification.fastreid.fastreid.solver import optim
+    from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.events import EventStorage, EventWriter, get_event_storage
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.precision_bn import update_bn_stats, get_bn_modules
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.timer import Timer
+    from .train_loop import HookBase
+except:
+    from fastreid.evaluation.testing import flatten_results_dict
+    from fastreid.solver import optim
+    from fastreid.utils import comm
+    from fastreid.utils.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
+    from fastreid.utils.events import EventStorage, EventWriter, get_event_storage
+    from fastreid.utils.file_io import PathManager
+    from fastreid.utils.precision_bn import update_bn_stats, get_bn_modules
+    from fastreid.utils.timer import Timer
+    from .train_loop import HookBase
 
 __all__ = [
     "CallbackHook",

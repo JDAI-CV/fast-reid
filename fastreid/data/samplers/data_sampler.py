@@ -9,7 +9,10 @@ from typing import Optional
 import numpy as np
 from torch.utils.data import Sampler
 
-from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+except:
+    from fastreid.utils import comm
 
 
 class TrainingSampler(Sampler):

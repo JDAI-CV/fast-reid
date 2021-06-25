@@ -7,8 +7,12 @@
 import json
 import os.path as osp
 
-from processor.pipeline.reidentification.fastreid.fastreid.data.datasets import DATASET_REGISTRY
-from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.data.datasets import DATASET_REGISTRY
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
+except:
+    from fastreid.utils.file_io import PathManager
+    from fastreid.data.datasets import DATASET_REGISTRY
 from .bases import ImageDataset
 
 

@@ -6,7 +6,10 @@
 import torch
 import torch.nn.functional as F
 
-from processor.pipeline.reidentification.fastreid.fastreid.utils.events import get_event_storage
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.events import get_event_storage
+except ImportError:
+    from fastreid.utils.events import get_event_storage
 
 
 def log_accuracy(pred_class_logits, gt_classes, topk=(1,)):

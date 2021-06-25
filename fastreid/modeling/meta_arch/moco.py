@@ -8,8 +8,13 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from processor.pipeline.reidentification.fastreid.fastreid.modeling.losses.utils import concat_all_gather
-from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.modeling.losses.utils import concat_all_gather
+    from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+except ImportError:
+    from fastreid.modeling.losses.utils import concat_all_gather
+    from fastreid.utils import comm
+
 from .baseline import Baseline
 from .build import META_ARCH_REGISTRY
 

@@ -9,8 +9,12 @@ import math
 import torch
 from torch import nn
 
-from processor.pipeline.reidentification.fastreid.fastreid.layers import SplAtConv2d, get_norm, DropBlock2D
-from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import get_unexpected_parameters_message, get_missing_parameters_message
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.layers import SplAtConv2d, get_norm, DropBlock2D
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import get_unexpected_parameters_message, get_missing_parameters_message
+except ImportError:
+    from fastreid.layers import SplAtConv2d, get_norm, DropBlock2D
+    from fastreid.utils.checkpoint import get_unexpected_parameters_message, get_missing_parameters_message
 from .build import BACKBONE_REGISTRY
 
 logger = logging.getLogger(__name__)

@@ -13,8 +13,12 @@ import torch
 import torch.nn.functional as F
 from sklearn import metrics
 
-from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
-from processor.pipeline.reidentification.fastreid.fastreid.utils.compute_dist import build_dist
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.compute_dist import build_dist
+except:
+    from fastreid.utils import comm
+    from fastreid.utils.compute_dist import build_dist
 from .evaluator import DatasetEvaluator
 from .query_expansion import aqe
 from .rank import evaluate_rank

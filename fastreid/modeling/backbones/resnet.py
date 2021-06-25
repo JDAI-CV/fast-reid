@@ -10,15 +10,26 @@ import math
 import torch
 from torch import nn
 
-from processor.pipeline.reidentification.fastreid.fastreid.layers import (
-    IBN,
-    SELayer,
-    Non_local,
-    get_norm,
-)
-from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.layers import (
+        IBN,
+        SELayer,
+        Non_local,
+        get_norm,
+    )
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
+    from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+except ImportError:
+    from fastreid.layers import (
+        IBN,
+        SELayer,
+        Non_local,
+        get_norm,
+    )
+    from fastreid.utils.checkpoint import get_missing_parameters_message, get_unexpected_parameters_message
+    from fastreid.utils import comm
+
 from .build import BACKBONE_REGISTRY
-from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
 
 
 logger = logging.getLogger(__name__)

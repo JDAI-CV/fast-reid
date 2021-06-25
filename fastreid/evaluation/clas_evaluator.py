@@ -10,8 +10,10 @@ import logging
 from collections import OrderedDict
 
 import torch
-
-from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+except:
+    from fastreid.utils import comm
 from .evaluator import DatasetEvaluator
 
 logger = logging.getLogger(__name__)

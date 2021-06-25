@@ -9,10 +9,14 @@ import sys
 
 sys.path.append('.')
 
-from processor.pipeline.reidentification.fastreid.fastreid.config import get_cfg
-from processor.pipeline.reidentification.fastreid.fastreid.engine import DefaultTrainer, default_argument_parser, default_setup, launch
-from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import Checkpointer
-
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.config import get_cfg
+    from processor.pipeline.reidentification.fastreid.fastreid.engine import DefaultTrainer, default_argument_parser, default_setup, launch
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import Checkpointer
+except:
+    from fastreid.config import get_cfg
+    from fastreid.engine import DefaultTrainer, default_argument_parser, default_setup, launch
+    from fastreid.utils.checkpoint import Checkpointer
 
 def setup(args):
     """

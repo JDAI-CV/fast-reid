@@ -6,8 +6,12 @@
 
 import os
 
-from processor.pipeline.reidentification.fastreid.fastreid.data.datasets import DATASET_REGISTRY
-from processor.pipeline.reidentification.fastreid.fastreid.data.datasets.bases import ImageDataset
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.data.datasets import DATASET_REGISTRY
+    from processor.pipeline.reidentification.fastreid.fastreid.data.datasets.bases import ImageDataset
+except:
+    from fastreid.data.datasets import DATASET_REGISTRY
+    from fastreid.data.datasets.bases import ImageDataset
 
 __all__ = ['Shinpuhkan', ]
 

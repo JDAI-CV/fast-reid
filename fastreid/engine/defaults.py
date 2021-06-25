@@ -17,20 +17,34 @@ from collections import OrderedDict
 import torch
 from torch.nn.parallel import DistributedDataParallel
 
-from processor.pipeline.reidentification.fastreid.fastreid.data import build_reid_test_loader, build_reid_train_loader
-from processor.pipeline.reidentification.fastreid.fastreid.evaluation import (ReidEvaluator,
-                                 inference_on_dataset, print_csv_format)
-from processor.pipeline.reidentification.fastreid.fastreid.modeling.meta_arch import build_model
-from processor.pipeline.reidentification.fastreid.fastreid.solver import build_lr_scheduler, build_optimizer
-from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
-from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import Checkpointer
-from processor.pipeline.reidentification.fastreid.fastreid.utils.collect_env import collect_env_info
-from processor.pipeline.reidentification.fastreid.fastreid.utils.env import seed_all_rng
-from processor.pipeline.reidentification.fastreid.fastreid.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
-from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
-from processor.pipeline.reidentification.fastreid.fastreid.utils.logger import setup_logger
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.data import build_reid_test_loader, build_reid_train_loader
+    from processor.pipeline.reidentification.fastreid.fastreid.evaluation import (ReidEvaluator,
+                                     inference_on_dataset, print_csv_format)
+    from processor.pipeline.reidentification.fastreid.fastreid.modeling.meta_arch import build_model
+    from processor.pipeline.reidentification.fastreid.fastreid.solver import build_lr_scheduler, build_optimizer
+    from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.checkpoint import Checkpointer
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.collect_env import collect_env_info
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.env import seed_all_rng
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.logger import setup_logger
+except:
+    from fastreid.data import build_reid_test_loader, build_reid_train_loader
+    from fastreid.evaluation import (ReidEvaluator, inference_on_dataset, print_csv_format)
+    from fastreid.modeling.meta_arch import build_model
+    from fastreid.solver import build_lr_scheduler, build_optimizer
+    from fastreid.utils import comm
+    from fastreid.utils.checkpoint import Checkpointer
+    from fastreid.utils.collect_env import collect_env_info
+    from fastreid.utils.env import seed_all_rng
+    from fastreid.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
+    from fastreid.utils.file_io import PathManager
+    from fastreid.utils.logger import setup_logger
 from . import hooks
 from .train_loop import TrainerBase, AMPTrainer, SimpleTrainer
+
 
 __all__ = ["default_argument_parser", "default_setup", "DefaultPredictor", "DefaultTrainer"]
 

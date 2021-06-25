@@ -11,7 +11,10 @@ import threading
 import queue
 from torch.utils.data import DataLoader
 
-from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.file_io import PathManager
+except:
+    from fastreid.utils.file_io import PathManager
 
 
 def read_image(file_name, format=None):

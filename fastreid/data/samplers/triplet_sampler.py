@@ -12,7 +12,10 @@ from typing import Optional, List
 import numpy as np
 from torch.utils.data.sampler import Sampler
 
-from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.utils import comm
+except:
+    from fastreid.utils import comm
 
 
 def no_index(a, b):

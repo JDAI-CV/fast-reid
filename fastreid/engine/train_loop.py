@@ -12,9 +12,12 @@ from typing import Dict
 import numpy as np
 import torch
 from torch.nn.parallel import DataParallel, DistributedDataParallel
-
-import processor.pipeline.reidentification.fastreid.fastreid.utils.comm as comm
-from processor.pipeline.reidentification.fastreid.fastreid.utils.events import EventStorage, get_event_storage
+try:
+    import processor.pipeline.reidentification.fastreid.fastreid.utils.comm as comm
+    from processor.pipeline.reidentification.fastreid.fastreid.utils.events import EventStorage, get_event_storage
+except:
+    import fastreid.utils.comm as comm
+    from fastreid.utils.events import EventStorage, get_event_storage
 
 __all__ = ["HookBase", "TrainerBase", "SimpleTrainer"]
 

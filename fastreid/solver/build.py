@@ -14,7 +14,10 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Type, Uni
 
 import torch
 
-from processor.pipeline.reidentification.fastreid.fastreid.config import CfgNode
+try:
+    from processor.pipeline.reidentification.fastreid.fastreid.config import CfgNode
+except:
+    from fastreid.config import CfgNode
 from . import lr_scheduler
 
 _GradientClipperInput = Union[torch.Tensor, Iterable[torch.Tensor]]
