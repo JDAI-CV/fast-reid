@@ -16,9 +16,11 @@ from fastreid.data.transforms import build_transforms
 from fastreid.engine import hooks
 from fastreid.engine.defaults import DefaultTrainer, TrainerBase
 from fastreid.engine.train_loop import SimpleTrainer, AMPTrainer
+from fastreid.solver import build_optimizer
 from fastreid.utils import comm
 from fastreid.utils.checkpoint import Checkpointer
 from fastreid.utils.logger import setup_logger
+from fastreid.utils.params import ContiguousParams
 from .face_data import MXFaceDataset
 from .face_data import TestFaceDataset
 from .face_evaluator import FaceEvaluator
@@ -39,7 +41,7 @@ class FaceTrainer(DefaultTrainer):
         data_loader = self.build_train_loader(cfg)
         cfg = self.auto_scale_hyperparams(cfg, data_loader.dataset.num_classes)
         model = self.build_model(cfg)
-        optimizer = self.build_optimizer(cfg, model)
+        optimizer, param_wrapper = self.build_optimizer(cfg, model)
 
         if cfg.MODEL.HEADS.PFC.ENABLED:
             # fmt: off
@@ -54,7 +56,7 @@ class FaceTrainer(DefaultTrainer):
             # Partial-FC module
             embedding_size = embedding_dim if embedding_dim > 0 else feat_dim
             self.pfc_module = PartialFC(embedding_size, num_classes, sample_rate, cls_type, scale, margin)
-            self.pfc_optimizer = self.build_optimizer(cfg, self.pfc_module)
+            self.pfc_optimizer, _ = build_optimizer(cfg, self.pfc_module, False)
 
         # For training, wrap with DDP. But don't need this for inference.
         if comm.get_world_size() > 1:
@@ -67,11 +69,11 @@ class FaceTrainer(DefaultTrainer):
         if cfg.MODEL.HEADS.PFC.ENABLED:
             mini_batch_size = cfg.SOLVER.IMS_PER_BATCH // comm.get_world_size()
             grad_scaler = MaxClipGradScaler(mini_batch_size, 128 * mini_batch_size, growth_interval=100)
-            self._trainer = PFCTrainer(model, data_loader, optimizer,
+            self._trainer = PFCTrainer(model, data_loader, optimizer, param_wrapper,
                                        self.pfc_module, self.pfc_optimizer, cfg.SOLVER.AMP.ENABLED, grad_scaler)
         else:
             self._trainer = (AMPTrainer if cfg.SOLVER.AMP.ENABLED else SimpleTrainer)(
-                model, data_loader, optimizer
+                model, data_loader, optimizer, param_wrapper
             )
 
         self.iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH
@@ -124,7 +126,8 @@ class FaceTrainer(DefaultTrainer):
         # Backbone loading state_dict
         super().resume_or_load(resume)
         # Partial-FC loading state_dict
-        self.pfc_checkpointer.resume_or_load('', resume=resume)
+        if self.cfg.MODEL.HEADS.PFC.ENABLED:
+            self.pfc_checkpointer.resume_or_load('', resume=resume)
 
     @classmethod
     def build_train_loader(cls, cfg):
@@ -161,8 +164,9 @@ class PFCTrainer(SimpleTrainer):
     https://github.com/deepinsight/insightface/blob/master/recognition/arcface_torch/partial_fc.py
     """
 
-    def __init__(self, model, data_loader, optimizer, pfc_module, pfc_optimizer, amp_enabled, grad_scaler):
-        super().__init__(model, data_loader, optimizer)
+    def __init__(self, model, data_loader, optimizer, param_wrapper, pfc_module, pfc_optimizer, amp_enabled,
+                 grad_scaler):
+        super().__init__(model, data_loader, optimizer, param_wrapper)
 
         self.pfc_module = pfc_module
         self.pfc_optimizer = pfc_optimizer
@@ -200,3 +204,5 @@ class PFCTrainer(SimpleTrainer):
         self.pfc_module.update()
         self.optimizer.zero_grad()
         self.pfc_optimizer.zero_grad()
+        if isinstance(self.param_wrapper, ContiguousParams):
+            self.param_wrapper.assert_buffer_is_valid()

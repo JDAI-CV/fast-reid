@@ -242,7 +242,7 @@ _C.SOLVER.NESTEROV = False
 _C.SOLVER.WEIGHT_DECAY = 0.0005
 # The weight decay that's applied to parameters of normalization layers
 # (typically the affine transformation)
-_C.SOLVER.WEIGHT_DECAY_NORM = 0.0
+_C.SOLVER.WEIGHT_DECAY_NORM = 0.0005
 
 # The previous detection code used a 2x higher LR and 0 WD for bias.
 # This is not useful (at least for recent models). You should avoid

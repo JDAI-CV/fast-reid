@@ -8,13 +8,15 @@ FastReID is a research platform that implements state-of-the-art re-identificati
 
 ## What's New
 
+- [June 2021] [Contiguous parameters](https://github.com/PhilJd/contiguous_pytorch_params) is supported, now it can
+  accelerate ~20%.
 - [May 2021] Vision Transformer backbone supported, see `configs/Market1501/bagtricks_vit.yml`.
 - [Apr 2021] Partial FC supported in [FastFace](projects/FastFace)!
 - [Jan 2021] TRT network definition APIs in [FastRT](projects/FastRT) has been released! 
 Thanks for [Darren](https://github.com/TCHeish)'s contribution.
 - [Jan 2021] NAIC20(reid track) [1-st solution](projects/NAIC20) based on fastreid has been released！
-- [Jan 2021] FastReID V1.0 has been released！🎉 
-Support many tasks beyond reid, such image retrieval and face recognition. See [release notes](https://github.com/JDAI-CV/fast-reid/releases/tag/v1.0.0).
+- [Jan 2021] FastReID V1.0 has been released！🎉
+  Support many tasks beyond reid, such image retrieval and face recognition. See [release notes](https://github.com/JDAI-CV/fast-reid/releases/tag/v1.0.0).
 - [Oct 2020] Added the [Hyper-Parameter Optimization](projects/FastTune) based on fastreid. See `projects/FastTune`.
 - [Sep 2020] Added the [person attribute recognition](projects/FastAttr) based on fastreid. See `projects/FastAttr`.
 - [Sep 2020] Automatic Mixed Precision training is supported with `apex`. Set `cfg.SOLVER.FP16_ENABLED=True` to switch it on.

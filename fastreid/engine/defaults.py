@@ -201,7 +201,7 @@ class DefaultTrainer(TrainerBase):
         data_loader = self.build_train_loader(cfg)
         cfg = self.auto_scale_hyperparams(cfg, data_loader.dataset.num_classes)
         model = self.build_model(cfg)
-        optimizer = self.build_optimizer(cfg, model)
+        optimizer, param_wrapper = self.build_optimizer(cfg, model)
 
         # For training, wrap with DDP. But don't need this for inference.
         if comm.get_world_size() > 1:
@@ -212,7 +212,7 @@ class DefaultTrainer(TrainerBase):
             )
 
         self._trainer = (AMPTrainer if cfg.SOLVER.AMP.ENABLED else SimpleTrainer)(
-            model, data_loader, optimizer
+            model, data_loader, optimizer, param_wrapper
         )
 
         self.iters_per_epoch = len(data_loader.dataset) // cfg.SOLVER.IMS_PER_BATCH

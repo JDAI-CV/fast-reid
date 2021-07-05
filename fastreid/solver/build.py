@@ -9,12 +9,14 @@
 import copy
 import itertools
 import math
+import re
 from enum import Enum
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Type, Union
 
 import torch
 
 from fastreid.config import CfgNode
+from fastreid.utils.params import ContiguousParams
 from . import lr_scheduler
 
 _GradientClipperInput = Union[torch.Tensor, Iterable[torch.Tensor]]
@@ -60,6 +62,7 @@ def _generate_optimizer_class_with_gradient_clipping(
             per_param_clipper is None or global_clipper is None
     ), "Not allowed to use both per-parameter clipping and global clipping"
 
+    @torch.no_grad()
     def optimizer_wgc_step(self, closure=None):
         if per_param_clipper is not None:
             for group in self.param_groups:
@@ -117,26 +120,31 @@ def maybe_add_gradient_clipping(
 def _generate_optimizer_class_with_freeze_layer(
         optimizer: Type[torch.optim.Optimizer],
         *,
-        freeze_layers: Optional[List] = None,
         freeze_iters: int = 0,
 ) -> Type[torch.optim.Optimizer]:
-    assert (
-            freeze_layers is not None and freeze_iters > 0
-    ), "No layers need to be frozen or freeze iterations is 0"
+    assert freeze_iters > 0, "No layers need to be frozen or freeze iterations is 0"
 
     cnt = 0
-
+    @torch.no_grad()
     def optimizer_wfl_step(self, closure=None):
         nonlocal cnt
         if cnt < freeze_iters:
             cnt += 1
+            param_ref = []
+            grad_ref = []
             for group in self.param_groups:
-                if group["name"].split('.')[0] in freeze_layers:
+                if group["freeze_status"] == "freeze":
                     for p in group["params"]:
                         if p.grad is not None:
+                            param_ref.append(p)
+                            grad_ref.append(p.grad)
                             p.grad = None
 
-        optimizer.step(self, closure)
+            optimizer.step(self, closure)
+            for p, g in zip(param_ref, grad_ref):
+                p.grad = g
+        else:
+            optimizer.step(self, closure)
 
     OptimizerWithFreezeLayer = type(
         optimizer.__name__ + "WithFreezeLayer",
@@ -149,7 +157,7 @@ def _generate_optimizer_class_with_freeze_layer(
 def maybe_add_freeze_layer(
         cfg: CfgNode, optimizer: Type[torch.optim.Optimizer]
 ) -> Type[torch.optim.Optimizer]:
-    if len(cfg.MODEL.FREEZE_LAYERS) == 0 or cfg.SOLVER.FREEZE_ITERS == 0:
+    if len(cfg.MODEL.FREEZE_LAYERS) == 0 or cfg.SOLVER.FREEZE_ITERS <= 0:
         return optimizer
 
     if isinstance(optimizer, torch.optim.Optimizer):
@@ -160,7 +168,6 @@ def maybe_add_freeze_layer(
 
     OptimizerWithFreezeLayer = _generate_optimizer_class_with_freeze_layer(
         optimizer_type,
-        freeze_layers=cfg.MODEL.FREEZE_LAYERS,
         freeze_iters=cfg.SOLVER.FREEZE_ITERS
     )
     if isinstance(optimizer, torch.optim.Optimizer):
@@ -170,37 +177,35 @@ def maybe_add_freeze_layer(
         return OptimizerWithFreezeLayer
 
 
-def build_optimizer(cfg, model):
+def build_optimizer(cfg, model, contiguous=True):
     params = get_default_optimizer_params(
         model,
         base_lr=cfg.SOLVER.BASE_LR,
+        weight_decay=cfg.SOLVER.WEIGHT_DECAY,
         weight_decay_norm=cfg.SOLVER.WEIGHT_DECAY_NORM,
         bias_lr_factor=cfg.SOLVER.BIAS_LR_FACTOR,
         heads_lr_factor=cfg.SOLVER.HEADS_LR_FACTOR,
-        weight_decay_bias=cfg.SOLVER.WEIGHT_DECAY_BIAS
+        weight_decay_bias=cfg.SOLVER.WEIGHT_DECAY_BIAS,
+        freeze_layers=cfg.MODEL.FREEZE_LAYERS if cfg.SOLVER.FREEZE_ITERS > 0 else [],
     )
 
+    if contiguous:
+        params = ContiguousParams(params)
     solver_opt = cfg.SOLVER.OPT
     if solver_opt == "SGD":
         return maybe_add_freeze_layer(
             cfg,
             maybe_add_gradient_clipping(cfg, torch.optim.SGD)
         )(
-            params,
-            lr=cfg.SOLVER.BASE_LR,
+            params.contiguous() if contiguous else params,
             momentum=cfg.SOLVER.MOMENTUM,
             nesterov=cfg.SOLVER.NESTEROV,
-            weight_decay=cfg.SOLVER.WEIGHT_DECAY,
-        )
+        ), params
     else:
         return maybe_add_freeze_layer(
             cfg,
             maybe_add_gradient_clipping(cfg, getattr(torch.optim, solver_opt))
-        )(
-            params,
-            lr=cfg.SOLVER.BASE_LR,
-            weight_decay=cfg.SOLVER.WEIGHT_DECAY,
-        )
+        )(params.contiguous() if contiguous else params), params
 
 
 def get_default_optimizer_params(
@@ -212,6 +217,7 @@ def get_default_optimizer_params(
         heads_lr_factor: Optional[float] = 1.0,
         weight_decay_bias: Optional[float] = None,
         overrides: Optional[Dict[str, Dict[str, float]]] = None,
+        freeze_layers: Optional[list] = [],
 ):
     """
     Get default param list for optimizer, with support for a few types of
@@ -228,6 +234,7 @@ def get_default_optimizer_params(
             (LR, weight decay) for module parameters with a given name; e.g.
             ``{"embedding": {"lr": 0.01, "weight_decay": 0.1}}`` will set the LR and
             weight decay values for all module parameters named `embedding`.
+        freeze_layers: layer names for freezing.
     For common detection models, ``weight_decay_norm`` is the only option
     needed to be set. ``bias_lr_factor,weight_decay_bias`` are legacy settings
     from Detectron1 that are not found useful.
@@ -256,6 +263,8 @@ def get_default_optimizer_params(
         if "bias" in overrides:
             raise ValueError("Conflicting overrides for 'bias'")
         overrides["bias"] = bias_overrides
+
+    layer_names_pattern = [re.compile(name) for name in freeze_layers]
 
     norm_module_types = (
         torch.nn.BatchNorm1d,
@@ -288,8 +297,15 @@ def get_default_optimizer_params(
             hyperparams.update(overrides.get(module_param_name, {}))
             if module_name.split('.')[0] == "heads" and (heads_lr_factor is not None and heads_lr_factor != 1.0):
                 hyperparams["lr"] = hyperparams.get("lr", base_lr) * heads_lr_factor
-            params.append({"name": module_name + '.' + module_param_name,
-                           "params": [value], **hyperparams})
+            name = module_name + '.' + module_param_name
+            freeze_status = "normal"
+            # Search freeze layer names, it must match from beginning, so use `match` not `search`
+            for pattern in layer_names_pattern:
+                if pattern.match(name) is not None:
+                    freeze_status = "freeze"
+                    break
+
+            params.append({"freeze_status": freeze_status, "params": [value], **hyperparams})
     return params
 
 

@@ -15,6 +15,7 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 
 import fastreid.utils.comm as comm
 from fastreid.utils.events import EventStorage, get_event_storage
+from fastreid.utils.params import ContiguousParams
 
 __all__ = ["HookBase", "TrainerBase", "SimpleTrainer"]
 
@@ -197,7 +198,7 @@ class SimpleTrainer(TrainerBase):
     or write your own training loop.
     """
 
-    def __init__(self, model, data_loader, optimizer):
+    def __init__(self, model, data_loader, optimizer, param_wrapper):
         """
         Args:
             model: a torch Module. Takes a data from data_loader and returns a
@@ -219,6 +220,7 @@ class SimpleTrainer(TrainerBase):
         self.data_loader = data_loader
         self._data_loader_iter = iter(data_loader)
         self.optimizer = optimizer
+        self.param_wrapper = param_wrapper
 
     def run_step(self):
         """
@@ -254,6 +256,8 @@ class SimpleTrainer(TrainerBase):
         wrap the optimizer with your custom `step()` method.
         """
         self.optimizer.step()
+        if isinstance(self.param_wrapper, ContiguousParams):
+            self.param_wrapper.assert_buffer_is_valid()
 
     def _write_metrics(self, loss_dict: Dict[str, torch.Tensor], data_time: float):
         """
@@ -303,7 +307,7 @@ class AMPTrainer(SimpleTrainer):
     in the training loop.
     """
 
-    def __init__(self, model, data_loader, optimizer, grad_scaler=None):
+    def __init__(self, model, data_loader, optimizer, param_wrapper, grad_scaler=None):
         """
 
         Args:
@@ -315,7 +319,7 @@ class AMPTrainer(SimpleTrainer):
             assert not (model.device_ids and len(model.device_ids) > 1), unsupported
         assert not isinstance(model, DataParallel), unsupported
 
-        super().__init__(model, data_loader, optimizer)
+        super().__init__(model, data_loader, optimizer, param_wrapper)
 
         if grad_scaler is None:
             from torch.cuda.amp import GradScaler
@@ -346,3 +350,5 @@ class AMPTrainer(SimpleTrainer):
 
         self.grad_scaler.step(self.optimizer)
         self.grad_scaler.update()
+        if isinstance(self.param_wrapper, ContiguousParams):
+            self.param_wrapper.assert_buffer_is_valid()
