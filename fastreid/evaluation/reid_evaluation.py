@@ -19,6 +19,7 @@ from .evaluator import DatasetEvaluator
 from .query_expansion import aqe
 from .rank import evaluate_rank
 from .roc import evaluate_roc
+from .gpu_rerank import gpu_reranking
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,22 @@ class ReidEvaluator(DatasetEvaluator):
 
             rerank_dist = build_dist(query_features, gallery_features, metric="jaccard", k1=k1, k2=k2)
             dist = rerank_dist * (1 - lambda_value) + dist * lambda_value
+
+        if self.cfg.TEST.GPU_RERANK.ENABLED:
+            logger.info("Test with gpu real-time rerank setting")
+            k1 = self.cfg.TEST.RERANK.K1
+            k2 = self.cfg.TEST.RERANK.K2
+            lambda_value = self.cfg.TEST.RERANK.LAMBDA
+
+            if self.cfg.TEST.METRIC == "cosine":
+                query_features = F.normalize(query_features, dim=1)
+                gallery_features = F.normalize(gallery_features, dim=1)
+
+            query_features = query_features.cuda()
+            gallery_features = gallery_features.cuda()
+            query_features, gallery_features = gpu_reranking(query_features, gallery_features, k1, k2)
+            rerank_dist = build_dist(query_features, gallery_features, self.cfg.TEST.METRIC) 
+            dist = dist * (1 - lambda_value) + rerank_dist * lambda_value   
 
         cmc, all_AP, all_INP = evaluate_rank(dist, query_pids, gallery_pids, query_camids, gallery_camids)
 
