@@ -105,9 +105,9 @@ class ReidEvaluator(DatasetEvaluator):
 
         if self.cfg.TEST.GPU_RERANK.ENABLED:
             logger.info("Test with gpu real-time rerank setting")
-            k1 = self.cfg.TEST.RERANK.K1
-            k2 = self.cfg.TEST.RERANK.K2
-            lambda_value = self.cfg.TEST.RERANK.LAMBDA
+            k1 = self.cfg.TEST.GPU_RERANK.K1
+            k2 = self.cfg.TEST.GPU_RERANK.K2
+            lambda_value = self.cfg.TEST.GPU_RERANK.LAMBDA
 
             if self.cfg.TEST.METRIC == "cosine":
                 query_features = F.normalize(query_features, dim=1)
