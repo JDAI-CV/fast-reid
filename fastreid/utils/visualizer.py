@@ -153,7 +153,7 @@ class Visualizer:
         query_indices = np.argsort(self.all_ap)
         if rank_sort == 'descending': query_indices = query_indices[::-1]
 
-        query_indices = query_indices[:num_vis]
+        query_indices = query_indices[:int(num_vis)]
         self.save_rank_result(query_indices, output, max_rank, vis_label, label_sort, actmap)
 
     def vis_roc_curve(self, output):
