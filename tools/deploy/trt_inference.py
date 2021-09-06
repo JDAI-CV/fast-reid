@@ -196,5 +196,5 @@ if __name__ == "__main__":
             img = cv2.imread(img_path)
             # the model expects RGB inputs
             cvt_img = img[:, :, ::-1]
-            feat = trt.inference_on_images([cvt_img])
+            feat = trt.inference_on_images([cvt_img], (args.height,args.width))
             np.save(os.path.join(args.output, os.path.basename(img_path).split('.')[0] + '.npy'), feat)
