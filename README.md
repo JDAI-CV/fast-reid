@@ -8,6 +8,7 @@ FastReID is a research platform that implements state-of-the-art re-identificati
 
 ## What's New
 
+- [Sep 2021] [DG-ReID](https://github.com/xiaomingzhid/sskd) is updated, you can check the [paper](https://arxiv.org/pdf/2108.05045.pdf).
 - [June 2021] [Contiguous parameters](https://github.com/PhilJd/contiguous_pytorch_params) is supported, now it can
   accelerate ~20%.
 - [May 2021] Vision Transformer backbone supported, see `configs/Market1501/bagtricks_vit.yml`.
