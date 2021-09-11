@@ -148,10 +148,37 @@ class DataLoaderX(DataLoader):
         self.local_rank = local_rank
 
     def __iter__(self):
-        self.iter = super().__iter__()
+        def _iter():
+            # wrap original iterator into an interruptible one
+            for batch in DataLoader.__iter__(self):
+                if self.interrupted:
+                    # if flagged as interrupted, return immediately, which would end the
+                    # BackgroundGenerator
+                    return
+                # otherwise, yield data batch as normal
+                yield batch
+
+        self.interrupted = False
+        self.iter = _iter()
         self.iter = BackgroundGenerator(self.iter, self.local_rank)
         self.preload()
         return self
+
+    def interrupt(self):
+        if self.interrupted or not self.iter.is_alive():
+            # avoid re-entrance or ill-conditioned thread state
+            return
+
+        # flag as interrupted, which could be awared from inside `_iter()`
+        self.interrupted = True
+
+        # exhaust all remaining elements, so that the queue becomes empty,
+        # and the thread should quit
+        for _ in self.iter:
+            pass
+
+        # wait for the thread to quit
+        self.iter.join()
 
     def preload(self):
         self.batch = next(self.iter, None)
@@ -169,3 +196,7 @@ class DataLoaderX(DataLoader):
             raise StopIteration
         self.preload()
         return batch
+
+    def __del__(self):
+        # if the dataloader is to be freed, interrupt its BackgroundGenerator
+        self.interrupt()
