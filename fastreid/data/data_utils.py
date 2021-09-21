@@ -172,7 +172,7 @@ class DataLoaderX(DataLoader):
         for _ in self.iter:
             pass
 
-        # Waiting for background thread to quit 
+        # Waiting for background thread to quit
         self.iter.join()
 
     def preload(self):
@@ -196,6 +196,7 @@ class DataLoaderX(DataLoader):
         self.preload()
         return batch
 
-    def __del__(self):
-        # if the dataloader is to be freed, shutdown its BackgroundGenerator
+    # Signal for shutting down background thread
+    def shutdown(self):
+        # If the dataloader is to be freed, shutdown its BackgroundGenerator
         self._shutdown_background_thread()
