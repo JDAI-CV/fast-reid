@@ -12,6 +12,11 @@ If you want to use other pre-train models, such as MoCo pre-train, you can downl
 ```bash
 cd fastreid/evaluation/rank_cylib; make all
 ```
+## Compile with gpu_reranking to achieve real-time re-ranking
+
+```bash
+cd fastreid/evaluation/extension; sh make.sh
+```
 
 ## Training & Evaluation in Command Line
 
@@ -57,6 +62,14 @@ To evaluate a model's performance, use
 ```bash
 python3 tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml --eval-only \
 MODEL.WEIGHTS /path/to/checkpoint_file MODEL.DEVICE "cuda:0"
+```
+
+
+To evaluate a model's performance, use
+
+```bash
+python3 tools/train_net.py --config-file ./configs/Market1501/bagtricks_R50.yml --eval-only \
+TEST.GPU_RERANK.ENABLED True MODEL.WEIGHTS /path/to/checkpoint_file MODEL.DEVICE "cuda:0"
 ```
 
 For more options, see `python3 tools/train_net.py -h`.
