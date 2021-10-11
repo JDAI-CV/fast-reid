@@ -1,9 +1,11 @@
 
 logs
+datasets
 
 # compilation and distribution
 __pycache__
 _ext
+*.c
 *.pyc
 *.pyd
 *.so
