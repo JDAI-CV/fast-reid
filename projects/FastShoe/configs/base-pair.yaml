@@ -70,7 +70,7 @@ TEST:
   IMS_PER_BATCH: 256
 
 DATASETS:
-  NAMES: ("Hymenoptera",)
-  TESTS: ("Hymenoptera",)
+  NAMES: ("ShoeDataset",)
+  TESTS: ("ShoeDataset",)
 
-OUTPUT_DIR: projects/FastClas/logs/r18_demo
+OUTPUT_DIR: projects/FastShoe/logs/r18_demo

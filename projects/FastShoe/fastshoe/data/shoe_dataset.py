@@ -23,7 +23,7 @@ class ShoeDataset(ImageDataset):
             pos_folders.append(data['positive_img_list'])
             neg_folders.append(data['negative_img_list'])
 
-        assert len(self.pos_folders) == len(self.neg_folders), \
+        assert len(pos_folders) == len(neg_folders), \
             'the len of self.pos_foders should be equal to self.pos_foders'
 
-        super().__init__(pos_folders, neg_folders, **kwargs)
+        super().__init__(pos_folders, neg_folders, None, **kwargs)
