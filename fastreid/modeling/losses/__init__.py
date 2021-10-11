@@ -5,6 +5,7 @@
 """
 
 from .circle_loss import *
+from .contrastive_loss import contrastive_loss
 from .cross_entroy_loss import cross_entropy_loss, log_accuracy
 from .focal_loss import focal_loss
 from .triplet_loss import triplet_loss

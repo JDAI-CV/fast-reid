@@ -121,6 +121,11 @@ _C.MODEL.LOSSES.COSFACE.MARGIN = 0.25
 _C.MODEL.LOSSES.COSFACE.GAMMA = 128
 _C.MODEL.LOSSES.COSFACE.SCALE = 1.0
 
+# Contrastive Loss options
+_C.MODEL.LOSSES.CONTRASTIVE = CN()
+_C.MODEL.LOSSES.CONTRASTIVE.MARGIN = 2.0
+_C.MODEL.LOSSES.CONTRASTIVE.SCALE = 1.0
+
 # Path to a checkpoint file to be loaded to the model. You can find available models in the model zoo.
 _C.MODEL.WEIGHTS = ""
 

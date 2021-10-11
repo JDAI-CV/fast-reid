@@ -37,3 +37,6 @@ model_ts*.txt
 .vscode
 _darcs
 .DS_Store
+
+# dataset dir
+datasets

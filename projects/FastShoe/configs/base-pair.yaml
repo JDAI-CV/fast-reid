@@ -18,10 +18,10 @@ MODEL:
     NUM_CLASSES: 2
 
   LOSSES:
-    NAME: ("CrossEntropyLoss",)
+    NAME: ("ContrastiveLoss",)
 
-    CE:
-      EPSILON: 0.1
+    CONTRASTIVE:
+      MARGIN: 2.0
       SCALE: 1.
 
 INPUT:

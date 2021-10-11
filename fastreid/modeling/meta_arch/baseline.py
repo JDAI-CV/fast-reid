@@ -88,6 +88,10 @@ class Baseline(nn.Module):
                         'margin': cfg.MODEL.LOSSES.COSFACE.MARGIN,
                         'gamma': cfg.MODEL.LOSSES.COSFACE.GAMMA,
                         'scale': cfg.MODEL.LOSSES.COSFACE.SCALE
+                    },
+                    'contrastive': {
+                        'margin': cfg.MODEL.LOSSES.CONTRASTIVE.MARGIN,
+                        'scale': cfg.MODEL.LOSSES.CONTRASTIVE.SCALE
                     }
                 }
         }
@@ -143,7 +147,7 @@ class Baseline(nn.Module):
         # fmt: on
 
         # Log prediction accuracy
-        log_accuracy(pred_class_logits, gt_labels)
+        # log_accuracy(pred_class_logits, gt_labels)
 
         loss_dict = {}
         loss_names = self.loss_kwargs['loss_names']
@@ -184,5 +188,13 @@ class Baseline(nn.Module):
                 cosface_kwargs.get('margin'),
                 cosface_kwargs.get('gamma'),
             ) * cosface_kwargs.get('scale')
+
+        if 'ContrastiveLoss' in loss_names:
+            contrastive_kwargs = self.loss_kwargs.get('contrastive')
+            loss_dict['loss_contrastive'] = contrastive_loss(
+                pred_features,
+                gt_labels,
+                contrastive_kwargs.get('margin')
+            ) * contrastive_kwargs.get('scale')
 
         return loss_dict
