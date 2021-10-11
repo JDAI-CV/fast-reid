@@ -5,6 +5,7 @@
 import os
 import random
 
+import torch
 from torch.utils.data import Dataset
 
 from fastreid.data.data_utils import read_image
@@ -28,6 +29,7 @@ class PairDataset(Dataset):
             img_path1, img_path2 = random.sample(pf, 2)
         else:
             # generate negative pair
+            label = 0
             img_path1, img_path2 = random.choice(pf), random.choice(nf)
 
         img_path1 = os.path.join(self.img_root, img_path1)
@@ -45,3 +47,8 @@ class PairDataset(Dataset):
             'img2': img2,
             'target': label
         }
+
+    @property
+    def num_classes(self):
+        return 2
+
