@@ -108,13 +108,19 @@ class Baseline(nn.Module):
             assert "targets" in batched_inputs, "Person ID annotation are missing in training!"
             targets = batched_inputs["targets"]
 
+            if "cls_targets" in batched_inputs:
+                cls_targets = batched_inputs['cls_targets']
+
             # PreciseBN flag, When do preciseBN on different dataset, the number of classes in new dataset
             # may be larger than that in the original dataset, so the circle/arcface will
             # throw an error. We just set all the targets to 0 to avoid this problem.
             if targets.sum() < 0: targets.zero_()
 
-            outputs = self.heads(features, targets)
-            losses = self.losses(outputs, targets)
+            if "cls_targets" in batched_inputs:
+                outputs = self.heads(features, cls_targets)
+            else:
+                outputs = self.heads(features, targets)
+            losses = self.losses(outputs, cls_targets, targets)
             return losses
         else:
             outputs = self.heads(features)
@@ -134,7 +140,7 @@ class Baseline(nn.Module):
         images.sub_(self.pixel_mean).div_(self.pixel_std)
         return images
 
-    def losses(self, outputs, gt_labels):
+    def losses(self, outputs, gt_cls_labels, gt_metric_labels):
         """
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
@@ -147,7 +153,7 @@ class Baseline(nn.Module):
         # fmt: on
 
         # Log prediction accuracy
-        # log_accuracy(pred_class_logits, gt_labels)
+        log_accuracy(pred_class_logits, gt_cls_labels)
 
         loss_dict = {}
         loss_names = self.loss_kwargs['loss_names']

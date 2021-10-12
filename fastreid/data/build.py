@@ -194,12 +194,15 @@ def pair_batch_collator(batched_inputs):
 
     images = []
     targets = []
+    cls_targets = []
     for elem in batched_inputs:
         images.append(elem['img1'])
         images.append(elem['img2'])
         targets.append(elem['target'])
+        cls_targets.append(elem['cls_target'])
 
     images = torch.stack(images, dim=0)
     targets = torch.tensor(targets)
-    return {'images': images, 'targets': targets}
+    cls_targets = torch.tensor(cls_targets)
+    return {'images': images, 'targets': targets, 'cls_targets': cls_targets}
 

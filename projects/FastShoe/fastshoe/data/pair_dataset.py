@@ -45,10 +45,10 @@ class PairDataset(Dataset):
         return {
             'img1': img1,
             'img2': img2,
-            'target': label
+            'target': label,
+            'cls_target': idx
         }
 
     @property
     def num_classes(self):
-        return 2
-
+        return len(self.pos_folders)
