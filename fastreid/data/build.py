@@ -203,6 +203,6 @@ def pair_batch_collator(batched_inputs):
 
     images = torch.stack(images, dim=0)
     targets = torch.tensor(targets)
-    cls_targets = torch.tensor(clas_targets)
+    clas_targets = torch.tensor(clas_targets)
     return {'images': images, 'targets': targets, 'clas_targets': clas_targets}
 

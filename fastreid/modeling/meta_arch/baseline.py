@@ -154,7 +154,7 @@ class Baseline(nn.Module):
         # fmt: on
 
         # Log prediction accuracy
-        log_accuracy(pred_class_logits[: pred_class_logits.size(0), 2], gt_cls_labels)
+        log_accuracy(pred_class_logits[0:pred_class_logits.size(0):2, :], gt_cls_labels)
 
         loss_dict = {}
         loss_names = self.loss_kwargs['loss_names']
