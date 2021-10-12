@@ -108,19 +108,19 @@ class Baseline(nn.Module):
             assert "targets" in batched_inputs, "Person ID annotation are missing in training!"
             targets = batched_inputs["targets"]
 
-            if "cls_targets" in batched_inputs:
-                cls_targets = batched_inputs['cls_targets']
+            if "clas_targets" in batched_inputs:
+                clas_targets = batched_inputs['clas_targets']
 
             # PreciseBN flag, When do preciseBN on different dataset, the number of classes in new dataset
             # may be larger than that in the original dataset, so the circle/arcface will
             # throw an error. We just set all the targets to 0 to avoid this problem.
             if targets.sum() < 0: targets.zero_()
 
-            if "cls_targets" in batched_inputs:
-                outputs = self.heads(features, cls_targets)
+            if "clas_targets" in batched_inputs:
+                outputs = self.heads(features, clas_targets)
             else:
                 outputs = self.heads(features, targets)
-            losses = self.losses(outputs, cls_targets, targets)
+            losses = self.losses(outputs, clas_targets, targets)
             return losses
         else:
             outputs = self.heads(features)
@@ -144,6 +144,7 @@ class Baseline(nn.Module):
         """
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
+        TODO: 修改这个文件，使其能够适用我们这种形式的pair损失，将其独立于原有的训练文件
         """
         # model predictions
         # fmt: off
@@ -153,7 +154,7 @@ class Baseline(nn.Module):
         # fmt: on
 
         # Log prediction accuracy
-        log_accuracy(pred_class_logits, gt_cls_labels)
+        log_accuracy(pred_class_logits[: pred_class_logits.size(0), 2], gt_cls_labels)
 
         loss_dict = {}
         loss_names = self.loss_kwargs['loss_names']
@@ -162,7 +163,7 @@ class Baseline(nn.Module):
             ce_kwargs = self.loss_kwargs.get('ce')
             loss_dict['loss_cls'] = cross_entropy_loss(
                 cls_outputs,
-                gt_labels,
+                gt_metric_labels,
                 ce_kwargs.get('eps'),
                 ce_kwargs.get('alpha')
             ) * ce_kwargs.get('scale')
@@ -171,7 +172,7 @@ class Baseline(nn.Module):
             tri_kwargs = self.loss_kwargs.get('tri')
             loss_dict['loss_triplet'] = triplet_loss(
                 pred_features,
-                gt_labels,
+                gt_metric_labels,
                 tri_kwargs.get('margin'),
                 tri_kwargs.get('norm_feat'),
                 tri_kwargs.get('hard_mining')
@@ -181,7 +182,7 @@ class Baseline(nn.Module):
             circle_kwargs = self.loss_kwargs.get('circle')
             loss_dict['loss_circle'] = pairwise_circleloss(
                 pred_features,
-                gt_labels,
+                gt_metric_labels,
                 circle_kwargs.get('margin'),
                 circle_kwargs.get('gamma')
             ) * circle_kwargs.get('scale')
@@ -190,7 +191,7 @@ class Baseline(nn.Module):
             cosface_kwargs = self.loss_kwargs.get('cosface')
             loss_dict['loss_cosface'] = pairwise_cosface(
                 pred_features,
-                gt_labels,
+                gt_metric_labels,
                 cosface_kwargs.get('margin'),
                 cosface_kwargs.get('gamma'),
             ) * cosface_kwargs.get('scale')
@@ -199,7 +200,7 @@ class Baseline(nn.Module):
             contrastive_kwargs = self.loss_kwargs.get('contrastive')
             loss_dict['loss_contrastive'] = contrastive_loss(
                 pred_features,
-                gt_labels,
+                gt_metric_labels,
                 contrastive_kwargs.get('margin')
             ) * contrastive_kwargs.get('scale')
 

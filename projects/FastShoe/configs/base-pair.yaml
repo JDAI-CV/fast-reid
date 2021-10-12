@@ -15,7 +15,7 @@ MODEL:
     EMBEDDING_DIM: 0
     POOL_LAYER: FastGlobalAvgPool
     CLS_LAYER: Linear
-    NUM_CLASSES: 2
+    NUM_CLASSES: 41380
 
   LOSSES:
     NAME: ("ContrastiveLoss",)
