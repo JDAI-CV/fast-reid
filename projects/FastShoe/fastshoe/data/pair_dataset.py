@@ -45,8 +45,7 @@ class PairDataset(Dataset):
         return {
             'img1': img1,
             'img2': img2,
-            'target': label,
-            'clas_target': idx
+            'target': label
         }
 
     @property

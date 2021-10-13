@@ -12,6 +12,7 @@ def contrastive_loss(
         embedding: torch.Tensor,
         targets: torch.Tensor,
         margin: float) -> torch.Tensor:
+    embedding = embedding.view(embedding.size(0) * 2, -1)
     embedding = normalize(embedding, axis=-1)
     embed1 = embedding[0:len(embedding):2, :]
     embed2 = embedding[1:len(embedding):2, :]
