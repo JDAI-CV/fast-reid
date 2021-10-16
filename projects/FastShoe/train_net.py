@@ -13,6 +13,7 @@ sys.path.append('.')
 from fastreid.config import get_cfg
 from fastreid.engine import default_argument_parser, default_setup, launch
 from fastreid.utils.checkpoint import Checkpointer, PathManager
+from fastreid.utils import bughook
 
 from fastshoe import PairTrainer
 
