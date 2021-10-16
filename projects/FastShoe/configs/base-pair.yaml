@@ -1,5 +1,5 @@
 MODEL:
-  META_ARCHITECTURE: Baseline
+  META_ARCHITECTURE: Metric
 
   BACKBONE:
     NAME: build_resnet_backbone
@@ -18,12 +18,8 @@ MODEL:
     NUM_CLASSES: 2
 
   LOSSES:
-    NAME: ("CrossEntropyLoss", "ContrastiveLoss")
+    NAME: ("ContrastiveLoss",)
     
-    CE:
-      EPSILON: 0.1
-      SCALE: 1.
-
     CONTRASTIVE:
       MARGIN: 2.0
       SCALE: 1.

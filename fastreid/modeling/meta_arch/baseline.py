@@ -138,7 +138,6 @@ class Baseline(nn.Module):
         """
         Compute loss from modeling's outputs, the loss function input arguments
         must be the same as the outputs of the model forwarding.
-        TODO: 修改这个文件，使其能够适用我们这种形式的pair损失，将其独立于原有的训练文件
         """
         # model predictions
         # fmt: off

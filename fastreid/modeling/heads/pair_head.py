@@ -3,6 +3,7 @@
 # @Author  : zuchen.wang@vipshop.com
 # @File    : pair_head.py
 import torch
+from torch import nn
 import torch.nn.functional as F
 
 from fastreid.config import configurable
@@ -12,7 +13,7 @@ from fastreid.modeling.heads import REID_HEADS_REGISTRY, EmbeddingHead
 
 
 @REID_HEADS_REGISTRY.register()
-class PairHead(EmbeddingHead):
+class PairHead(nn.Module):
 
     @configurable
     def __init__(
@@ -20,12 +21,8 @@ class PairHead(EmbeddingHead):
             *,
             feat_dim,
             embedding_dim,
-            num_classes,
             neck_feat,
             pool_type,
-            cls_type,
-            scale,
-            margin,
             with_bnneck,
             norm_type
     ):
@@ -36,26 +33,53 @@ class PairHead(EmbeddingHead):
         Args:
             feat_dim:
             embedding_dim:
-            num_classes:
             neck_feat:
             pool_type:
-            cls_type:
-            scale:
-            margin:
             with_bnneck:
             norm_type:
         """
-        feat_dim = feat_dim * 2
-        super(PairHead, self).__init__(feat_dim=feat_dim,
-                                       embedding_dim=embedding_dim,
-                                       num_classes=num_classes,
-                                       neck_feat=neck_feat,
-                                       pool_type=pool_type,
-                                       cls_type=cls_type,
-                                       scale=scale,
-                                       margin=margin,
-                                       with_bnneck=with_bnneck,
-                                       norm_type=norm_type)
+        super().__init__()
+        feat_dim *= 2
+        # Pooling layer
+        assert hasattr(pooling, pool_type), "Expected pool types are {}, " \
+                                            "but got {}".format(pooling.__all__, pool_type)
+        self.pool_layer = getattr(pooling, pool_type)()
+
+        self.neck_feat = neck_feat
+
+        neck = []
+        if embedding_dim > 0:
+            neck.append(nn.Conv2d(feat_dim, embedding_dim, 1, 1, bias=False))
+            feat_dim = embedding_dim
+
+        if with_bnneck:
+            neck.append(get_norm(norm_type, feat_dim, bias_freeze=True))
+
+        self.bottleneck = nn.Sequential(*neck)
+
+        self.reset_parameters()
+    
+    def reset_parameters(self) -> None:
+        self.bottleneck.apply(weights_init_kaiming)
+
+    @classmethod
+    def from_config(cls, cfg):
+        # fmt: off
+        feat_dim      = cfg.MODEL.BACKBONE.FEAT_DIM
+        embedding_dim = cfg.MODEL.HEADS.EMBEDDING_DIM
+        neck_feat     = cfg.MODEL.HEADS.NECK_FEAT
+        pool_type     = cfg.MODEL.HEADS.POOL_LAYER
+        with_bnneck   = cfg.MODEL.HEADS.WITH_BNNECK
+        norm_type     = cfg.MODEL.HEADS.NORM
+        # fmt: on
+        return {
+            'feat_dim': feat_dim,
+            'embedding_dim': embedding_dim,
+            'neck_feat': neck_feat,
+            'pool_type': pool_type,
+            'with_bnneck': with_bnneck,
+            'norm_type': norm_type
+        }
 
     def forward(self, features, targets=None):
         """
@@ -65,20 +89,7 @@ class PairHead(EmbeddingHead):
         neck_feat = self.bottleneck(pool_feat)
         neck_feat = neck_feat.view(int(neck_feat.size(0) / 2), -1)
 
-        if self.cls_layer.__class__.__name__ == 'Linear':
-            logits = F.linear(neck_feat, self.weight)
-        else:
-            logits = F.linear(F.normalize(neck_feat), F.normalize(self.weight))
-
-        # Evaluation
-        if not self.training:
-            return logits.mul_(self.cls_layer.s)
-
-        cls_outputs = self.cls_layer(logits.clone(), targets)
-
         return {
-            "cls_outputs": cls_outputs,
-            "pred_class_logits": logits.mul_(self.cls_layer.s),
             "features": neck_feat,
         }
 
