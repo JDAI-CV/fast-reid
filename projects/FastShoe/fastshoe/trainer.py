@@ -11,7 +11,7 @@ from fastreid.data.datasets import DATASET_REGISTRY
 from fastreid.utils import comm
 from fastreid.data.transforms import build_transforms
 from fastreid.data.build import build_reid_train_loader, build_reid_test_loader
-from fastreid.evaluation.clas_evaluator import ClasEvaluator
+from fastreid.evaluation.pair_evaluator import PairEvaluator
 
 from projects.FastShoe.fastshoe.data import PairDataset
 
@@ -57,4 +57,4 @@ class PairTrainer(DefaultTrainer):
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_dir=None):
         data_loader = cls.build_test_loader(cfg, dataset_name)
-        return data_loader, ClasEvaluator(cfg, output_dir)
+        return data_loader, PairEvaluator(cfg, output_dir)

@@ -21,18 +21,32 @@ def print_csv_format(results):
     logger = logging.getLogger(__name__)
 
     dataset_name = results.pop('dataset')
-    metrics = ["Dataset"] + [k for k in results]
-    csv_results = [(dataset_name, *list(results.values()))]
+    metrics = ["Dataset"] + [k for k, v in results.items() if not isinstance(v, (list, np.ndarray))]
+    csv_results = [[dataset_name] + [v for v in results.values() if not isinstance(v, (list, np.ndarray))]]
 
     # tabulate it
     table = tabulate(
         csv_results,
         tablefmt="pipe",
-        floatfmt=".2f",
+        floatfmt=".4f",
         headers=metrics,
         numalign="left",
     )
+    logger.info("Evaluation results in csv format: \n" + colored(table, "cyan"))
 
+    # show precision, recall and f1 under given threshold
+    metrics = [k for k, v in results.items() if isinstance(v, (list, np.ndarray))]
+    csv_results = [v for v in results.values() if isinstance(v, (list, np.ndarray))]
+    csv_results = [v.tolist() if isinstance(v, np.ndarray) else v for v in csv_results]
+    csv_results = np.array(csv_results).T.tolist()
+
+    table = tabulate(
+        csv_results,
+        tablefmt="pipe",
+        floatfmt=".4f",
+        headers=metrics,
+        numalign="left",
+    )
     logger.info("Evaluation results in csv format: \n" + colored(table, "cyan"))
 
 
@@ -85,3 +99,4 @@ def flatten_results_dict(results):
         else:
             r[k] = v
     return r
+

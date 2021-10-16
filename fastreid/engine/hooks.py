@@ -9,6 +9,7 @@ import tempfile
 import time
 from collections import Counter
 
+import numpy as np
 import torch
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel
@@ -354,6 +355,11 @@ class EvalHook(HookBase):
             assert isinstance(
                 results, dict
             ), "Eval function must return a dict. Got {} instead.".format(results)
+
+            # drop np.array values in results
+            for k, v in list(results.items()):
+                if isinstance(v, (list, np.ndarray)):
+                    results.pop(k)
 
             flattened_results = flatten_results_dict(results)
             for k, v in flattened_results.items():
