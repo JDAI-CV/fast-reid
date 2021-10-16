@@ -37,7 +37,7 @@ class PairTrainer(DefaultTrainer):
 
         transforms = build_transforms(cfg, is_train=True)
         train_set = PairDataset(img_root=cls.img_dir,
-                                pos_folders=pos_folder_list, neg_folders=neg_folder_list, transform=transforms)
+                                pos_folders=pos_folder_list, neg_folders=neg_folder_list, transform=transforms, mode='train')
         data_loader = build_reid_train_loader(cfg, train_set=train_set)
         return data_loader
 
@@ -50,7 +50,7 @@ class PairTrainer(DefaultTrainer):
         transforms = build_transforms(cfg, is_train=False)
 
         test_set = PairDataset(img_root=cls.img_dir,
-                               pos_folders=data.train, neg_folders=data.query, transform=transforms)
+                               pos_folders=data.train, neg_folders=data.query, transform=transforms, mode='val')
         data_loader, _ = build_reid_test_loader(cfg, test_set=test_set)
         return data_loader
 

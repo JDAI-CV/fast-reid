@@ -4,21 +4,33 @@
 # @File    : pair_dataset.py
 import os
 import random
+import logging
 
 import torch
 from torch.utils.data import Dataset
 
 from fastreid.data.data_utils import read_image
+from fastreid.utils.env import seed_all_rng
+
+logger = logging.getLogger(__name__)
 
 
 class PairDataset(Dataset):
-    def __init__(self, img_root: str, pos_folders: list, neg_folders: list, transform=None):
+    def __init__(self, img_root: str, pos_folders: list, neg_folders: list, transform=None, mode: str = 'train' ):
+        assert mode in ('train', 'val', 'test'), logger.info('''mode should the one of ('train', 'val', 'test')''')
         self.img_root = img_root
         self.pos_folders = pos_folders
         self.neg_folders = neg_folders
         self.transform = transform
+        self.mode = mode
+
+        if self.mode != 'train':
+            seed_all_rng(12345)
 
     def __len__(self):
+        if self.mode == 'test':
+            return len(self.pos_folders) * 10
+
         return len(self.pos_folders)
 
     def __getitem__(self, idx):
@@ -50,4 +62,4 @@ class PairDataset(Dataset):
 
     @property
     def num_classes(self):
-        return len(self.pos_folders)
+        return 2
