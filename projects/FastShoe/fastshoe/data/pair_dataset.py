@@ -11,12 +11,13 @@ from torch.utils.data import Dataset
 from fastreid.data.data_utils import read_image
 from fastreid.utils.env import seed_all_rng
 
-logger = logging.getLogger(__name__)
-
 
 class PairDataset(Dataset):
+
     def __init__(self, img_root: str, pos_folders: list, neg_folders: list, transform=None, mode: str = 'train' ):
-        assert mode in ('train', 'val', 'test'), logger.info('''mode should the one of ('train', 'val', 'test')''')
+        self._logger = logging.getLogger(__name__)
+
+        assert mode in ('train', 'val', 'test'), self._logger.info('''mode should the one of ('train', 'val', 'test')''')
         self.img_root = img_root
         self.pos_folders = pos_folders
         self.neg_folders = neg_folders
@@ -24,6 +25,7 @@ class PairDataset(Dataset):
         self.mode = mode
 
         if self.mode != 'train':
+            self._logger.info('set {} with {} random seed: 12345'.format(self.mode, self.__class__.__name__))
             seed_all_rng(12345)
 
     def __len__(self):

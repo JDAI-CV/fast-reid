@@ -12,12 +12,11 @@ from termcolor import colored
 from fastreid.data.datasets import DATASET_REGISTRY
 from fastreid.data.datasets.bases import ImageDataset
 
-logger = logging.getLogger(__name__)
-
 
 @DATASET_REGISTRY.register()
 class ShoeDataset(ImageDataset):
     def __init__(self, img_dir: str, anno_path: str, **kwargs):
+        self._logger = logging.getLogger(__name__)
         self.img_dir = img_dir
         self.anno_path = anno_path
 
@@ -28,8 +27,7 @@ class ShoeDataset(ImageDataset):
             pos_folders.append(data['positive_img_list'])
             neg_folders.append(data['negative_img_list'])
 
-        assert len(pos_folders) == len(neg_folders), \
-            'the len of self.pos_foders should be equal to self.pos_foders'
+        assert len(pos_folders) == len(neg_folders), self._logger.error('the len of self.pos_foders should be equal to self.pos_foders')
 
         super().__init__(pos_folders, neg_folders, None, **kwargs)
 
@@ -61,7 +59,7 @@ class ShoeDataset(ImageDataset):
             numalign="left",
         )
 
-        logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
+        self._logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
 
     def show_test(self):
         num_query_pids, num_query_images = self.parse_data(self.query)
@@ -76,4 +74,4 @@ class ShoeDataset(ImageDataset):
             headers=headers,
             numalign="left",
         )
-        logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
+        self._logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
