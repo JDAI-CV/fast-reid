@@ -35,6 +35,7 @@ class PairEvaluator(DatasetEvaluator):
         embed2 = embedding[1:len(embedding):2, :]
         distances = torch.mul(embed1, embed2).sum(-1).numpy()
 
+        # print(distances)
         prediction = {
             'distances': distances,
             'labels': inputs["targets"].to(self._cpu_device).numpy()

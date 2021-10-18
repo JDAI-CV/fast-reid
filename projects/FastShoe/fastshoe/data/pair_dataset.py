@@ -6,7 +6,6 @@ import os
 import random
 import logging
 
-import torch
 from torch.utils.data import Dataset
 
 from fastreid.data.data_utils import read_image
@@ -34,6 +33,9 @@ class PairDataset(Dataset):
         return len(self.pos_folders)
 
     def __getitem__(self, idx):
+        if self.mode == 'test':
+            idx = int(idx / 10)
+		
         pf, nf = self.pos_folders[idx], self.neg_folders[idx]
         label = 1
         if random.random() < 0.5:

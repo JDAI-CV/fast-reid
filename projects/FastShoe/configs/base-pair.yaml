@@ -3,11 +3,13 @@ MODEL:
 
   BACKBONE:
     NAME: build_resnet_backbone
-    DEPTH: 18x
+    DEPTH: 101x
     NORM: BN
     LAST_STRIDE: 2
     FEAT_DIM: 512
     PRETRAIN: True
+    WITH_IBN: True
+    WITH_SE: True
 
   HEADS:
     NAME: PairHead
@@ -28,6 +30,13 @@ INPUT:
   SIZE_TRAIN: [0,]  # no need for resize when training
   SIZE_TEST: [256,]
 
+  AUTOAUG:
+    ENABLED: True
+    PROB: 0.5
+
+  CJ:
+    ENABLED: True
+
   CROP:
     ENABLED: True
     SIZE: [224,]
@@ -42,7 +51,7 @@ DATALOADER:
   NUM_WORKERS: 8
 
 SOLVER:
-  MAX_EPOCH: 100
+  MAX_EPOCH: 1000
   AMP:
     ENABLED: True
 
@@ -67,10 +76,10 @@ SOLVER:
 
 TEST:
   EVAL_PERIOD: 1
-  IMS_PER_BATCH: 256
+  IMS_PER_BATCH: 32
 
 DATASETS:
-  NAMES: ("ShoeDataset",)
-  TESTS: ("ShoeDataset",)
+  NAMES: ("ShoeDataset", "OnlineDataset")
+  TESTS: ("ShoeDataset", "OnlineDataset")
 
-OUTPUT_DIR: projects/FastShoe/logs/r18_demo
+OUTPUT_DIR: projects/FastShoe/logs/r101_ibn_se

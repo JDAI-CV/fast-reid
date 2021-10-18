@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 
 @DATASET_REGISTRY.register()
 class ShoeDataset(ImageDataset):
-    def __init__(self, img_dir: str, annotation_json: str, **kwargs):
+    def __init__(self, img_dir: str, anno_path: str, **kwargs):
         self.img_dir = img_dir
-        self.annotation_json = annotation_json
+        self.anno_path = anno_path
 
-        all_data = json.load(open(self.annotation_json))
+        all_data = json.load(open(self.anno_path))
         pos_folders = []
         neg_folders = []
         for data in all_data:

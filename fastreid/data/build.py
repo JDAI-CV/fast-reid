@@ -155,6 +155,15 @@ def build_reid_test_loader(test_set, test_batch_size, num_query, num_workers=4):
         collate_fn=pair_batch_collator,
         pin_memory=True,
     )
+    # Usage: debug dataset
+    # from torch.utils.data import DataLoader
+    # test_loader = DataLoader(
+    #     dataset=test_set,
+    #     batch_sampler=batch_sampler,
+    #     num_workers=0,  # for debug
+    #     collate_fn=pair_batch_collator,
+    #     pin_memory=True,
+    # )
     return test_loader, num_query
 
 
@@ -194,7 +203,6 @@ def pair_batch_collator(batched_inputs):
 
     images = []
     targets = []
-    clas_targets = []
     for elem in batched_inputs:
         images.append(elem['img1'])
         images.append(elem['img2'])
