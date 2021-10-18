@@ -7,7 +7,7 @@ import logging
 import os
 import tempfile
 import time
-from collections import Counter
+from collections import Counter, Mapping
 
 import numpy as np
 import torch
@@ -358,7 +358,12 @@ class EvalHook(HookBase):
 
             # drop np.array values in results
             for k, v in list(results.items()):
-                if isinstance(v, (list, np.ndarray)):
+                if isinstance(v, Mapping):
+                    for kk, vv in list(v.items()):
+                        if isinstance(vv, (list, np.ndarray)):
+                            v.pop(kk)
+                    results[k] = v
+                elif isinstance(v, (list, np.ndarray)):
                     results.pop(k)
 
             flattened_results = flatten_results_dict(results)
