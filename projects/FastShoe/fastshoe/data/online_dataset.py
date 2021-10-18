@@ -11,14 +11,14 @@ from fastreid.data.datasets import DATASET_REGISTRY
 from fastreid.data.datasets.bases import ImageDataset
 from fastreid.utils.env import seed_all_rng
 
-logger = logging.getLogger(__name__)
-
 
 @DATASET_REGISTRY.register()
 class OnlineDataset(ImageDataset):
-
     def __init__(self, img_dir, anno_path, transform=None, **kwargs):
+        self._logger = logging.getLogger(__name__)
+        self._logger.info('set {} with {} random seed: 12345'.format(self.mode, self.__class__.__name__))
         seed_all_rng(12345)
+
         self.img_dir = img_dir
         self.anno_path = anno_path
         self.transform = transform
@@ -82,4 +82,4 @@ class OnlineDataset(ImageDataset):
             headers=headers,
             numalign="left",
         )
-        logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
+        self._logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
