@@ -1,3 +1,5 @@
+_BASE_: base-pair.yaml
+
 MODEL:
   META_ARCHITECTURE: Metric
 
@@ -27,24 +29,26 @@ MODEL:
       SCALE: 1.
 
 INPUT:
-  SIZE_TRAIN: [0,]  # no need for resize when training
-  SIZE_TEST: [256,]
+  SIZE_TRAIN: [224, 224]  # no need for resize when training
+  SIZE_TEST: [224, 224]
 
-  AUTOAUG:
+  FLIP:
     ENABLED: True
-    PROB: 0.5
 
   CJ:
     ENABLED: True
 
-  CROP:
-    ENABLED: False
-    SIZE: [224,]
-    SCALE: [0.08, 1]
-    RATIO: [0.75, 1.333333333]
-
-  FLIP:
+  AUTOAUG:
     ENABLED: True
+    PROB: 0.5
+  
+  AUGMIX:
+    ENABLED: True
+    PROB: 0.5
+
+  REA:
+    ENABLED: True
+
 
 DATALOADER:
   SAMPLER_TRAIN: TrainingSampler
@@ -79,7 +83,7 @@ TEST:
   IMS_PER_BATCH: 32
 
 DATASETS:
-  NAMES: ("ShoeDataset", "OnlineDataset")
+  NAMES: ("ShoeDataset",)
   TESTS: ("ShoeDataset", "OnlineDataset")
 
 OUTPUT_DIR: projects/FastShoe/logs/r101_ibn_se
