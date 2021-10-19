@@ -1,0 +1,10 @@
+pyyaml
+yacs
+numpy
+termcolor
+scikit-learn
+faiss-cpu
+tabulate
+tensorboard
+pandas
+gdown
