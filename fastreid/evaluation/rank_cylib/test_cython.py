@@ -5,8 +5,8 @@ import os.path as osp
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)) + '/../../..')
 
-from fastreid.evaluation import evaluate_rank
-from fastreid.evaluation import evaluate_roc
+from fastreid.evaluation.rank import evaluate_rank
+from fastreid.evaluation.roc import evaluate_roc
 
 """
 Test the speed of cython-based evaluation code. The speed improvements
@@ -24,8 +24,8 @@ import sys
 import os.path as osp
 import numpy as np
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)) + '/../../..')
-from fastreid.evaluation import evaluate_rank
-from fastreid.evaluation import evaluate_roc
+from fastreid.evaluation.rank import evaluate_rank
+from fastreid.evaluation.roc import evaluate_roc
 num_q = 30
 num_g = 300
 dim = 512
