@@ -16,7 +16,7 @@ from fastreid.utils.env import seed_all_rng
 class OnlineDataset(ImageDataset):
     def __init__(self, img_dir, anno_path, transform=None, **kwargs):
         self._logger = logging.getLogger(__name__)
-        self._logger.info('set {} with {} random seed: 12345'.format(self.mode, self.__class__.__name__))
+        self._logger.info('set with {} random seed: 12345'.format(self.__class__.__name__))
         seed_all_rng(12345)
 
         self.img_dir = img_dir
