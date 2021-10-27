@@ -135,13 +135,11 @@ class PcbHead(nn.Module):
         
     @classmethod
     def from_config(cls, cfg: CfgNode):
-        full_dim      = cfg.MODEL.HEADS.FULL_DIM
-        part_dim      = cfg.MODEL.HEADS.PART_DIM
-        embedding_dim = cfg.MODEL.HEADS.EMBEDDING_DIM
-        # num_classes   = cfg.MODEL.HEADS.NUM_CLASSES
-        # cls_type      = cfg.MODEL.HEADS.CLS_LAYER
-        # scale         = cfg.MODEL.HEADS.SCALE
-        # margin        = cfg.MODEL.HEADS.MARGIN
+        # fmt: off
+        full_dim      = cfg.MODEL.PCB.HEAD.FULL_DIM
+        part_dim      = cfg.MODEL.PCB.HEAD.PART_DIM
+        embedding_dim = cfg.MODEL.PCB.HEAD.EMBEDDING_DIM
+        # fmt: on
 
         return {
                 'full_dim': full_dim,

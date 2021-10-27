@@ -27,6 +27,7 @@ class PCB(Baseline):
             pixel_mean,
             pixel_std,
             part_num,
+            part_dim,
             embedding_dim,
             loss_kwargs=None
     ):
@@ -48,6 +49,7 @@ class PCB(Baseline):
                 loss_kwargs=loss_kwargs
             )
         self.part_num = part_num
+        self.part_dim = part_dim
         self.embedding_dim = embedding_dim
         self.modify_backbone()
         self.random_init()
@@ -77,12 +79,13 @@ class PCB(Baseline):
         # embedding
         for i in range(self.part_num):
             name = 'embedder' + str(i)
-            setattr(self, name, nn.Linear(self.embedding_dim, 512))
+            setattr(self, name, nn.Linear(self.embedding_dim, self.part_dim))
 
     @classmethod
     def from_config(cls, cfg):
         config_dict = super(PCB, cls).from_config(cfg)
-        config_dict['part_num'] = cfg.MODEL.PCB.PART_NUM  
+        config_dict['part_num'] = cfg.MODEL.PCB.PART_NUM
+        config_dict['part_dim'] = cfg.MODEL.PCB.PART_DIM
         config_dict['embedding_dim'] = cfg.MODEL.PCB.EMBEDDING_DIM
         return config_dict
 
