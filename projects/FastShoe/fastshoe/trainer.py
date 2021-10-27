@@ -60,7 +60,7 @@ class PairTrainer(DefaultTrainer):
             if cfg.eval_only:
                 # for testing
                 test_set_0830 = DATASET_REGISTRY.get(dataset_name)(img_dir=os.path.join(_root, 'excel/0830/shoe_crop_images'),
-                                                                   anno_path=os.path.join(_root, 'excel/0830/excel_pair_crop_val.csv'),
+                                                                   anno_path=os.path.join(_root, 'excel/0830/excel_pair_crop.csv'),
                                                                    transform=transforms)
                 # for validation in train phase
                 test_set_0908 = DATASET_REGISTRY.get(dataset_name)(img_dir=os.path.join(_root, 'excel/0908/shoe_crop_images'),
@@ -76,8 +76,8 @@ class PairTrainer(DefaultTrainer):
         if comm.is_main_process():
             if dataset_name == 'ShoeDataset':
                 data.show_test()
-            else:
-                test_set.show_test()
+            # else:
+            #     test_set.show_test()
 
         data_loader, _ = build_reid_test_loader(cfg, test_set=test_set)
         return data_loader

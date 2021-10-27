@@ -82,6 +82,10 @@ _C.MODEL.HEADS.CLS_LAYER = "Linear"  # ArcSoftmax" or "CircleSoftmax"
 _C.MODEL.HEADS.MARGIN = 0.
 _C.MODEL.HEADS.SCALE = 1
 
+# PCB HEAD options
+_C.MODEL.HEADS.FULL_DIM = 512
+_C.MODEL.HEADS.PART_DIM = 512
+
 # ---------------------------------------------------------------------------- #
 # REID LOSSES options
 # ---------------------------------------------------------------------------- #
@@ -143,6 +147,14 @@ _C.KD.MODEL_CONFIG = []
 _C.KD.MODEL_WEIGHTS = []
 _C.KD.EMA = CN({"ENABLED": False})
 _C.KD.EMA.MOMENTUM = 0.999
+
+# -----------------------------------------------------------------------------
+# PCB MODEL
+# -----------------------------------------------------------------------------
+
+_C.MODEL.PCB = CN()
+_C.MODEL.PCB.PART_NUM = 3
+_C.MODEL.PCB.EMBEDDING_DIM = 512
 
 # -----------------------------------------------------------------------------
 # INPUT
