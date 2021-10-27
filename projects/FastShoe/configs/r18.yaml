@@ -1,61 +1,42 @@
-_BASE_: base-pair.yaml
+_BASE_: r101-se-ibn.yaml
 
 MODEL:
-  META_ARCHITECTURE: Metric
+  META_ARCHITECTURE: PCB
+
+  PCB:
+    EMBEDDING_DIM: 2048
 
   BACKBONE:
     NAME: build_resnet_backbone
-    DEPTH: 101x
+    DEPTH: 50x
     NORM: BN
     LAST_STRIDE: 2
     FEAT_DIM: 512
     PRETRAIN: True
-    WITH_IBN: True
-    WITH_SE: True
+    WITH_IBN: False
+    WITH_SE: False
 
   HEADS:
-    NAME: PairHead
+    NAME: PcbHead
     WITH_BNNECK: False
-    EMBEDDING_DIM: 0
+    EMBEDDING_DIM: 128
     POOL_LAYER: FastGlobalAvgPool
     CLS_LAYER: Linear
     NUM_CLASSES: 2
 
   LOSSES:
-    NAME: ("ContrastiveLoss",)
+    NAME: ("CrossEntropyLoss",)
     
     CONTRASTIVE:
       MARGIN: 2.0
       SCALE: 1.
 
-INPUT:
-  SIZE_TRAIN: [224, 224]  # no need for resize when training
-  SIZE_TEST: [224, 224]
-
-  FLIP:
-    ENABLED: True
-
-  CJ:
-    ENABLED: True
-
-  AUTOAUG:
-    ENABLED: True
-    PROB: 0.5
-  
-  AUGMIX:
-    ENABLED: True
-    PROB: 0.5
-
-  REA:
-    ENABLED: True
-
-
 DATALOADER:
   SAMPLER_TRAIN: TrainingSampler
-  NUM_WORKERS: 16
+  NUM_WORKERS: 8
 
 SOLVER:
-  MAX_EPOCH: 300
+  MAX_EPOCH: 1000
   AMP:
     ENABLED: True
 
@@ -63,13 +44,13 @@ SOLVER:
   SCHED: CosineAnnealingLR
 
   BASE_LR: 0.001
-  MOMENTUM: 0.99
+  MOMENTUM: 0.9
   NESTEROV: False
 
   BIAS_LR_FACTOR: 1.
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.
-  IMS_PER_BATCH: 4
+  IMS_PER_BATCH: 28
 
   ETA_MIN_LR: 0.00003
 
@@ -80,10 +61,10 @@ SOLVER:
 
 TEST:
   EVAL_PERIOD: 1
-  IMS_PER_BATCH: 128
+  IMS_PER_BATCH: 2
 
 DATASETS:
   NAMES: ("ShoeDataset",)
-  TESTS: ("ShoeDataset", "OnlineDataset")
+  TESTS: ("OnlineDataset",)
 
 OUTPUT_DIR: projects/FastShoe/logs/r101_ibn_se
