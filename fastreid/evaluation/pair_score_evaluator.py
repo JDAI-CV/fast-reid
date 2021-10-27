@@ -18,7 +18,7 @@ class PairScoreEvaluator(PairEvaluator):
 
     def process(self, inputs, outputs):
         prediction = {
-            'distances': outputs['cls_outputs'].to(self._cpu_device).numpy(),
-            'labels': inputs["targets"].to(self._cpu_device).numpy()
+                'distances': outputs['cls_outputs'][:, 1].to(self._cpu_device).numpy(),
+                'labels': inputs["targets"].to(self._cpu_device).numpy()
         }
         self._predictions.append(prediction)
