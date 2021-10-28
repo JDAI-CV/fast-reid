@@ -1,6 +1,16 @@
 MODEL:
-  META_ARCHITECTURE: Metric
-
+  META_ARCHITECTURE: PCB
+  
+  PCB:
+    PART_NUM: 3
+    PART_DIM: 512
+    EMBEDDING_DIM: 2048
+    
+    HEAD:
+      FULL_DIM: 2048
+      PART_DIM: 512
+      EMBEDDING_DIM: 512
+  
   BACKBONE:
     NAME: build_resnet_backbone
     DEPTH: 101x
@@ -12,60 +22,61 @@ MODEL:
     WITH_SE: True
 
   HEADS:
-    NAME: PairHead
+    NAME: PcbHead
     WITH_BNNECK: False
-    EMBEDDING_DIM: 0
+    EMBEDDING_DIM: 128
     POOL_LAYER: FastGlobalAvgPool
     CLS_LAYER: Linear
     NUM_CLASSES: 2
 
   LOSSES:
-    NAME: ("ContrastiveLoss",)
+    NAME: ("CrossEntropyLoss",)
     
     CONTRASTIVE:
       MARGIN: 2.0
       SCALE: 1.
 
 INPUT:
-  SIZE_TRAIN: [0,]  # no need for resize when training
-  SIZE_TEST: [256,]
-
-  AUTOAUG:
-    ENABLED: True
-    PROB: 0.5
-
-  CJ:
-    ENABLED: True
-
-  CROP:
-    ENABLED: False
-    SIZE: [224,]
-    SCALE: [0.08, 1]
-    RATIO: [0.75, 1.333333333]
+  SIZE_TRAIN: [480, 320]
+  SIZE_TEST: [480, 320]
 
   FLIP:
     ENABLED: True
 
+  CJ:
+    ENABLED: True
+
+  AUTOAUG:
+    ENABLED: True
+    PROB: 0.5
+  
+  AUGMIX:
+    ENABLED: True
+    PROB: 0.5
+
+  REA:
+    ENABLED: True
+
 DATALOADER:
   SAMPLER_TRAIN: TrainingSampler
-  NUM_WORKERS: 8
+  NUM_WORKERS: 20
 
 SOLVER:
-  MAX_EPOCH: 1000
+  MAX_EPOCH: 300
   AMP:
     ENABLED: True
 
   OPT: SGD
   SCHED: CosineAnnealingLR
 
-  BASE_LR: 0.001
-  MOMENTUM: 0.9
-  NESTEROV: False
+  BASE_LR: 0.01
+  MOMENTUM: 0.95
+  NESTEROV: True
 
   BIAS_LR_FACTOR: 1.
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.
-  IMS_PER_BATCH: 16
+  IMS_PER_BATCH: 96
 
   ETA_MIN_LR: 0.00003
 
@@ -76,10 +87,11 @@ SOLVER:
 
 TEST:
   EVAL_PERIOD: 1
-  IMS_PER_BATCH: 32
+  IMS_PER_BATCH: 128
 
 DATASETS:
-  NAMES: ("ShoeDataset", "OnlineDataset")
+  NAMES: ("ShoeDataset",)
   TESTS: ("ShoeDataset", "OnlineDataset")
 
-OUTPUT_DIR: projects/FastShoe/logs/r101_ibn_se
+OUTPUT_DIR: projects/FastShoe/logs/base-pair
+
