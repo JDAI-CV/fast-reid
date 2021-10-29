@@ -149,9 +149,9 @@ _C.KD.EMA.MOMENTUM = 0.999
 # -----------------------------------------------------------------------------
 _C.INPUT = CN()
 # Size of the image during training
-_C.INPUT.SIZE_TRAIN = [256, 128]
+_C.INPUT.SIZE_TRAIN = [0, 0]
 # Size of the image during test
-_C.INPUT.SIZE_TEST = [256, 128]
+_C.INPUT.SIZE_TEST = [0, 0]
 
 # `True` if cropping is used for data augmentation during training
 _C.INPUT.CROP = CN({"ENABLED": False})
