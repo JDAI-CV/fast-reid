@@ -1,3 +1,5 @@
+_BASE_: base.yaml
+
 MODEL:
   META_ARCHITECTURE: PCB
   
@@ -37,61 +39,18 @@ MODEL:
       SCALE: 1.
 
 INPUT:
-  SIZE_TRAIN: [480, 320]
-  SIZE_TEST: [480, 320]
+  SIZE_TRAIN: [310, 300]
+  SIZE_TEST: [310, 300]
 
-  FLIP:
+  CROP:
     ENABLED: True
-
-  CJ:
-    ENABLED: True
-
-  AUTOAUG:
-    ENABLED: True
-    PROB: 0.5
-  
-  AUGMIX:
-    ENABLED: True
-    PROB: 0.5
-
-  REA:
-    ENABLED: True
-
-DATALOADER:
-  SAMPLER_TRAIN: TrainingSampler
-  NUM_WORKERS: 20
-
-SOLVER:
-  MAX_EPOCH: 300
-  AMP:
-    ENABLED: True
-
-  OPT: SGD
-  SCHED: CosineAnnealingLR
-
-  BASE_LR: 0.01
-  MOMENTUM: 0.95
-  NESTEROV: True
-
-  BIAS_LR_FACTOR: 1.
-  WEIGHT_DECAY: 0.0005
-  WEIGHT_DECAY_BIAS: 0.
-  IMS_PER_BATCH: 96
-
-  ETA_MIN_LR: 0.00003
-
-  WARMUP_FACTOR: 0.1
-  WARMUP_ITERS: 100
-
-  CHECKPOINT_PERIOD: 1
-
-TEST:
-  EVAL_PERIOD: 1
-  IMS_PER_BATCH: 128
+    SIZE: [270, 260]
+    SCALE: [0.8, 1.2]
+    RATIO: [3./4, 4./3]
 
 DATASETS:
   NAMES: ("ShoeDataset",)
   TESTS: ("ShoeDataset", "OnlineDataset")
 
-OUTPUT_DIR: projects/FastShoe/logs/base-pair
+OUTPUT_DIR: projects/FastShoe/logs/online-pcb
 
