@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import torch
-from torch import nn
-import torch.nn.functional as F
 
-from fastreid.config import configurable
+import torch
+import torch.nn.functional as F
+from torch import nn
+
 from fastreid.config import CfgNode
+from fastreid.config import configurable
 from fastreid.layers import weights_init_classifier
-from fastreid.layers import any_softmax
-from fastreid.modeling.heads import REID_HEADS_REGISTRY, EmbeddingHead
+from fastreid.modeling.heads import REID_HEADS_REGISTRY
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +45,6 @@ class PcbHead(nn.Module):
         self.full_dim = full_dim
         self.part_dim = part_dim
         self.embedding_dim = embedding_dim
-        # self.num_classes = num_classes
-        # self.cls_type = cls_type
-        # self.scale = scale
-        # self.margin = margin
 
         self.match_full = nn.Sequential(
                     nn.Dropout(p=0.5),
