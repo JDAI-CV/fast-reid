@@ -22,13 +22,13 @@ class SePcbNet(nn.Module):
 	             part_num: int,
 	             embedding_dim: int,
 	             part_dim: int,
-	             last_stride: Tuple[int, int]
+	             last_stride: int,
 	             ):
 		super(SePcbNet, self).__init__()
 		self.part_num = part_num
 		self.embedding_dim = embedding_dim
 		self.part_dim = part_dim
-		self.last_stride = last_stride
+		self.last_stride = (last_stride, last_stride)
 
 		self.cnn = pretrainedmodels.__dict__["se_resnext101_32x4d"](pretrained='imagenet')
 		self.cnn.layer4[0].downsample[0].stride = self.last_stride
@@ -40,7 +40,7 @@ class SePcbNet(nn.Module):
 			setattr(self, 'reduction_' + str(i),
 			        nn.Sequential(
 				        nn.Conv2d(self.embedding_dim, self.part_dim, (1, 1), bias=False),
-				        nn.BatchNorm2d(self.part_num),
+				        nn.BatchNorm2d(self.part_dim),
 				        nn.ReLU()
 			        ))
 
@@ -70,7 +70,6 @@ class SePcbNet(nn.Module):
 		}
 
 	def random_init(self):
-		self.conv1.weight.data.normal_(0, math.sqrt(2. / (7 * 7 * 64)))
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):
 				n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -81,6 +80,8 @@ class SePcbNet(nn.Module):
 			elif isinstance(m, nn.InstanceNorm2d):
 				m.weight.data.fill_(1)
 				m.bias.data.zero_()
+
+		self.cnn.layer0.conv1.weight.data.normal_(0, math.sqrt(2. / (7 * 7 * 64)))
 
 
 @BACKBONE_REGISTRY.register()
@@ -99,10 +100,10 @@ def build_senet_pcb_backbone(cfg: CfgNode):
 	if pretrain:
 		if pretrain_path:
 			try:
-				state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))['model']
+				state_dict = torch.load(pretrain_path, map_location=torch.device('cpu'))
 				new_state_dict = {}
 				for k in state_dict:
-					new_k = '.'.join(k.split('.')[2:])
+					new_k = 'cnn.' + k
 					if new_k in model.state_dict() and (model.state_dict()[new_k].shape == state_dict[k].shape):
 						new_state_dict[new_k] = state_dict[k]
 				state_dict = new_state_dict

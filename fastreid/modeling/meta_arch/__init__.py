@@ -14,3 +14,4 @@ from .moco import MoCo
 from .distiller import Distiller
 from .metric import Metric
 from .pcb import PCB
+from .pcb_online import PcbOnline

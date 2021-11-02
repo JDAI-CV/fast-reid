@@ -28,14 +28,9 @@ class PairDataset(Dataset):
             self._logger.info('set {} with {} random seed: 12345'.format(self.mode, self.__class__.__name__))
             seed_all_rng(12345)
         
-        # if self.mode == 'train':
-        #     # make negative sample come from all negative folders when train
-        #     self.neg_folders = sum(self.neg_folders, list())
-
     def __len__(self):
         if self.mode == 'test':
             return len(self.pos_folders) * 10
-
         return len(self.pos_folders)
 
     def __getitem__(self, idx):
@@ -43,9 +38,6 @@ class PairDataset(Dataset):
             idx = int(idx / 10)
 		
         pf = self.pos_folders[idx]
-        # if self.mode == 'train':
-        #     nf = self.neg_folders
-        # else:
         nf = self.neg_folders[idx]
 
         label = 1

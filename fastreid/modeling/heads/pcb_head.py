@@ -79,37 +79,31 @@ class PcbHead(nn.Module):
         self.reset_parameters()
 
     def forward(self, features, targets=None):
-        full = features['full']
-        parts = features['parts']
-        bsz = full.size(0)
-        
-        # normalize
-        full = self._normalize(full)
-        parts = self._normalize(parts)
+        query_feature = features['query']
+        gallery_feature = features['gallery']
 
-        # split features into pair
-        query_full, gallery_full = self._split_features(full, bsz)
-        query_part_0, gallery_part_0 = self._split_features(parts[0], bsz)
-        query_part_1, gallery_part_1 = self._split_features(parts[1], bsz)
-        query_part_2, gallery_part_2 = self._split_features(parts[2], bsz)
+        query_full, query_part_0, query_part_1, query_part_2 = torch.split(query_feature,
+            [self.full_dim, self.part_dim, self.part_dim, self.part_dim], dim=-1)
+        gallery_full, gallery_part_0, gallery_part_1, gallery_part_2 = torch.split(gallery_feature,
+            [self.full_dim, self.part_dim, self.part_dim, self.part_dim], dim=-1)
 
         m_full = self.match_full(
-                    torch.cat([query_full, gallery_full, query_full - gallery_full, 
+                    torch.cat([query_full, gallery_full, (query_full - gallery_full).abs(),
                         query_full * gallery_full], dim=-1)
                 )
         
         m_part_0 = self.match_part_0(
-                    torch.cat([query_part_0, gallery_part_0, query_part_0 - gallery_part_0, 
+                    torch.cat([query_part_0, gallery_part_0, (query_part_0 - gallery_part_0).abs(),
                         query_part_0 * gallery_part_0], dim=-1)
                 )
 
         m_part_1 = self.match_part_1(
-                    torch.cat([query_part_1, gallery_part_1, query_part_1 - gallery_part_1, 
+                    torch.cat([query_part_1, gallery_part_1, (query_part_1 - gallery_part_1).abs(),
                         query_part_1 * gallery_part_1], dim=-1)
                 )
 
         m_part_2 = self.match_part_2(
-                    torch.cat([query_part_2, gallery_part_2, query_part_2 - gallery_part_2, 
+                    torch.cat([query_part_2, gallery_part_2, (query_part_2 - gallery_part_2).abs(),
                         query_part_2 * gallery_part_2], dim=-1)
                 )
 

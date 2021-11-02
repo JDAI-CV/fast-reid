@@ -1,8 +1,8 @@
 _BASE_: base.yaml
 
 MODEL:
-  META_ARCHITECTURE: PCB
-  
+  META_ARCHITECTURE: PcbOnline
+
   PCB:
     PART_NUM: 3
     PART_DIM: 512
@@ -14,10 +14,12 @@ MODEL:
       EMBEDDING_DIM: 512
   
   BACKBONE:
-    NAME: build_resnet_backbone
+    PRETRAIN: True
+    PRETRAIN_PATH: /home/apps/.cache/torch/hub/checkpoints/se_resnext101_32x4d-3b2fe3d8.pth
+    NAME: build_senet_pcb_backbone
     DEPTH: 101x
     NORM: BN
-    LAST_STRIDE: 2
+    LAST_STRIDE: 1
     FEAT_DIM: 512
     PRETRAIN: True
     WITH_IBN: True
@@ -46,11 +48,34 @@ INPUT:
     ENABLED: True
     SIZE: [270, 260]
     SCALE: [0.8, 1.2]
-    RATIO: [3./4, 4./3]
+    RATIO: [0.75, 1.33333333]
+
+DATALOADER:
+  NUM_WORKERS: 8
+
+SOLVER:
+  OPT: SGD
+  SCHED: CosineAnnealingLR
+
+  BASE_LR: 0.001
+  MOMENTUM: 0.9
+  NESTEROV: False
+
+  BIAS_LR_FACTOR: 1.
+  WEIGHT_DECAY: 0.0005
+  WEIGHT_DECAY_BIAS: 0.
+  ETA_MIN_LR: 0.00003
+
+  WARMUP_FACTOR: 0.1
+  WARMUP_ITERS: 1000
+
+  IMS_PER_BATCH: 40
+
+TEST:
+  IMS_PER_BATCH: 64
 
 DATASETS:
   NAMES: ("ShoeDataset",)
-  TESTS: ("ShoeDataset", "OnlineDataset")
+  TESTS: ("ShoeDataset",)
 
 OUTPUT_DIR: projects/FastShoe/logs/online-pcb
-
