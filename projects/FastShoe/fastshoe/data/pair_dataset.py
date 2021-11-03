@@ -17,8 +17,10 @@ from fastreid.utils.env import seed_all_rng
 
 @DATASET_REGISTRY.register()
 class PairDataset(ImageDataset):
+
+    _logger = logging.getLogger('fastreid.fastshoe')
+
     def __init__(self, img_root: str, anno_path: str, transform=None, mode: str = 'train'):
-        self._logger = logging.getLogger(__name__)
 
         assert mode in ('train', 'val', 'test'), self._logger.info(
                 '''mode should the one of ('train', 'val', 'test')''')
@@ -51,7 +53,7 @@ class PairDataset(ImageDataset):
     def __getitem__(self, idx):
         if self.mode == 'test':
             idx = int(idx / 10)
-		
+        
         pf = self.pos_folders[idx]
         nf = self.neg_folders[idx]
 
@@ -84,42 +86,35 @@ class PairDataset(ImageDataset):
     @property
     def num_classes(self):
         return 2
+    
+    @property   
+    def num_folders(self):
+        return len(self)
+    
+    @property   
+    def num_pos_images(self):
+        return sum([len(x) for x in self.pos_folders])
 
-    def get_num_pids(self, data):
-        return len(data)
+    @property   
+    def num_neg_images(self):
+        return sum([len(x) for x in self.neg_folders])
 
-    def get_num_cams(self, data):
-        return 1
+    def describe(self):
+        headers = ['subset', 'folders', 'pos images', 'neg images']
+        csv_results = [[self.mode, self.num_folders, self.num_pos_images, self.num_neg_images]]
+
+        # tabulate it
+        table = tabulate(
+            csv_results,
+            tablefmt="pipe",
+            headers=headers,
+            numalign="left",
+        )
+
+        self._logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
 
     def show_train(self):
-        num_folders = len(self)
-        num_train_images = sum([len(x) for x in self.pos_folders]) + sum([len(x) for x in self.neg_folders])
-        headers = ['subset', '# folders', '# images']
-        csv_results = [[self.mode, num_folders, num_train_images]]
-
-        # tabulate it
-        table = tabulate(
-            csv_results,
-            tablefmt="pipe",
-            headers=headers,
-            numalign="left",
-        )
-
-        self._logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
+        return self.describe()
 
     def show_test(self):
-        num_folders = len(self)
-        num_images = sum([len(x) for x in self.pos_folders]) + sum([len(x) for x in self.neg_folders])
-
-        headers = ['subset', '# folders', '# images']
-        csv_results = [[self.mode, num_folders, num_images]]
-
-        # tabulate it
-        table = tabulate(
-            csv_results,
-            tablefmt="pipe",
-            headers=headers,
-            numalign="left",
-        )
-        self._logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
- 
+        return self.describe()

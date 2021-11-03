@@ -14,8 +14,10 @@ from fastreid.utils.env import seed_all_rng
 
 @DATASET_REGISTRY.register()
 class ExcelDataset(ImageDataset):
+
+    _logger = logging.getLogger('fastreid.fastshoe')
+
     def __init__(self, img_root, anno_path, transform=None, **kwargs):
-        self._logger = logging.getLogger(__name__)
         self._logger.info('set with {} random seed: 12345'.format(self.__class__.__name__))
         seed_all_rng(12345)
 
@@ -55,26 +57,12 @@ class ExcelDataset(ImageDataset):
     def num_classes(self):
         return 2
     
-    def get_num_pids(self, data):
-        return len(data)
-
-    def get_num_cams(self, data):
-        return 1
-
-    def parse_data(self, data):
-        pids = 0
-        imgs = set()
-        for info in data:
-            pids += 1
-            imgs.intersection_update(info)
-
-        return pids, len(imgs)
-
     def show_test(self):
-        num_query_pids, num_query_images = self.parse_data(self.df['内网crop图'].tolist())
+        num_pairs = len(self)
+        num_images = num_pairs * 2
 
-        headers = ['subset', '# ids', '# images', '# cameras']
-        csv_results = [['query', num_query_pids, num_query_pids, num_query_images]]
+        headers = ['pairs', 'images']
+        csv_results = [[num_pairs, num_images]]
 
         # tabulate it
         table = tabulate(

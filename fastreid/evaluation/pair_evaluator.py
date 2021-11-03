@@ -70,30 +70,30 @@ class PairEvaluator(DatasetEvaluator):
         ap = skmetrics.average_precision_score(all_labels, all_distances)
         auc = skmetrics.roc_auc_score(all_labels, all_distances)  # auc under roc
 
-        accs = []
         precisions = []
         recalls = []
         f1s = []
+        accs = []
         for thresh in self._threshold_list:
-            acc = skmetrics.accuracy_score(all_labels, all_distances >= thresh) 
             precision = skmetrics.precision_score(all_labels, all_distances >= thresh, zero_division=0)
             recall = skmetrics.recall_score(all_labels, all_distances >= thresh, zero_division=0)
             f1 = 2 * precision * recall / (precision + recall + 1e-12)
+            acc = skmetrics.accuracy_score(all_labels, all_distances >= thresh) 
 
-            accs.append(acc)
             precisions.append(precision)
             recalls.append(recall)
             f1s.append(f1)
+            accs.append(acc)
 
         self._results = OrderedDict()
         self._results['Acc@0.5'] = acc
         self._results['Ap'] = ap
         self._results['Auc'] = auc
         self._results['Thresholds'] = self._threshold_list
-        self._results['Accs'] = accs
         self._results['Precisions'] = precisions
         self._results['Recalls'] = recalls
         self._results['F1_Scores'] = f1s
+        self._results['Accs'] = accs
 
         return copy.deepcopy(self._results)
 

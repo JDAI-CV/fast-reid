@@ -7,7 +7,6 @@ import os
 
 import torch
 
-from fastreid.utils.logger import setup_logger
 from fastreid.data.build import _root
 from fastreid.engine import DefaultTrainer
 from fastreid.data.datasets import DATASET_REGISTRY
@@ -17,14 +16,15 @@ from fastreid.data.build import build_reid_train_loader, build_reid_test_loader
 from fastreid.evaluation.pair_score_evaluator import PairScoreEvaluator
 from projects.FastShoe.fastshoe.data import PairDataset
 
-logger = logging.getLogger(__name__)
 
 
 class PairTrainer(DefaultTrainer):
 
+    _logger = logging.getLogger('fastreid.fastshoe')
+
     @classmethod
     def build_train_loader(cls, cfg):
-        logger.info("Prepare training set")
+        cls._logger.info("Prepare training set")
 
         transforms = build_transforms(cfg, is_train=True)
         datasets = []
@@ -49,7 +49,7 @@ class PairTrainer(DefaultTrainer):
             test_json = os.path.join(_root, 'labels/1019/1019_clean_test.json')
 
             anno_path, mode = (test_json, 'test') if cfg.eval_only else (val_json, 'val')
-            logger.info('Loading {} with  {} for {}.'.format(img_root, anno_path, mode))
+            cls._logger.info('Loading {} with {} for {}.'.format(img_root, anno_path, mode))
             test_set = DATASET_REGISTRY.get(dataset_name)(img_root=img_root, anno_path=anno_path, transform=transforms, mode=mode)
             test_set.show_test()
 
@@ -61,21 +61,21 @@ class PairTrainer(DefaultTrainer):
             val_csv_0908 = os.path.join(_root, 'excel/0908/excel_pair_crop_val.csv')
             test_csv_0908 = os.path.join(_root, 'excel/0908/excel_pair_crop_test.csv')
             if cfg.eval_only:
-                logger.info('Loading {} with {} for test.'.format(img_root_0830, test_csv_0830))
+                cls._logger.info('Loading {} with {} for test.'.format(img_root_0830, test_csv_0830))
                 test_set_0830 = DATASET_REGISTRY.get(dataset_name)(img_root=img_root_0830, anno_path=test_csv_0830, transform=transforms)
                 test_set_0830.show_test()
 
-                logger.info('Loading {} with {} for test.'.format(img_root_0908, test_csv_0908))
+                cls._logger.info('Loading {} with {} for test.'.format(img_root_0908, test_csv_0908))
                 test_set_0908 = DATASET_REGISTRY.get(dataset_name)(img_root=img_root_0908, anno_path=test_csv_0908, transform=transforms)
                 test_set_0908.show_test()
 
                 test_set = torch.utils.data.ConcatDataset((test_set_0830, test_set_0908))
             else:
-                logger.info('Loading {} with {} for validation.'.format(img_root_0908, val_csv_0908))
+                cls._logger.info('Loading {} with {} for validation.'.format(img_root_0908, val_csv_0908))
                 test_set = DATASET_REGISTRY.get(dataset_name)(img_root=img_root_0908, anno_path=val_csv_0908, transform=transforms)
                 test_set.show_test()
         else:
-            logger.error("Undefined Dataset!!!")
+            cls._logger.error("Undefined Dataset!!!")
             exit(-1)
                 
         data_loader, _ = build_reid_test_loader(cfg, test_set=test_set)
