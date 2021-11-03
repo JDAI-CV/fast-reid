@@ -208,7 +208,7 @@ class DefaultTrainer(TrainerBase):
             # ref to https://github.com/pytorch/pytorch/issues/22049 to set `find_unused_parameters=True`
             # for part of the parameters is not updated.
             model = DistributedDataParallel(
-                model, device_ids=[comm.get_local_rank()], broadcast_buffers=False, find_unused_parameters=False
+                model, device_ids=[comm.get_local_rank()], broadcast_buffers=False, find_unused_parameters=True
             )
 
         self._trainer = (AMPTrainer if cfg.SOLVER.AMP.ENABLED else SimpleTrainer)(

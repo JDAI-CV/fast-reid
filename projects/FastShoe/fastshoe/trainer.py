@@ -7,6 +7,7 @@ import os
 
 import torch
 
+from fastreid.utils.logger import setup_logger
 from fastreid.data.build import _root
 from fastreid.engine import DefaultTrainer
 from fastreid.data.datasets import DATASET_REGISTRY
@@ -16,69 +17,67 @@ from fastreid.data.build import build_reid_train_loader, build_reid_test_loader
 from fastreid.evaluation.pair_score_evaluator import PairScoreEvaluator
 from projects.FastShoe.fastshoe.data import PairDataset
 
+logger = logging.getLogger(__name__)
+
 
 class PairTrainer(DefaultTrainer):
 
     @classmethod
     def build_train_loader(cls, cfg):
-        logger = logging.getLogger(__name__)
         logger.info("Prepare training set")
 
-        pos_folder_list, neg_folder_list = list(), list()
-        for d in cfg.DATASETS.NAMES:
-            data = DATASET_REGISTRY.get(d)(img_dir=os.path.join(_root, 'shoe_crop_all_images'),
-                                           anno_path=os.path.join(_root, 'labels/1019/1019_clean_train.json'))
-            if comm.is_main_process():
-                data.show_train()
-            pos_folder_list.extend(data.train)
-            neg_folder_list.extend(data.query)
-
         transforms = build_transforms(cfg, is_train=True)
-        train_set = PairDataset(img_root=os.path.join(_root, 'shoe_crop_all_images'),
-                                pos_folders=pos_folder_list, neg_folders=neg_folder_list, transform=transforms, mode='train')
+        datasets = []
+        for d in cfg.DATASETS.NAMES:
+            dataset = DATASET_REGISTRY.get(d)(img_root=os.path.join(_root, 'shoe_crop_all_images'),
+                                           anno_path=os.path.join(_root, 'labels/1019/1019_clean_train.json'),
+                                           transform=transforms, mode='train')
+            if comm.is_main_process():
+                dataset.show_train()
+            datasets.append(dataset)
+
+        train_set = datasets[0] if len(datasets) == 1 else torch.utils.data.ConcatDataset(datasets)
         data_loader = build_reid_train_loader(cfg, train_set=train_set)
         return data_loader
 
     @classmethod
     def build_test_loader(cls, cfg, dataset_name):
         transforms = build_transforms(cfg, is_train=False)
-        if dataset_name == 'ShoeDataset':
-            shoe_img_dir = os.path.join(_root, 'shoe_crop_all_images')
-            if cfg.eval_only:
-                # for testing
-                mode = 'test'
-                anno_path = os.path.join(_root, 'labels/1019/1019_clean_test.json')
-            else:
-                # for validation in train phase
-                mode = 'val'
-                anno_path = os.path.join(_root, 'labels/1019/1019_clean_val.json')
+        if dataset_name == 'PairDataset':
+            img_root = os.path.join(_root, 'shoe_crop_all_images')
+            val_json = os.path.join(_root, 'labels/1019/1019_clean_val.json')
+            test_json = os.path.join(_root, 'labels/1019/1019_clean_test.json')
 
-            data = DATASET_REGISTRY.get(dataset_name)(img_dir=shoe_img_dir, anno_path=anno_path)
-            test_set = PairDataset(img_root=shoe_img_dir,
-                                   pos_folders=data.train, neg_folders=data.query, transform=transforms, mode=mode)
-        elif dataset_name == 'OnlineDataset':
+            anno_path, mode = (test_json, 'test') if cfg.eval_only else (val_json, 'val')
+            logger.info('Loading {} with  {} for {}.'.format(img_root, anno_path, mode))
+            test_set = DATASET_REGISTRY.get(dataset_name)(img_root=img_root, anno_path=anno_path, transform=transforms, mode=mode)
+            test_set.show_test()
+
+        elif dataset_name == 'ExcelDataset':
+            img_root_0830 = os.path.join(_root, 'excel/0830/rotate_shoe_crop_images')
+            test_csv_0830 = os.path.join(_root, 'excel/0830/excel_pair_crop.csv')
+
+            img_root_0908 = os.path.join(_root, 'excel/0908/rotate_shoe_crop_images')
+            val_csv_0908 = os.path.join(_root, 'excel/0908/excel_pair_crop_val.csv')
+            test_csv_0908 = os.path.join(_root, 'excel/0908/excel_pair_crop_test.csv')
             if cfg.eval_only:
-                # for testing
-                test_set_0830 = DATASET_REGISTRY.get(dataset_name)(img_dir=os.path.join(_root, 'excel/0830/shoe_crop_images'),
-                                                                   anno_path=os.path.join(_root, 'excel/0830/excel_pair_crop.csv'),
-                                                                   transform=transforms)
-                # for validation in train phase
-                test_set_0908 = DATASET_REGISTRY.get(dataset_name)(img_dir=os.path.join(_root, 'excel/0908/shoe_crop_images'),
-                                                                   anno_path=os.path.join(_root, 'excel/0908/excel_pair_crop_val.csv'),
-                                                                   transform=transforms)
+                logger.info('Loading {} with {} for test.'.format(img_root_0830, test_csv_0830))
+                test_set_0830 = DATASET_REGISTRY.get(dataset_name)(img_root=img_root_0830, anno_path=test_csv_0830, transform=transforms)
+                test_set_0830.show_test()
+
+                logger.info('Loading {} with {} for test.'.format(img_root_0908, test_csv_0908))
+                test_set_0908 = DATASET_REGISTRY.get(dataset_name)(img_root=img_root_0908, anno_path=test_csv_0908, transform=transforms)
+                test_set_0908.show_test()
+
                 test_set = torch.utils.data.ConcatDataset((test_set_0830, test_set_0908))
-                
             else:
-                test_set = DATASET_REGISTRY.get(dataset_name)(img_dir=os.path.join(_root, 'excel/0908/shoe_crop_images'),
-                                                             anno_path=os.path.join(_root, 'excel/0908/excel_pair_crop_val.csv'),
-                                                             transform=transforms)
+                logger.info('Loading {} with {} for validation.'.format(img_root_0908, val_csv_0908))
+                test_set = DATASET_REGISTRY.get(dataset_name)(img_root=img_root_0908, anno_path=val_csv_0908, transform=transforms)
+                test_set.show_test()
+        else:
+            logger.error("Undefined Dataset!!!")
+            exit(-1)
                 
-        if comm.is_main_process():
-            if dataset_name == 'ShoeDataset':
-                data.show_test()
-            # else:
-            #     test_set.show_test()
-
         data_loader, _ = build_reid_test_loader(cfg, test_set=test_set)
         return data_loader
 

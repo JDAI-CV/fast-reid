@@ -13,13 +13,13 @@ from fastreid.utils.env import seed_all_rng
 
 
 @DATASET_REGISTRY.register()
-class OnlineDataset(ImageDataset):
-    def __init__(self, img_dir, anno_path, transform=None, **kwargs):
+class ExcelDataset(ImageDataset):
+    def __init__(self, img_root, anno_path, transform=None, **kwargs):
         self._logger = logging.getLogger(__name__)
         self._logger.info('set with {} random seed: 12345'.format(self.__class__.__name__))
         seed_all_rng(12345)
 
-        self.img_dir = img_dir
+        self.img_root = img_root
         self.anno_path = anno_path
         self.transform = transform
 
@@ -31,8 +31,8 @@ class OnlineDataset(ImageDataset):
     def __getitem__(self, idx):
         image_inner, image_outer, label = tuple(self.df.loc[idx])
 
-        image_inner_path = os.path.join(self.img_dir, image_inner)
-        image_outer_path = os.path.join(self.img_dir, image_outer)
+        image_inner_path = os.path.join(self.img_root, image_inner)
+        image_outer_path = os.path.join(self.img_root, image_outer)
 
         img1 = read_image(image_inner_path)
         img2 = read_image(image_outer_path)
@@ -50,6 +50,7 @@ class OnlineDataset(ImageDataset):
     def __len__(self):
         return len(self.df)
     
+    #-------------下面是辅助信息------------------#
     @property
     def num_classes(self):
         return 2

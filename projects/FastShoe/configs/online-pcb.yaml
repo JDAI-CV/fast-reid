@@ -69,13 +69,13 @@ SOLVER:
   WARMUP_FACTOR: 0.1
   WARMUP_ITERS: 1000
 
-  IMS_PER_BATCH: 40
+  IMS_PER_BATCH: 150
 
 TEST:
-  IMS_PER_BATCH: 64
+  IMS_PER_BATCH: 512
 
 DATASETS:
-  NAMES: ("ShoeDataset",)
-  TESTS: ("ShoeDataset",)
+  NAMES: ("PairDataset",)
+  TESTS: ("PairDataset", "ExcelDataset")
 
 OUTPUT_DIR: projects/FastShoe/logs/online-pcb

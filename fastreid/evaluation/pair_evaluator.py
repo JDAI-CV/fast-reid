@@ -22,7 +22,10 @@ class PairEvaluator(DatasetEvaluator):
         self._output_dir = output_dir
         self._cpu_device = torch.device('cpu')
         self._predictions = []
-        self._threshold_list = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98]
+        if self.cfg.eval_only:
+            self._threshold_list = [x / 10 for x in range(5, 10)] + [x / 1000 for x in range(901, 1000)]
+        else:
+            self._threshold_list = [x / 10 for x in range(5, 9)] + [x / 100 for x in range(90, 100)]
 
     def reset(self):
         self._predictions = []
@@ -63,27 +66,31 @@ class PairEvaluator(DatasetEvaluator):
         all_labels = np.concatenate(all_labels)
 
         # 计算这3个总体值，还有给定阈值下的precision, recall, f1
-        acc = skmetrics.accuracy_score(all_labels, all_distances > 0.5)
+        cls_acc = skmetrics.accuracy_score(all_labels, all_distances >= 0.5)
         ap = skmetrics.average_precision_score(all_labels, all_distances)
         auc = skmetrics.roc_auc_score(all_labels, all_distances)  # auc under roc
 
+        accs = []
         precisions = []
         recalls = []
         f1s = []
         for thresh in self._threshold_list:
+            acc = skmetrics.accuracy_score(all_labels, all_distances >= thresh) 
             precision = skmetrics.precision_score(all_labels, all_distances >= thresh, zero_division=0)
             recall = skmetrics.recall_score(all_labels, all_distances >= thresh, zero_division=0)
             f1 = 2 * precision * recall / (precision + recall + 1e-12)
 
+            accs.append(acc)
             precisions.append(precision)
             recalls.append(recall)
             f1s.append(f1)
 
         self._results = OrderedDict()
-        self._results['Acc'] = acc
+        self._results['Acc@0.5'] = acc
         self._results['Ap'] = ap
         self._results['Auc'] = auc
         self._results['Thresholds'] = self._threshold_list
+        self._results['Accs'] = accs
         self._results['Precisions'] = precisions
         self._results['Recalls'] = recalls
         self._results['F1_Scores'] = f1s

@@ -34,7 +34,7 @@ def print_csv_format(results):
     )
     logger.info("Evaluation results in csv format: \n" + colored(table, "cyan"))
 
-    # show precision, recall and f1 under given threshold
+    # show acc precision, recall and f1 under given threshold
     metrics = [k for k, v in results.items() if isinstance(v, (list, np.ndarray))]
     csv_results = [v for v in results.values() if isinstance(v, (list, np.ndarray))]
     csv_results = [v.tolist() if isinstance(v, np.ndarray) else v for v in csv_results]

@@ -14,8 +14,9 @@ from fastreid.config import get_cfg
 from fastreid.engine import default_argument_parser, default_setup, launch
 from fastreid.utils.checkpoint import Checkpointer, PathManager
 from fastreid.utils import bughook
-
 from fastshoe import PairTrainer
+
+logger = logging.getLogger(__name__)
 
 
 def setup(args):
@@ -38,16 +39,13 @@ def main(args):
         cfg.defrost()
         cfg.MODEL.BACKBONE.PRETRAIN = False
         model = PairTrainer.build_model(cfg)
-
         Checkpointer(model).load(cfg.MODEL.WEIGHTS)  # load trained model
-
         try:
             output_dir = os.path.dirname(cfg.MODEL.WEIGHTS)
             path = os.path.join(output_dir, "idx2class.json")
             with PathManager.open(path, 'r') as f:
                 idx2class = json.load(f)
         except:
-            logger = logging.getLogger(__name__)
             logger.info(f"Cannot find idx2class dict in {os.path.dirname(cfg.MODEL.WEIGHTS)}")
 
         res = PairTrainer.test(cfg, model)
