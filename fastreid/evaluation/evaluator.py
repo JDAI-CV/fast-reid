@@ -24,7 +24,7 @@ class DatasetEvaluator:
         Preparation for a new round of evaluation.
         Should be called before starting a round of evaluation.
         """
-        pass
+        self._predictions = []
 
     def preprocess_inputs(self, inputs):
         pass
