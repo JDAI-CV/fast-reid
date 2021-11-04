@@ -13,6 +13,7 @@ def contrastive_loss(
         gallery_feat: torch.Tensor,
         targets: torch.Tensor,
         margin: float) -> torch.Tensor:
-    euclidean_distance = torch.sqrt(torch.sum(torch.pow(query_feat - gallery_feat, 2), -1))
-    return torch.mean(targets * torch.pow(euclidean_distance, 2) +
-                      (1 - targets) * torch.pow(torch.clamp(margin - euclidean_distance, min=0), 2))
+    distance = torch.sqrt(torch.sum(torch.pow(query_feat - gallery_feat, 2), -1))
+    loss1 = 0.5 * targets * torch.pow(distance, 2)
+    loss2 = 0.5 * (1 - targets) * torch.pow(torch.clamp(margin - distance, min=0), 2)
+    return torch.mean(loss1 + loss2)
