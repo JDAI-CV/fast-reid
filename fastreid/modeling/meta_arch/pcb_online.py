@@ -6,7 +6,7 @@ Sun, Y. ,  Zheng, L. ,  Yang, Y. ,  Tian, Q. , &  Wang, S. . (2017). Beyond part
 import torch
 import torch.nn.functional as F
 
-from fastreid.modeling.losses import cross_entropy_loss, log_accuracy
+from fastreid.modeling.losses import cross_entropy_loss, log_accuracy, contrastive_loss
 from fastreid.modeling.meta_arch import Baseline
 from fastreid.modeling.meta_arch import META_ARCH_REGISTRY
 
@@ -23,8 +23,10 @@ class PcbOnline(Baseline):
 
         qf = feats[0: bsz * 2: 2, ...]
         xf = feats[1: bsz * 2: 2, ...]
-        outputs = self.heads({'query': qf, 'gallery': xf})  
-        
+        outputs = self.heads({'query': qf, 'gallery': xf})
+
+        outputs['query_feature'] = qf
+        outputs['gallery_feature'] = xf
         if self.training:
             targets = batched_inputs['targets']
             losses = self.losses(outputs, targets)
@@ -38,8 +40,10 @@ class PcbOnline(Baseline):
         must be the same as the outputs of the model forwarding.
         """
         # model predictions
-        pred_class_logits = outputs['pred_class_logits'].detach()
-        cls_outputs = outputs['cls_outputs']
+        pred_query_feature       = outputs['query_feature']
+        pred_gallery_feature     = outputs['gallery_feature']
+        pred_class_logits        = outputs['pred_class_logits'].detach()
+        cls_outputs              = outputs['cls_outputs']
         
         # Log prediction accuracy
         log_accuracy(pred_class_logits, gt_labels)
@@ -56,5 +60,13 @@ class PcbOnline(Baseline):
                 ce_kwargs.get('alpha')
             ) * ce_kwargs.get('scale')
 
+        if 'ContrastiveLoss' in loss_names:
+            contrastive_kwargs = self.loss_kwargs.get('contrastive')
+            loss_dict['loss_contrastive'] = contrastive_loss(
+                pred_query_feature,
+				pred_gallery_feature,
+                gt_labels,
+                contrastive_kwargs.get('margin')
+            ) * contrastive_kwargs.get('scale')
 
         return loss_dict
