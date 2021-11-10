@@ -73,7 +73,7 @@ class PcbHead(nn.Module):
         # Get similarity
         self.match_all = nn.Sequential(
                     nn.Dropout(p=0.5),
-                    nn.Linear(self.embedding_dim * 4, 2)
+                    nn.Linear(self.embedding_dim * 4, 1)
                 )
 
         self.reset_parameters()
