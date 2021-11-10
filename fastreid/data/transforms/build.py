@@ -5,6 +5,7 @@
 """
 
 import torchvision.transforms as T
+from torchvision.transforms import InterpolationMode
 
 from .transforms import *
 from .autoaugment import AutoAugment
@@ -63,11 +64,12 @@ def build_transforms(cfg, is_train=True):
             res.append(T.RandomApply([AutoAugment()], p=autoaug_prob))
 
         if size_train[0] > 0:
-            res.append(T.Resize(size_train[0] if len(size_train) == 1 else size_train, interpolation=3))
+            res.append(T.Resize(size_train[0] if len(size_train) == 1 else size_train,
+                interpolation=InterpolationMode.BICUBIC))
 
         if do_crop:
             res.append(T.RandomResizedCrop(size=crop_size[0] if len(crop_size) == 1 else crop_size,
-                                           interpolation=3,
+                                           interpolation=InterpolationMode.BICUBIC,
                                            scale=crop_scale, ratio=crop_ratio))
         if do_pad:
             res.extend([T.Pad(padding_size, padding_mode=padding_mode),
@@ -93,7 +95,8 @@ def build_transforms(cfg, is_train=True):
         crop_size = cfg.INPUT.CROP.SIZE
 
         if size_test[0] > 0:
-            res.append(T.Resize(size_test[0] if len(size_test) == 1 else size_test, interpolation=3))
+            res.append(T.Resize(size_test[0] if len(size_test) == 1 else size_test,
+                interpolation=InterpolationMode.BICUBIC))
         if do_crop:
             res.append(T.CenterCrop(size=crop_size[0] if len(crop_size) == 1 else crop_size))
         res.append(ToTensor())

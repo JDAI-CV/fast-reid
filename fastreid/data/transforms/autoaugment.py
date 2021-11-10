@@ -25,6 +25,7 @@ import re
 import PIL
 import numpy as np
 from PIL import Image, ImageOps, ImageEnhance
+from torchvision.transforms import InterpolationMode
 
 _PIL_VER = tuple([int(x) for x in PIL.__version__.split('.')[:2]])
 
@@ -39,11 +40,11 @@ _HPARAMS_DEFAULT = dict(
     img_mean=_FILL,
 )
 
-_RANDOM_INTERPOLATION = (Image.BILINEAR, Image.BICUBIC)
+_RANDOM_INTERPOLATION = (InterpolationMode.BILINEAR, InterpolationMode.BICUBIC)
 
 
 def _interpolation(kwargs):
-    interpolation = kwargs.pop('resample', Image.BILINEAR)
+    interpolation = kwargs.pop('resample', InterpolationMode.BILINEAR)
     if isinstance(interpolation, (list, tuple)):
         return random.choice(interpolation)
     else:
