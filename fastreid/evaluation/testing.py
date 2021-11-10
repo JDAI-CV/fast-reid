@@ -32,7 +32,7 @@ def print_csv_format(results):
         headers=metrics,
         numalign="left",
     )
-    logger.info("Evaluation results in csv format: \n" + colored(table, "cyan"))
+    logger.info("Evaluation results: \n" + colored(table, "cyan"))
 
     # show acc precision, recall and f1 under given threshold
     metrics = [k for k, v in results.items() if isinstance(v, (list, np.ndarray))]
@@ -47,7 +47,7 @@ def print_csv_format(results):
         headers=metrics,
         numalign="left",
     )
-    logger.info("Evaluation results in csv format: \n" + colored(table, "cyan"))
+    logger.info("Evaluation results: \n" + colored(table, "cyan"))
 
 
 def verify_results(cfg, results):

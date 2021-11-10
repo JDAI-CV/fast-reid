@@ -102,7 +102,7 @@ class Dataset(object):
             headers=headers,
             numalign="left",
         )
-        logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
+        logger.info(f"=> Loaded {self.__class__.__name__}: \n" + colored(table, "cyan"))
         logger.info("attributes:")
         for label, attr in self.attr_dict.items():
             logger.info('{:3d}: {}'.format(label, attr))
@@ -124,4 +124,4 @@ class Dataset(object):
             headers=headers,
             numalign="left",
         )
-        logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
+        logger.info(f"=> Loaded {self.__class__.__name__}: \n" + colored(table, "cyan"))

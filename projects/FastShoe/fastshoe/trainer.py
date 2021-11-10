@@ -27,11 +27,12 @@ class PairTrainer(DefaultTrainer):
         cls._logger.info("Prepare training set")
 
         transforms = build_transforms(cfg, is_train=True)
+        img_root=os.path.join(_root, 'shoe_crop_all_images')
+        anno_path=os.path.join(_root, 'labels/1019/1019_clean_train.json')
+
         datasets = []
         for d in cfg.DATASETS.NAMES:
-            dataset = DATASET_REGISTRY.get(d)(img_root=os.path.join(_root, 'shoe_crop_all_images'),
-                                           anno_path=os.path.join(_root, 'labels/1019/1019_clean_train.json'),
-                                           transform=transforms, mode='train')
+            dataset = DATASET_REGISTRY.get(d)(img_root=img_root, anno_path=anno_path, transform=transforms, mode='train')
             if comm.is_main_process():
                 dataset.show_train()
             datasets.append(dataset)
@@ -42,6 +43,8 @@ class PairTrainer(DefaultTrainer):
 
     @classmethod
     def build_test_loader(cls, cfg, dataset_name):
+        cls._logger.info("Prepare {} set".format('test' if cfg.eval_only else 'validation'))
+
         transforms = build_transforms(cfg, is_train=False)
         if dataset_name == 'PairDataset':
             img_root = os.path.join(_root, 'shoe_crop_all_images')
@@ -75,8 +78,7 @@ class PairTrainer(DefaultTrainer):
                 test_set = DATASET_REGISTRY.get(dataset_name)(img_root=img_root_0908, anno_path=val_csv_0908, transform=transforms)
                 test_set.show_test()
         else:
-            cls._logger.error("Undefined Dataset!!!")
-            exit(-1)
+            raise ValueError("Undefined Dataset!!!")
                 
         data_loader, _ = build_reid_test_loader(cfg, test_set=test_set)
         return data_loader

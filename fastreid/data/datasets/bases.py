@@ -161,7 +161,7 @@ class ImageDataset(Dataset):
             headers=headers,
             numalign="left",
         )
-        logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
+        logger.info(f"=> Loaded {self.__class__.__name__}: \n" + colored(table, "cyan"))
 
     def show_test(self):
         num_query_pids, num_query_cams = self.parse_data(self.query)
@@ -180,4 +180,4 @@ class ImageDataset(Dataset):
             headers=headers,
             numalign="left",
         )
-        logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
+        logger.info(f"=> Loaded {self.__class__.__name__}: \n" + colored(table, "cyan"))

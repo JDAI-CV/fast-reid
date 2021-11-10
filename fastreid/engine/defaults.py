@@ -445,7 +445,7 @@ class DefaultTrainer(TrainerBase):
                 ), "Evaluator must return a dict on the main process. Got {} instead.".format(
                     results
                 )
-                logger.info("Evaluation results for {} in csv format:".format(dataset_name))
+                logger.info("Evaluation results for {}:".format(dataset_name))
                 results_i['dataset'] = dataset_name
                 print_csv_format(results_i)
 

@@ -111,7 +111,7 @@ class PairDataset(ImageDataset):
             numalign="left",
         )
 
-        self._logger.info(f"=> Loaded {self.__class__.__name__} in csv format: \n" + colored(table, "cyan"))
+        self._logger.info(f"=> Loaded {self.__class__.__name__}: \n" + colored(table, "cyan"))
 
     def show_train(self):
         return self.describe()
