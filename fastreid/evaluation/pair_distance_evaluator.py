@@ -23,7 +23,8 @@ class PairDistanceEvaluator(DatasetEvaluator):
         if self.cfg.eval_only:
             self._threshold_list = [x / 1000 for x in range(1, 100)] + [x / 10 for x in range(1, 7)]
         else:
-            self._threshold_list = [x / 100 for x in range(1, 100)] + [x / 10 for x in range(1, 7)]
+            # self._threshold_list = [x / 100 for x in range(1, 10)] + [x / 10 for x in range(1, 10)]
+            self._threshold_list = [x / 10 for x in range(1, 10)]
 
     def process(self, inputs, outputs):
         query_feat = outputs['query_feature']
