@@ -27,6 +27,7 @@ class PcbOnline(Baseline):
 
         outputs['query_feature'] = qf
         outputs['gallery_feature'] = xf
+        outputs['features'] = {}
         if self.training:
             targets = batched_inputs['targets']
             losses = self.losses(outputs, targets)
@@ -34,39 +35,3 @@ class PcbOnline(Baseline):
         else:
             return outputs
 
-    def losses(self, outputs, gt_labels):
-        """
-        Compute loss from modeling's outputs, the loss function input arguments
-        must be the same as the outputs of the model forwarding.
-        """
-        # model predictions
-        pred_query_feature       = outputs['query_feature']
-        pred_gallery_feature     = outputs['gallery_feature']
-        pred_class_logits        = outputs['pred_class_logits'].detach()
-        cls_outputs              = outputs['cls_outputs']
-        
-        # Log prediction accuracy
-        log_accuracy(pred_class_logits, gt_labels)
-
-        loss_dict = {}
-        loss_names = self.loss_kwargs['loss_names']
-
-        if 'CrossEntropyLoss' in loss_names:
-            ce_kwargs = self.loss_kwargs.get('ce')
-            loss_dict['loss_cls'] = cross_entropy_loss(
-                cls_outputs,
-                gt_labels,
-                ce_kwargs.get('eps'),
-                ce_kwargs.get('alpha')
-            ) * ce_kwargs.get('scale')
-
-        if 'ContrastiveLoss' in loss_names:
-            contrastive_kwargs = self.loss_kwargs.get('contrastive')
-            loss_dict['loss_contrastive'] = contrastive_loss(
-                pred_query_feature,
-				pred_gallery_feature,
-                gt_labels,
-                contrastive_kwargs.get('margin')
-            ) * contrastive_kwargs.get('scale')
-
-        return loss_dict

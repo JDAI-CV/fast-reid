@@ -52,3 +52,7 @@ def cross_entropy_loss(pred_class_outputs, gt_classes, eps, alpha=0.2):
     loss = loss.sum() / non_zero_cnt
 
     return loss
+
+
+def binary_cross_entropy_loss(inputs, targets):
+    return F.binary_cross_entropy_with_logits(inputs, targets)

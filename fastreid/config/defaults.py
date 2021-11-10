@@ -88,6 +88,10 @@ _C.MODEL.HEADS.SCALE = 1
 _C.MODEL.LOSSES = CN()
 _C.MODEL.LOSSES.NAME = ("CrossEntropyLoss",)
 
+# Binary Cross Entropy Loss
+_C.MODEL.LOSSES.BCE = CN()
+_C.MODEL.LOSSES.BCE.SCALE = 1.0
+
 # Cross Entropy Loss options
 _C.MODEL.LOSSES.CE = CN()
 # if epsilon == 0, it means no label smooth regularization,
@@ -95,6 +99,12 @@ _C.MODEL.LOSSES.CE = CN()
 _C.MODEL.LOSSES.CE.EPSILON = 0.0
 _C.MODEL.LOSSES.CE.ALPHA = 0.2
 _C.MODEL.LOSSES.CE.SCALE = 1.0
+
+# Binary Focal Loss options
+_C.MODEL.LOSSES.BFL = CN()
+_C.MODEL.LOSSES.BFL.ALPHA = 0.25
+_C.MODEL.LOSSES.BFL.GAMMA = 2
+_C.MODEL.LOSSES.BFL.SCALE = 1.0
 
 # Focal Loss options
 _C.MODEL.LOSSES.FL = CN()

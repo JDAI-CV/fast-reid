@@ -68,10 +68,23 @@ class Baseline(nn.Module):
                     'loss_names': cfg.MODEL.LOSSES.NAME,
 
                     # loss hyperparameters
+                    'bce': {
+                        'scale': cfg.MODEL.LOSSES.BCE.SCALE
+                    },
                     'ce': {
                         'eps': cfg.MODEL.LOSSES.CE.EPSILON,
                         'alpha': cfg.MODEL.LOSSES.CE.ALPHA,
                         'scale': cfg.MODEL.LOSSES.CE.SCALE
+                    },
+                    'bfl': {
+                        'alpha': cfg.MODEL.LOSSES.BFL.ALPHA,
+                        'gamma': cfg.MODEL.LOSSES.BFL.GAMMA,
+                        'scale': cfg.MODEL.LOSSES.BFL.SCALE
+                    },
+                    'fl': {
+                        'alpha': cfg.MODEL.LOSSES.FL.ALPHA,
+                        'gamma': cfg.MODEL.LOSSES.FL.GAMMA,
+                        'scale': cfg.MODEL.LOSSES.FL.SCALE
                     },
                     'tri': {
                         'margin': cfg.MODEL.LOSSES.TRI.MARGIN,
@@ -152,6 +165,13 @@ class Baseline(nn.Module):
         loss_dict = {}
         loss_names = self.loss_kwargs['loss_names']
 
+        if 'BinaryCrossEntropyLoss' in loss_names:
+            bce_kwargs = self.loss_kwargs.get('bce')
+            loss_dict['loss_bcls'] = binary_cross_entropy_loss(
+                cls_outputs,
+                gt_labels,
+            ) * bce_kwargs.get('scale')
+
         if 'CrossEntropyLoss' in loss_names:
             ce_kwargs = self.loss_kwargs.get('ce')
             loss_dict['loss_cls'] = cross_entropy_loss(
@@ -160,6 +180,24 @@ class Baseline(nn.Module):
                 ce_kwargs.get('eps'),
                 ce_kwargs.get('alpha')
             ) * ce_kwargs.get('scale')
+
+        if 'BinaryFocalLoss' in loss_names:
+            bfl_kwargs = self.loss_kwargs.get('bfl')
+            loss_dict['loss_bfl'] = binary_focal_loss(
+                cls_outputs,
+                gt_labels,
+                bfl_kwargs.get('alpha'),
+                bfl_kwargs.get('gamma')
+            ) * bfl_kwargs.get('scale')
+
+        if 'FocalLoss' in loss_names:
+            fl_kwargs = self.loss_kwargs.get('fl')
+            loss_dict['loss_fl'] = focal_loss(
+                cls_outputs, 
+                gt_labels,
+                fl_kwargs.get('alpha'),
+                fl_kwargs.get('gamma')
+            ) * fl_kwargs.get('scale')
 
         if 'TripletLoss' in loss_names:
             tri_kwargs = self.loss_kwargs.get('tri')

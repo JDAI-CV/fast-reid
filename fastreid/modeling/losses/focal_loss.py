@@ -90,3 +90,51 @@ def focal_loss(
         raise NotImplementedError("Invalid reduction mode: {}"
                                   .format(reduction))
     return loss
+
+
+def binary_focal_loss(inputs, targets, alpha=0.25, gamma=2):
+    '''
+    Reference: https://github.com/tensorflow/addons/blob/v0.14.0/tensorflow_addons/losses/focal_loss.py
+    '''
+#     __import__('ipdb').set_trace()
+    if alpha < 0:
+        raise ValueError(f'Value of alpha should be greater than or equal to zero, but get {alpha}')
+    if gamma < 0:
+        raise ValueError(f'Value of gamma should be greater than or equal to zero, but get {gamma}')
+
+    if not torch.is_tensor(inputs):
+        raise TypeError("Input type is not a torch.Tensor. Got {}".format(type(inputs)))
+
+    if not len(inputs.shape) >= 2:
+        raise ValueError("Invalid input shape, we expect BxCx*. Got: {}".format(inputs.shape))
+
+    if inputs.size(0) != targets.size(0):
+        raise ValueError('Expected input batch_size ({}) to match target batch_size ({}).'
+                         .format(inputs.size(0), targets.size(0)))
+
+    if not inputs.device == targets.device:
+        raise ValueError(
+            "input and target must be in the same device. Got: {}".format(
+                inputs.device, targets.device))
+    
+    if len(targets.shape) == 1:
+        targets = torch.unsqueeze(targets, 1)
+
+    if targets.dtype != inputs.dtype:
+        targets = targets.to(inputs.dtype)
+
+    bce = F.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
+    pred_prob = torch.sigmoid(inputs)
+
+    p_t = targets * pred_prob + (1 - targets) * (1 - pred_prob)
+    alpha_factor = 1.0
+    modulating_factor = 1.0
+
+    if alpha > 0:
+        alpha_factor = targets * alpha + (1 - targets) * (1 - alpha)
+
+    if gamma > 0:
+        modulating_factor = torch.pow(1.0 - p_t, gamma)
+
+    loss = torch.mean(alpha_factor * modulating_factor * bce)
+    return loss
