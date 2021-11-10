@@ -86,4 +86,4 @@ class PairTrainer(DefaultTrainer):
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_dir=None):
         data_loader = cls.build_test_loader(cfg, dataset_name)
-        return data_loader, PairDistanceEvaluator(cfg, output_dir)
+        return data_loader, PairScoreEvaluator(cfg, output_dir)
