@@ -65,11 +65,11 @@ def build_transforms(cfg, is_train=True):
 
         if size_train[0] > 0:
             res.append(T.Resize(size_train[0] if len(size_train) == 1 else size_train,
-                interpolation=InterpolationMode.BICUBIC))
+                interpolation=InterpolationMode.BILINEAR))
 
         if do_crop:
             res.append(T.RandomResizedCrop(size=crop_size[0] if len(crop_size) == 1 else crop_size,
-                                           interpolation=InterpolationMode.BICUBIC,
+                                           interpolation=InterpolationMode.BILINEAR,
                                            scale=crop_scale, ratio=crop_ratio))
         if do_pad:
             res.extend([T.Pad(padding_size, padding_mode=padding_mode),
@@ -96,8 +96,8 @@ def build_transforms(cfg, is_train=True):
 
         if size_test[0] > 0:
             res.append(T.Resize(size_test[0] if len(size_test) == 1 else size_test,
-                interpolation=InterpolationMode.BICUBIC))
-        if do_crop:
+                interpolation=InterpolationMode.BILINEAR))
+        if do_crop and size_test == crop_size:
             res.append(T.CenterCrop(size=crop_size[0] if len(crop_size) == 1 else crop_size))
         res.append(ToTensor())
     return T.Compose(res)
