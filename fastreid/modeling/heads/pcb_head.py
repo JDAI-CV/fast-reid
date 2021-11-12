@@ -49,25 +49,25 @@ class PcbHead(nn.Module):
         self.match_full = nn.Sequential(
                     nn.Dropout(p=0.5),
                     nn.Linear(self.full_dim * 4, self.embedding_dim),
-                    nn.GELU()
+                    nn.ReLU()
                 )
 
         self.match_part_0 = nn.Sequential(
                     nn.Dropout(p=0.5),
                     nn.Linear(self.part_dim * 4, self.embedding_dim),
-                    nn.GELU()
+                    nn.ReLU()
                 )
 
         self.match_part_1 = nn.Sequential(
                     nn.Dropout(p=0.5),
                     nn.Linear(self.part_dim * 4, self.embedding_dim),
-                    nn.GELU()
+                    nn.ReLU()
                 )
 
         self.match_part_2 = nn.Sequential(
                     nn.Dropout(p=0.5),
                     nn.Linear(self.part_dim * 4, self.embedding_dim),
-                    nn.GELU()
+                    nn.ReLU()
                 )
 
         # Get similarity
