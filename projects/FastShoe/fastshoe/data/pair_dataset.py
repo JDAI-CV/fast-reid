@@ -37,8 +37,9 @@ class PairDataset(ImageDataset):
         pos_folders = []
         neg_folders = []
         for data in all_data:
-            pos_folders.append(data['positive_img_list'])
-            neg_folders.append(data['negative_img_list'])
+            if len(data['positive_img_list']) >= 2 and len(data['negative_img_list']) >= 1:
+                pos_folders.append(data['positive_img_list'])
+                neg_folders.append(data['negative_img_list'])
 
         assert len(pos_folders) == len(neg_folders), self._logger.error('the len of self.pos_foders should be equal to self.pos_foders')
         self.pos_folders = pos_folders
