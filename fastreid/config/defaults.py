@@ -286,7 +286,7 @@ _C.SOLVER.SCHED = "MultiStepLR"
 _C.SOLVER.DELAY_EPOCHS = 0
 
 _C.SOLVER.GAMMA = 0.1
-_C.SOLVER.STEPS = [30, 55]
+_C.SOLVER.STEPS = [100, 200, 250]
 
 # Cosine annealing learning rate options
 _C.SOLVER.ETA_MIN_LR = 1e-7
