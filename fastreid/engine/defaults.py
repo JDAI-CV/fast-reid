@@ -366,7 +366,7 @@ class DefaultTrainer(TrainerBase):
         """
         model = build_model(cfg)
         logger = logging.getLogger(__name__)
-        logger.info("Model:\n{}".format(model))
+        # logger.info("Model:\n{}".format(model))
         return model
 
     @classmethod
