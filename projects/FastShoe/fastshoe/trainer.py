@@ -14,8 +14,8 @@ from fastreid.utils import comm
 from fastreid.data.transforms import build_transforms
 from fastreid.data.build import build_reid_train_loader, build_reid_test_loader
 from fastreid.evaluation import PairScoreEvaluator, PairDistanceEvaluator
-from projects.FastShoe.fastshoe.data import PairDataset
-
+# ensure custom datasets are registered
+import projects.FastShoe.fastshoe.data
 
 
 class PairTrainer(DefaultTrainer):
