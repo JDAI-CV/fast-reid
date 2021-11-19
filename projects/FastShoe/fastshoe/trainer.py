@@ -27,8 +27,8 @@ class PairTrainer(DefaultTrainer):
         cls._logger.info("Prepare training set")
 
         transforms = build_transforms(cfg, is_train=True)
-        img_root=os.path.join(_root, 'shoe_crop_all_images')
-        anno_path=os.path.join(_root, 'labels/1102/train_1102.json')
+        img_root = os.path.join(_root, '20211115/rotate_shoe_crop_images')
+        anno_path = os.path.join(_root, 'labels/1115/train_1115.json')
         cls._logger.info('Loading {} with {}.'.format(img_root, anno_path))
 
         datasets = []
@@ -48,9 +48,9 @@ class PairTrainer(DefaultTrainer):
 
         transforms = build_transforms(cfg, is_train=False)
         if dataset_name == 'PairDataset':
-            img_root = os.path.join(_root, 'shoe_crop_all_images')
-            val_json = os.path.join(_root, 'labels/1102/validation_1102.json')
-            test_json = os.path.join(_root, 'labels/1102/test_1102.json')
+            img_root = os.path.join(_root, '20211115/rotate_shoe_crop_images')
+            val_json = os.path.join(_root, 'labels/1115/val_1115.json')
+            test_json = os.path.join(_root, 'labels/1115/val_1115.json')
 
             anno_path, mode = (test_json, 'test') if cfg.eval_only else (val_json, 'val')
             cls._logger.info('Loading {} with {} for {}.'.format(img_root, anno_path, mode))
