@@ -310,7 +310,7 @@ class DefaultTrainer(TrainerBase):
         if comm.is_main_process():
             ret.append(hooks.PeriodicCheckpointer(self.checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD))
             # run writers in the end, so that evaluation metrics are written
-            ret.append(hooks.PeriodicWriter(self.build_writers(), 200))
+            ret.append(hooks.PeriodicWriter(self.build_writers(), 100))
 
         return ret
 
