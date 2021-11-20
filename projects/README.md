@@ -20,6 +20,8 @@ Note that these are research projects, and therefore may not have the same level
 
 External projects in the community that use fastreid:
 
+- [FastReID of Interpreter Project](https://github.com/SheldongChen/AMD.github.io)
+
 # Competitions
 
 - NAIC20 reid track [1-st solution](https://github.com/JDAI-CV/fast-reid/tree/master/projects/NAIC20) 
