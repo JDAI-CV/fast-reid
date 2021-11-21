@@ -229,6 +229,11 @@ class CommonMetricPrinter(EventWriter):
         except KeyError:
             lr = "N/A"
 
+        try:
+            cls_accuracy = "{:.4f}".format( storage.history("cls_accuracy").latest())
+        except KeyError:
+            accuracy = "N/A"
+
         if torch.cuda.is_available():
             max_mem_mb = torch.cuda.max_memory_allocated() / 1024.0 / 1024.0
         else:
@@ -236,7 +241,7 @@ class CommonMetricPrinter(EventWriter):
 
         # NOTE: max_mem is parsed by grep in "dev/parse_results.sh"
         self.logger.info(
-            " {eta}epoch/iter: {epoch}/{iter}  {losses}  {time}{data_time}lr: {lr}  {memory}".format(
+                " {eta}epoch/iter: {epoch}/{iter}  {losses} cls_accuracy: {cls_accuracy} {time}{data_time}lr: {lr}  {memory}".format(
                 eta=f"eta: {eta_string}  " if eta_string else "",
                 epoch=epoch,
                 iter=iteration,
@@ -247,6 +252,7 @@ class CommonMetricPrinter(EventWriter):
                         if "loss" in k
                     ]
                 ),
+                cls_accuracy = cls_accuracy,
                 time="time: {:.4f}  ".format(iter_time) if iter_time is not None else "",
                 data_time="data_time: {:.4f}  ".format(data_time) if data_time is not None else "",
                 lr=lr,

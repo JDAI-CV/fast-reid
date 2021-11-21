@@ -208,7 +208,7 @@ class DefaultTrainer(TrainerBase):
             # ref to https://github.com/pytorch/pytorch/issues/22049 to set `find_unused_parameters=True`
             # for part of the parameters is not updated.
             model = DistributedDataParallel(
-                model, device_ids=[comm.get_local_rank()], broadcast_buffers=False, find_unused_parameters=True
+                model, device_ids=[comm.get_local_rank()], broadcast_buffers=False, find_unused_parameters=False
             )
 
         self._trainer = (AMPTrainer if cfg.SOLVER.AMP.ENABLED else SimpleTrainer)(
@@ -336,7 +336,7 @@ class DefaultTrainer(TrainerBase):
             # It may not always print what you want to see, since it prints "common" metrics only.
             CommonMetricPrinter(self.max_iter),
             JSONWriter(os.path.join(self.cfg.OUTPUT_DIR, "metrics.json")),
-            TensorboardXWriter(self.cfg.OUTPUT_DIR),
+            # TensorboardXWriter(self.cfg.OUTPUT_DIR),
         ]
 
     def train(self):
