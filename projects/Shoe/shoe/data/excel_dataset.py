@@ -15,7 +15,7 @@ from fastreid.utils.env import seed_all_rng
 @DATASET_REGISTRY.register()
 class ExcelDataset(ImageDataset):
 
-    _logger = logging.getLogger('fastreid.fastshoe')
+    _logger = logging.getLogger('fastreid.shoe.data.excel')
 
     def __init__(self, img_root, anno_path, transform=None, **kwargs):
         self._logger.info('set with {} random seed: 12345'.format(self.__class__.__name__))

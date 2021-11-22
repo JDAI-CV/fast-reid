@@ -1,7 +1,7 @@
 _BASE_: base.yaml
 
 MODEL:
-  META_ARCHITECTURE: PcbOnline
+  META_ARCHITECTURE: PCB
 
   PCB:
     PART_NUM: 3

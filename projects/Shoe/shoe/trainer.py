@@ -13,14 +13,14 @@ from fastreid.data.datasets import DATASET_REGISTRY
 from fastreid.utils import comm
 from fastreid.data.transforms import build_transforms
 from fastreid.data.build import build_reid_train_loader, build_reid_test_loader
-from fastreid.evaluation import PairScoreEvaluator, PairDistanceEvaluator
+from fastreid.evaluation import ShoeScoreEvaluator, ShoeDistanceEvaluator
 # ensure custom datasets are registered
-import projects.FastShoe.fastshoe.data
+import projects.Shoe.shoe.data
 
 
 class PairTrainer(DefaultTrainer):
 
-    _logger = logging.getLogger('fastreid.fastshoe')
+    _logger = logging.getLogger('fastreid.shoe')
 
     @classmethod
     def build_train_loader(cls, cfg):
@@ -47,16 +47,18 @@ class PairTrainer(DefaultTrainer):
         cls._logger.info("Prepare {} set".format('test' if cfg.eval_only else 'validation'))
 
         transforms = build_transforms(cfg, is_train=False)
-        if dataset_name == 'PairDataset':
+        if dataset_name.startswith('Shoe'):
             img_root = os.path.join(_root, '20211115/rotate_shoe_crop_images')
+            train_json = os.path.join(_root, 'labels/1115/train_1115.json')
             val_json = os.path.join(_root, 'labels/1115/val_1115.json')
-            test_json = os.path.join(_root, 'labels/1115/val_1115.json')
-
-            anno_path, mode = (test_json, 'test') if cfg.eval_only else (val_json, 'val')
+            test_json = os.path.join(_root, 'labels/1115/test_1115.json')
+            if dataset_name == 'ShoePairDataset':
+                anno_path, mode = (test_json, 'test') if cfg.eval_only else (val_json, 'val')
+            elif dataset_name == 'ShoeClasDataset':
+                anno_path = train_json
             cls._logger.info('Loading {} with {} for {}.'.format(img_root, anno_path, mode))
             test_set = DATASET_REGISTRY.get(dataset_name)(img_root=img_root, anno_path=anno_path, transform=transforms, mode=mode)
             test_set.show_test()
-
         elif dataset_name == 'ExcelDataset':
             img_root_0830 = os.path.join(_root, 'excel/0830/rotate_shoe_crop_images')
             test_csv_0830 = os.path.join(_root, 'excel/0830/excel_pair_crop.csv')
@@ -87,4 +89,5 @@ class PairTrainer(DefaultTrainer):
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_dir=None):
         data_loader = cls.build_test_loader(cfg, dataset_name)
-        return data_loader, PairScoreEvaluator(cfg, output_dir)
+        # return data_loader, ClasEvaluator(cfg, output_dir)
+        return data_loader, ShoeDistanceEvaluator(cfg, output_dir)

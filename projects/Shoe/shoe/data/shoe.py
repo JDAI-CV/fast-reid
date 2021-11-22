@@ -23,7 +23,7 @@ from .augment import augment_pos_image, augment_neg_image
 
 class ShoeDataset(ImageDataset):
 
-    _logger = logging.getLogger('fastreid.shoe.dataset')
+    _logger = logging.getLogger('fastreid.shoe.data')
 
     def __init__(self, img_root: str, anno_path: str, transform=None, mode: str = 'train'):
         if mode not in ('train', 'val', 'test'):
