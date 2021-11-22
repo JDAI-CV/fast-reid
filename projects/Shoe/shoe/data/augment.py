@@ -20,7 +20,7 @@ pos_augmenter = iaa.Sequential(
 
 
 def augment_pos_image(img: Image.Image) -> Image.Image:
-    img = self.pos_ia_augmenter.augment_image(np.array(img))
+    img = pos_augmenter.augment_image(np.array(img))
     img = Image.fromarray(img.astype('uint8')).convert('RGB')
     return img
 

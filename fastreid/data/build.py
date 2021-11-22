@@ -83,15 +83,18 @@ def build_reid_train_loader(
     """
 
     mini_batch_size = total_batch_size // comm.get_world_size()
-
     batch_sampler = torch.utils.data.sampler.BatchSampler(sampler, mini_batch_size, True)
+
+    cfn = fast_batch_collator
+    if train_set.__class__.__name__ in ('ShoePairDataset', 'ExcelDataset'):
+        cfn = pair_batch_collator
 
     train_loader = DataLoaderX(
         comm.get_local_rank(),
         dataset=train_set,
         num_workers=num_workers,
         batch_sampler=batch_sampler,
-        collate_fn=pair_batch_collator,
+        collate_fn=cfn,
         pin_memory=True,
     )
 
@@ -147,12 +150,19 @@ def build_reid_test_loader(test_set, test_batch_size, num_query, num_workers=4):
     mini_batch_size = test_batch_size // comm.get_world_size()
     data_sampler = samplers.InferenceSampler(len(test_set))
     batch_sampler = torch.utils.data.BatchSampler(data_sampler, mini_batch_size, False)
+
+    cfn = fast_batch_collator
+    if isinstance(test_set, torch.utils.data.ConcatDataset) and test_set.__dict__['datasets'][0].__class__.__name__ == 'ExcelDataset':
+        cfn = pair_batch_collator
+    if test_set.__class__.__name__ in ('ShoePairDataset', 'ExcelDataset'):
+        cfn = pair_batch_collator
+
     test_loader = DataLoaderX(
         comm.get_local_rank(),
         dataset=test_set,
         batch_sampler=batch_sampler,
         num_workers=num_workers,  # save some memory
-        collate_fn=pair_batch_collator,
+        collate_fn=cfn,
         pin_memory=True,
     )
     # Usage: debug dataset

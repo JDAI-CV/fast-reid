@@ -23,10 +23,10 @@ from .shoe import ShoeDataset
 
 
 @DATASET_REGISTRY.register()
-class ShoeClasDataset(ImageDataset):
+class ShoeClasDataset(ShoeDataset):
 
     def __init__(self, img_root: str, anno_path: str, transform=None, mode: str = 'train'):
-        super(ShoeClassDataset, self).__init__(img_root, anno_path, transform, mode)
+        super(ShoeClasDataset, self).__init__(img_root, anno_path, transform, mode)
 
         self.pos_folders = []
         for data in self.all_data:
@@ -37,6 +37,8 @@ class ShoeClasDataset(ImageDataset):
             # for validation in train phase: 
             # use 2 sample per folder(class) since 1 is to little and more is compute expensive
             self.num_images = len(self.pos_folders) * 2
+        else:
+            self.num_images = sum([len(x) for x in self.pos_folders])
 
         self.image_paths = []
         self.image_labels = []
@@ -78,7 +80,7 @@ class ShoeClasDataset(ImageDataset):
     
     def describe(self):
         headers = ['subset', 'classes', 'images']
-        csv_results = [[self.mode, self.num_classes, self.num_images]]
+        csv_results = [[self.mode, len(self.pos_folders), self.num_images]]
 
         # tabulate it
         table = tabulate(

@@ -72,5 +72,5 @@ DATASETS:
   NAMES: ("ShoeClasDataset",)
   TESTS: ("ShoeClasDataset",)
 
-OUTPUT_DIR: projects/ShoeClas/logs/base-clas
+OUTPUT_DIR: projects/Shoe/logs/base-clas
 

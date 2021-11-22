@@ -77,8 +77,8 @@ TEST:
   IMS_PER_BATCH: 336
 
 DATASETS:
-  NAMES: ("PairDataset",)
-  TESTS: ("PairDataset", "ExcelDataset",)
+  NAMES: ("ShoePairDataset",)
+  TESTS: ("ShoePairDataset", "ExcelDataset",)
 
-OUTPUT_DIR: projects/FastShoe/logs/online-pcb
+OUTPUT_DIR: projects/Shoe/logs/online-pcb
 

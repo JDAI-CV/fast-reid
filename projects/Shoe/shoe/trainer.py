@@ -55,7 +55,7 @@ class PairTrainer(DefaultTrainer):
             if dataset_name == 'ShoePairDataset':
                 anno_path, mode = (test_json, 'test') if cfg.eval_only else (val_json, 'val')
             elif dataset_name == 'ShoeClasDataset':
-                anno_path = train_json
+                anno_path, mode = train_json, 'val'
             cls._logger.info('Loading {} with {} for {}.'.format(img_root, anno_path, mode))
             test_set = DATASET_REGISTRY.get(dataset_name)(img_root=img_root, anno_path=anno_path, transform=transforms, mode=mode)
             test_set.show_test()
@@ -88,6 +88,13 @@ class PairTrainer(DefaultTrainer):
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_dir=None):
+        head_name = cfg.MODEL.HEADS.NAME
         data_loader = cls.build_test_loader(cfg, dataset_name)
-        # return data_loader, ClasEvaluator(cfg, output_dir)
-        return data_loader, ShoeDistanceEvaluator(cfg, output_dir)
+        if head_name == 'ClasHead':
+            evaluator = ClasEvaluator(cfg, output_dir)
+        elif head_name == 'PcbHead':
+            evaluator = ShoeScoreEvaluator(cfg, output_dir)
+        elif head_name == 'EmbeddingHead':
+            evaluator = ShoeDistanceEvaluator(cfg, output_dir)
+
+        return data_loader, evaluator
