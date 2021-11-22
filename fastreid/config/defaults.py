@@ -80,7 +80,7 @@ _C.MODEL.HEADS.CLS_LAYER = "Linear"  # ArcSoftmax" or "CircleSoftmax"
 
 # Margin and Scale for margin-based classification layer
 _C.MODEL.HEADS.MARGIN = 0.
-_C.MODEL.HEADS.SCALE = 1
+_C.MODEL.HEADS.SCALE = 1.
 
 # ---------------------------------------------------------------------------- #
 # REID LOSSES options

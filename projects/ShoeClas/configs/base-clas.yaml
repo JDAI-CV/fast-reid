@@ -1,0 +1,76 @@
+_BASE_: base.yaml
+
+MODEL:
+  META_ARCHITECTURE: Baseline
+
+  BACKBONE:
+    PRETRAIN: False
+    NAME: build_resnet_backbone
+    LAST_STRIDE: 4
+    NORM: BN
+    WITH_IBN: True
+    WITH_SE: True
+    WITH_NL: False
+    DEPTH: 101x
+
+  HEADS:
+    NAME: ClasHead  # train: ClasHead, eval: EmbeddingHead
+    NORM: BN
+    WITH_BNNECK: True
+    NECK_FEAT: after
+    POOL_LAYER: GeneralizedMeanPoolingP
+    CLS_LAYER: ArcSoftmax
+    SCALE: 16.73045033
+    MARGIN: 0.35
+    NUM_CLASSES: 0
+
+  LOSSES:
+    NAME: ("FocalLoss",)
+    CE: 
+      EPSILON: 0.1
+      SCALE: 1.0
+
+INPUT:
+  SIZE_TRAIN: [480, 320]
+  SIZE_TEST: [450, 300]
+
+  CROP:
+    ENABLED: True
+    SIZE: [450, 300]
+    SCALE: [0.8, 1.2]
+    RATIO: [0.75, 1.33333333]
+
+DATALOADER:
+  NUM_WORKERS: 16
+
+SOLVER:
+  AMP:
+    ENABLED: True
+
+  OPT: SGD
+  SCHED: MultiStepLR
+
+  BASE_LR: 0.001
+  MOMENTUM: 0.9
+  NESTEROV: False
+
+  BIAS_LR_FACTOR: 1.
+  WEIGHT_DECAY: 0.0005
+  WEIGHT_DECAY_BIAS: 0.
+  ETA_MIN_LR: 0.000003
+
+  WARMUP_FACTOR: 0.1
+  WARMUP_ITERS: 0
+
+  MAX_EPOCH: 300
+  IMS_PER_BATCH: 168
+
+TEST:
+  IMS_PER_BATCH: 336
+
+DATASETS:
+  NAMES: ("ShoeClasDataset",)
+  TESTS: ("ShoeClasDataset",)
+
+OUTPUT_DIR: projects/ShoeClas/logs/base-clas
+
