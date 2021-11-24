@@ -75,6 +75,8 @@ SOLVER:
 
 TEST:
   IMS_PER_BATCH: 336
+  EVALUATOR: ShoeScoreEvaluator
+
 
 DATASETS:
   NAMES: ("ShoePairDataset",)

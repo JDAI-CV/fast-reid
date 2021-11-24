@@ -10,6 +10,7 @@ import torch
 from fastreid.data.build import _root
 from fastreid.engine import DefaultTrainer
 from fastreid.data.datasets import DATASET_REGISTRY
+from fastreid.evaluation import EVALUATOR_REGISTRY
 from fastreid.utils import comm
 from fastreid.data.transforms import build_transforms
 from fastreid.data.build import build_reid_train_loader, build_reid_test_loader
@@ -88,13 +89,6 @@ class PairTrainer(DefaultTrainer):
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_dir=None):
-        head_name = cfg.MODEL.HEADS.NAME
         data_loader = cls.build_test_loader(cfg, dataset_name)
-        if head_name == 'ClasHead':
-            evaluator = ClasEvaluator(cfg, output_dir)
-        elif head_name == 'PcbHead':
-            evaluator = ShoeScoreEvaluator(cfg, output_dir)
-        elif head_name == 'EmbeddingHead':
-            evaluator = ShoeDistanceEvaluator(cfg, output_dir)
-
+        evaluator = EVALUATOR_REGISTRY.get(cfg.TEST.EVALUATOR)(cfg, output_dir)
         return data_loader, evaluator

@@ -13,6 +13,7 @@ import torch
 
 from fastreid.utils import comm
 from .evaluator import DatasetEvaluator
+from .registry import EVALUATOR_REGISTRY
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ def accuracy(output, target, topk=(1,)):
         return res
 
 
+@EVALUATOR_REGISTRY.register()
 class ClasEvaluator(DatasetEvaluator):
     def __init__(self, cfg, output_dir=None):
         self.cfg = cfg

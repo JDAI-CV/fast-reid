@@ -68,6 +68,8 @@ _C.MODEL.HEADS.NORM = "BN"
 _C.MODEL.HEADS.NUM_CLASSES = 0
 # Embedding dimension in head
 _C.MODEL.HEADS.EMBEDDING_DIM = 0
+# If return embedding in ClasHead in eval mode
+_C.MODEL.HEADS.RETURN_EMBEDDING = False
 # If use BNneck in embedding
 _C.MODEL.HEADS.WITH_BNNECK = False
 # Triplet feature using feature before(after) bnneck
@@ -322,6 +324,7 @@ _C.SOLVER.CLIP_GRADIENTS.NORM_TYPE = 2.0
 _C.TEST = CN()
 
 _C.TEST.EVAL_PERIOD = 20
+_C.TEST.EVALUATOR = ("ClasEvaluator")
 
 # Number of images per batch across all machines.
 _C.TEST.IMS_PER_BATCH = 64
@@ -345,6 +348,7 @@ _C.TEST.RERANK.LAMBDA = 0.3
 _C.TEST.PRECISE_BN = CN({"ENABLED": False})
 _C.TEST.PRECISE_BN.DATASET = 'Market1501'
 _C.TEST.PRECISE_BN.NUM_ITER = 300
+
 
 # ---------------------------------------------------------------------------- #
 # Misc options

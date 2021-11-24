@@ -49,6 +49,7 @@ SOLVER:
 
   OPT: SGD
   SCHED: MultiStepLR
+  STEPS: [100, 200, 250]
 
   BASE_LR: 0.001
   MOMENTUM: 0.9
@@ -73,4 +74,3 @@ DATASETS:
   TESTS: ("ShoeClasDataset",)
 
 OUTPUT_DIR: projects/Shoe/logs/base-clas
-

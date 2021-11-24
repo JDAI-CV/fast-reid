@@ -19,10 +19,12 @@ from fastreid.utils.compute_dist import build_dist
 from .evaluator import DatasetEvaluator
 from .query_expansion import aqe
 from .rank_cylib import compile_helper
+from .registry import EVALUATOR_REGISTRY
 
 logger = logging.getLogger(__name__)
 
 
+@EVALUATOR_REGISTRY.register()
 class ReidEvaluator(DatasetEvaluator):
     def __init__(self, cfg, num_query, output_dir=None):
         self.cfg = cfg

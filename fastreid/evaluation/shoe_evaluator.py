@@ -10,6 +10,7 @@ from sklearn import metrics as skmetrics
 
 from fastreid.utils import comm
 from .evaluator import DatasetEvaluator
+from .registry import EVALUATOR_REGISTRY
 
 __all__ = ['ShoeScoreEvaluator', 'ShoeDistanceEvaluator']
 
@@ -78,6 +79,7 @@ class ShoeEvaluator(DatasetEvaluator):
         return copy.deepcopy(self._results)
 
 
+@EVALUATOR_REGISTRY.register()
 class ShoeScoreEvaluator(ShoeEvaluator):
     def process(self, inputs, outputs):
         scores = outputs['cls_outputs']
@@ -92,14 +94,15 @@ class ShoeScoreEvaluator(ShoeEvaluator):
 
         prediction = {
             'preds': scores.to(self._cpu_device).numpy(),
-            'labels': inputs["targets"].to(self._cpu_device).numpy()
+            'labels': inputs["binary_targets"].to(self._cpu_device).numpy()
         }
         self._predictions.append(prediction)
 
 
+@EVALUATOR_REGISTRY.register()
 class ShoeDistanceEvaluator(ShoeEvaluator):
     def process(self, inputs: dict, feats: torch.Tensor):
-        label = inputs["targets"].to(self._cpu_device).numpy()
+        label = inputs["binary_targets"].to(self._cpu_device).numpy()
         bsz = label.shape[0]
         feats_len = feats.size(0)
         assert bsz * 2 == feats_len
@@ -108,11 +111,11 @@ class ShoeDistanceEvaluator(ShoeEvaluator):
 
         query_feat = outputs[0:feats_len:2, :]
         gallery_feat = outputs[1:feats_len:2, :]
-        distances = torch.sum(query_feat * gallery_feat, -1)
+        cosine_distances = torch.sum(query_feat * gallery_feat, -1)
 
         # print(distances)
         prediction = {
-            'preds': distances.to(self._cpu_device).numpy(),
+            'preds': cosine_distances.to(self._cpu_device).numpy(),
             'labels': label
         }
         self._predictions.append(prediction)
