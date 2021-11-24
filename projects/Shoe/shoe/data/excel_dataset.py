@@ -46,7 +46,8 @@ class ExcelDataset(ImageDataset):
         return {
             'img1': img1,
             'img2': img2,
-            'target': label
+            'binary_target': label,
+            'multi_target': [label, label]  # multi_target is positional and ununsed
         }
 
     def __len__(self):

@@ -30,10 +30,15 @@ class ShoePairDataset(ShoeDataset):
 
         self.pos_folders = []
         self.neg_folders = []
+        self.image_label_dict = {}
         for data in self.all_data:
             if len(data['positive_img_list']) >= 2 and len(data['negative_img_list']) >= 1:
                 self.pos_folders.append(data['positive_img_list'])
                 self.neg_folders.append(data['negative_img_list'])
+
+        for idx, folder in enumerate(self.pos_folders):
+            for img_path in folder:
+                self.image_label_dict[img_path] = idx
 
     def __len__(self):
         return len(self.pos_folders)
@@ -72,6 +77,13 @@ class ShoePairDataset(ShoeDataset):
                 img_path1, img_path2 = random.choice(pf), random.choice(nf)
 
 
+        if label == 1:
+            multi_label = [self.image_label_dict[img_path1], self.image_label_dict[img_path1]]
+        else:
+            # -1 indicate it is a negative sample which has no multi class label
+            # this negative sample will be ignored in computing multi class related loss
+            multi_label = [self.image_label_dict[img_path1], -1]
+
         img_path1 = os.path.join(self.img_root, img_path1)
         img1 = read_image(img_path1)
 
@@ -91,12 +103,14 @@ class ShoePairDataset(ShoeDataset):
         return {
             'img1': img1,
             'img2': img2,
-            'target': label
+            'binary_target': label,
+            'multi_target': multi_label
         }
 
     #-------------下面是辅助信息------------------#
     @property
     def num_classes(self):
+        # return len(self.pos_folders)
         return 2
     
     @property   
