@@ -232,7 +232,7 @@ class CommonMetricPrinter(EventWriter):
         try:
             cls_accuracy = "{:.4f}".format( storage.history("cls_accuracy").latest())
         except KeyError:
-            accuracy = "N/A"
+            cls_accuracy = "N/A"
 
         if torch.cuda.is_available():
             max_mem_mb = torch.cuda.max_memory_allocated() / 1024.0 / 1024.0
