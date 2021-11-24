@@ -57,6 +57,10 @@ def focal_loss(
         raise ValueError('Expected input batch_size ({}) to match target batch_size ({}).'
                          .format(input.size(0), target.size(0)))
 
+    index = torch.where(target != -1)[0]
+    target = target[index]
+    input = input[index, :]
+
     n = input.size(0)
     out_size = (n,) + input.size()[2:]
     if target.size()[1:] != input.size()[2:]:
@@ -96,7 +100,6 @@ def binary_focal_loss(inputs, targets, alpha=0.25, gamma=2):
     '''
     Reference: https://github.com/tensorflow/addons/blob/v0.14.0/tensorflow_addons/losses/focal_loss.py
     '''
-#     __import__('ipdb').set_trace()
     if alpha < 0:
         raise ValueError(f'Value of alpha should be greater than or equal to zero, but get {alpha}')
     if gamma < 0:

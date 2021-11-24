@@ -13,6 +13,16 @@ def log_accuracy(pred_class_logits, gt_classes, topk=(1,)):
     """
     Log the accuracy metrics to EventStorage.
     """
+    storage = get_event_storage()
+
+    index = torch.where(gt_classes != -1)[0]
+    if len(index) == 0:
+        storage.put_scalar("cls_accuracy", 0)
+        return
+
+    pred_class_logits = pred_class_logits[index, :]
+    gt_classes = gt_classes[index]
+
     bsz = pred_class_logits.size(0)
     maxk = max(topk)
     _, pred_class = pred_class_logits.topk(maxk, 1, True, True)
@@ -24,12 +34,18 @@ def log_accuracy(pred_class_logits, gt_classes, topk=(1,)):
         correct_k = correct[:k].view(-1).float().sum(dim=0, keepdim=True)
         ret.append(correct_k.mul_(1. / bsz))
 
-    storage = get_event_storage()
     storage.put_scalar("cls_accuracy", ret[0])
 
 
 def cross_entropy_loss(pred_class_outputs, gt_classes, eps, alpha=0.2):
     num_classes = pred_class_outputs.size(1)
+
+    index = torch.where(gt_classes != -1)[0]
+    if len(index) == 0:
+        return torch.tensor(0, dtype=torch.float32, device=pred_class_outputs.device)
+
+    pred_class_outputs = pred_class_outputs[index, :]
+    gt_classes = gt_classes[index]
 
     if eps >= 0:
         smooth_param = eps
