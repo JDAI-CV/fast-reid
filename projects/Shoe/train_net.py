@@ -24,14 +24,15 @@ def setup(args):
     cfg = get_cfg()
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
-    setattr(cfg, 'eval_only', args.eval_only)
-    cfg.freeze()
     default_setup(cfg, args)
     return cfg
 
 
 def main(args):
     cfg = setup(args)
+    cfg.defrost()
+    setattr(cfg, 'eval_only', args.eval_only)
+    cfg.freeze()
 
     if args.eval_only:
         cfg.defrost()
