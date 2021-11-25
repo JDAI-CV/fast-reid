@@ -1,0 +1,18 @@
+_BASE_: base-clas.yaml
+
+MODEL:
+  BACKBONE:
+    PRETRAIN: True
+
+  HEADS:
+    ARC_K: 3
+    EMBEDDING_DIM: 256
+    SCALE: 65.
+
+
+SOLVER:
+  MAX_EPOCH: 50
+  SCHED: MultiStepLR
+  STEPS: [20, 35, 45]
+
+OUTPUT_DIR: projects/Shoe/logs/subcenter-arc-k3
