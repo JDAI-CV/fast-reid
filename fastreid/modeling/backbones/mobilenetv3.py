@@ -4,7 +4,15 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
-from torchvision.models.utils import load_state_dict_from_url
+
+#The style of importing Considers compatibility for the diversity of torchvision versions
+try:
+    from torchvision.models.utils import load_state_dict_from_url
+except ImportError:
+    try:
+        from torch.hub import load_state_dict_from_url
+    except ImportError:
+        from torch.utils.model_zoo import load_url as load_state_dict_from_url
 
 from fastreid.layers import get_norm
 from .build import BACKBONE_REGISTRY
