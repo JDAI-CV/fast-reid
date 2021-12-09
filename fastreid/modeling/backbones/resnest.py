@@ -1,6 +1,6 @@
 # encoding: utf-8
 # based on:
-# https://github.com/zhanghang1989/ResNeSt/blob/master/resnest/torch/resnest.py
+# https://github.com/zhanghang1989/ResNeSt/blob/master/resnest/torch/models/resnest.py
 """ResNeSt models"""
 
 import logging
@@ -14,7 +14,7 @@ from fastreid.utils.checkpoint import get_unexpected_parameters_message, get_mis
 from .build import BACKBONE_REGISTRY
 
 logger = logging.getLogger(__name__)
-_url_format = 'https://s3.us-west-1.wasabisys.com/resnest/torch/{}-{}.pth'
+_url_format = 'https://github.com/zhanghang1989/ResNeSt/releases/download/weights_step1/{}-{}.pth'
 
 _model_sha256 = {name: checksum for checksum, name in [
     ('528c19ca', 'resnest50'),
