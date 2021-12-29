@@ -56,6 +56,11 @@ def get_parser():
         help='if use multiprocess for feature extraction.'
     )
     parser.add_argument(
+        '--actmap',
+        action='store_true',
+        help='if use activation map to overlap the image.'
+    )
+    parser.add_argument(
         "--dataset-name",
         help="a test dataset name for visualizing ranking list."
     )
@@ -72,6 +77,7 @@ def get_parser():
     )
     parser.add_argument(
         "--num-vis",
+        type=int,
         default=100,
         help="number of query images to be visualized",
     )
@@ -87,6 +93,7 @@ def get_parser():
     )
     parser.add_argument(
         "--max-rank",
+        type=int,
         default=10,
         help="maximum number of rank list to be visualized",
     )
@@ -109,10 +116,12 @@ if __name__ == '__main__':
     feats = []
     pids = []
     camids = []
-    for (feat, pid, camid) in tqdm.tqdm(demo.run_on_loader(test_loader), total=len(test_loader)):
+    acts_list = []
+    for (feat, pid, camid, acts) in tqdm.tqdm(demo.run_on_loader(test_loader), total=len(test_loader)):
         feats.append(feat)
         pids.extend(pid)
         camids.extend(camid)
+        acts_list.extend(acts)
 
     feats = torch.cat(feats, dim=0)
     q_feat = feats[:num_query]
@@ -131,7 +140,7 @@ if __name__ == '__main__':
     logger.info("Finish computing APs for all query images!")
 
     visualizer = Visualizer(test_loader.dataset)
-    visualizer.get_model_output(all_ap, distmat, q_pids, g_pids, q_camids, g_camids)
+    visualizer.get_model_output(all_ap, distmat, q_pids, g_pids, q_camids, g_camids, acts_list)
 
     logger.info("Start saving ROC curve ...")
     fpr, tpr, pos, neg = visualizer.vis_roc_curve(args.output)
@@ -140,5 +149,5 @@ if __name__ == '__main__':
 
     logger.info("Saving rank list result ...")
     query_indices = visualizer.vis_rank_list(args.output, args.vis_label, args.num_vis,
-                                             args.rank_sort, args.label_sort, args.max_rank)
+                                             args.rank_sort, args.label_sort, args.max_rank, args.actmap)
     logger.info("Finish saving rank list results!")

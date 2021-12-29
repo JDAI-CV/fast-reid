@@ -9,6 +9,9 @@ import bisect
 from collections import deque
 
 import cv2
+import numpy as np
+import torch.nn.functional as F
+
 import torch
 import torch.multiprocessing as mp
 
@@ -57,6 +60,31 @@ class FeatureExtractionDemo(object):
         predictions = self.predictor(image)
         return predictions
 
+
+    def get_actmap(self, features, sz):
+        """
+        :param features: (1, 2048, 16, 8) activation map
+        :return:
+        """
+        features = (features ** 2).sum(1)  # (1, 16, 8)
+        b, h, w = features.size()
+        features = features.view(b, h * w)
+        features = F.normalize(features, p=2, dim=1)
+        acts = features.view(b, h, w)
+        all_acts = []
+        for i in range(b):
+            act = acts[i].numpy()
+            act = cv2.resize(act, (sz[1], sz[0]))
+            # act = 255 * (act - act.max()) / (act.max() - act.min() + 1e-12)
+            act = 255 * (act - act.min()) / (act.max() - act.min() + 1e-12)
+
+            act = np.uint8(np.floor(act))
+            act = cv2.applyColorMap(act, cv2.COLORMAP_JET)
+
+            all_acts.append(act)
+        return all_acts
+        
+
     def run_on_loader(self, data_loader):
         if self.parallel:
             buffer_size = self.predictor.default_buffer_size
@@ -78,8 +106,22 @@ class FeatureExtractionDemo(object):
                 yield predictions, batch["targets"].cpu().numpy(), batch["camids"].cpu().numpy()
         else:
             for batch in data_loader:
+                # add hook here to get features: start
+                act_outputs = []
+                def hook_fns_forward(module, input, output):
+                    act_outputs.append(output.cpu())
+                handle = self.predictor.model.backbone.register_forward_hook(hook_fns_forward)
+                # add hook here to get features: end
+                
                 predictions = self.predictor(batch["images"])
-                yield predictions, batch["targets"].cpu().numpy(), batch["camids"].cpu().numpy()
+                
+                # add hook here to get features: start
+                handle.remove()
+                sz = list(batch["images"].shape[-2:])
+                acts = self.get_actmap(act_outputs[0], sz)
+                # add hook here to get features: end
+                
+                yield predictions, batch["targets"].cpu().numpy(), batch["camids"].cpu().numpy(), acts
 
 
 class AsyncPredictor:
