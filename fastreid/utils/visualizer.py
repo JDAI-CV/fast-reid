@@ -7,6 +7,8 @@
 import os
 import pickle
 import random
+import cv2
+import torch.nn.functional as F
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,7 +25,7 @@ class Visualizer:
     def __init__(self, dataset):
         self.dataset = dataset
 
-    def get_model_output(self, all_ap, dist, q_pids, g_pids, q_camids, g_camids):
+    def get_model_output(self, all_ap, dist, q_pids, g_pids, q_camids, g_camids, acts=None):
         self.all_ap = all_ap
         self.dist = dist
         self.sim = 1 - dist
@@ -36,6 +38,8 @@ class Visualizer:
         self.matches = (g_pids[self.indices] == q_pids[:, np.newaxis]).astype(np.int32)
 
         self.num_query = len(q_pids)
+        
+        if acts: self.acts = acts
 
     def get_matched_result(self, q_index):
         q_pid = self.q_pids[q_index]
@@ -65,7 +69,19 @@ class Visualizer:
             query_img = np.rollaxis(np.asarray(query_img.numpy(), dtype=np.uint8), 0, 3)
             plt.clf()
             ax = fig.add_subplot(1, max_rank + 1, 1)
-            ax.imshow(query_img)
+            
+            # ax.imshow(query_img)
+            # added: show acts
+            if actmap:
+                query_acts = self.acts[q_idx]
+                overlapped = query_img*0.3 + query_acts*0.7
+                overlapped[overlapped > 255] = 255
+                overlapped = overlapped.astype(np.uint8)
+                ax.imshow(overlapped)
+            # added: show acts
+            else:
+                ax.imshow(query_img)
+                
             ax.set_title('{:.4f}/cam{}'.format(self.all_ap[q_idx], cam_id))
             ax.axis("off")
             for i in range(max_rank):
@@ -89,27 +105,21 @@ class Visualizer:
                     ax.add_patch(plt.Rectangle(xy=(0, 0), width=gallery_img.shape[1] - 1,
                                                height=gallery_img.shape[0] - 1,
                                                edgecolor=(0, 0, 1), fill=False, linewidth=5))
-                ax.imshow(gallery_img)
+                
+                # added: show acts
+                if actmap:
+                    gallery_acts = self.acts[g_idx]
+                    overlapped = gallery_img*0.3 + gallery_acts*0.7
+                    overlapped[overlapped > 255] = 255
+                    overlapped = overlapped.astype(np.uint8)
+                    ax.imshow(overlapped)
+                # added: show acts
+                else:
+                    ax.imshow(gallery_img)
+                    
                 ax.set_title(f'{self.sim[q_idx, sort_idx[i]]:.3f}/{label}/cam{cam_id}')
                 ax.axis("off")
-            # if actmap:
-            #     act_outputs = []
-            #
-            #     def hook_fns_forward(module, input, output):
-            #         act_outputs.append(output.cpu())
-            #
-            #     all_imgs = np.stack(all_imgs, axis=0)  # (b, 3, h, w)
-            #     all_imgs = torch.from_numpy(all_imgs).float()
-            #     # normalize
-            #     all_imgs = all_imgs.sub_(self.mean).div_(self.std)
-            #     sz = list(all_imgs.shape[-2:])
-            #     handle = m.base.register_forward_hook(hook_fns_forward)
-            #     with torch.no_grad():
-            #         _ = m(all_imgs.cuda())
-            #     handle.remove()
-            #     acts = self.get_actmap(act_outputs[0], sz)
-            #     for i in range(top + 1):
-            #         axes.flat[i].imshow(acts[i], alpha=0.3, cmap='jet')
+
             if vis_label:
                 label_indice = np.where(cmc == 1)[0]
                 if label_sort == "ascending": label_indice = label_indice[::-1]
@@ -257,22 +267,3 @@ class Visualizer:
     #     plt.xticks(np.arange(0.1, 1.0, 0.1))
     #     plt.title('positive and negative pair distribution')
     #     return fig
-
-    # def get_actmap(self, features, sz):
-    #     """
-    #     :param features: (1, 2048, 16, 8) activation map
-    #     :return:
-    #     """
-    #     features = (features ** 2).sum(1)  # (1, 16, 8)
-    #     b, h, w = features.size()
-    #     features = features.view(b, h * w)
-    #     features = nn.functional.normalize(features, p=2, dim=1)
-    #     acts = features.view(b, h, w)
-    #     all_acts = []
-    #     for i in range(b):
-    #         act = acts[i].numpy()
-    #         act = cv2.resize(act, (sz[1], sz[0]))
-    #         act = 255 * (act - act.max()) / (act.max() - act.min() + 1e-12)
-    #         act = np.uint8(np.floor(act))
-    #         all_acts.append(act)
-    #     return all_acts
