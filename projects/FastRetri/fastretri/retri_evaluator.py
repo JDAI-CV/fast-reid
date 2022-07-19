@@ -97,7 +97,7 @@ class RetriEvaluator(DatasetEvaluator):
 
     def process(self, inputs, outputs):
         self.features.append(outputs.cpu())
-        self.labels.extend(inputs["targets"])
+        self.labels.extend(inputs["targets"].cpu())
 
     def evaluate(self):
         if comm.get_world_size() > 1:
