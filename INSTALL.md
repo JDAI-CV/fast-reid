@@ -25,4 +25,5 @@ pip install -r docs/requirements.txt
 ```
 
 # Set up with Dockder
-comming soon
+
+Please check the [docker folder](docker)

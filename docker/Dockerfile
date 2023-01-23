@@ -1,5 +1,8 @@
 FROM nvidia/cuda:10.1-cudnn7-devel
 
+# https://github.com/NVIDIA/nvidia-docker/issues/1632
+RUN rm /etc/apt/sources.list.d/cuda.list
+RUN rm /etc/apt/sources.list.d/nvidia-ml.list
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y \
 	python3-opencv ca-certificates python3-dev git wget sudo ninja-build
@@ -12,8 +15,9 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 USER appuser
 WORKDIR /home/appuser
 
+# https://github.com/facebookresearch/detectron2/issues/3933
 ENV PATH="/home/appuser/.local/bin:${PATH}"
-RUN wget https://bootstrap.pypa.io/get-pip.py && \
+RUN wget https://bootstrap.pypa.io/pip/3.6/get-pip.py && \
 	python3 get-pip.py --user && \
 	rm get-pip.py
 
