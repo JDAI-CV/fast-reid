@@ -8,7 +8,14 @@ import logging
 import os
 
 import torch
-from torch._six import string_classes
+TORCH_MAJOR = int(torch.__version__.split('.')[0])
+TORCH_MINOR = int(torch.__version__.split('.')[1])
+
+if TORCH_MAJOR == 1 and TORCH_MINOR < 8:
+    from torch._six import string_classes
+else:
+    string_classes = str
+
 from collections import Mapping
 
 from fastreid.config import configurable
