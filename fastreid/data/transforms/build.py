@@ -8,6 +8,7 @@ import torchvision.transforms as T
 
 from .transforms import *
 from .autoaugment import AutoAugment
+from .trans_gray import RandomGrayscalePatchReplace
 
 
 def build_transforms(cfg, is_train=True):
@@ -59,11 +60,19 @@ def build_transforms(cfg, is_train=True):
         do_rpt = cfg.INPUT.RPT.ENABLED
         rpt_prob = cfg.INPUT.RPT.PROB
 
+        # Random Grayscale Patch Replace
+        do_rgpr = cfg.INPUT.RGPR.ENABLED
+        rgpr_prob = cfg.INPUT.RGPR.PROB
+
         if do_autoaug:
             res.append(T.RandomApply([AutoAugment()], p=autoaug_prob))
 
         if size_train[0] > 0:
             res.append(T.Resize(size_train[0] if len(size_train) == 1 else size_train, interpolation=3))
+
+        # after resize and before crop or flip
+        if do_rgpr:
+            res.append(RandomGrayscalePatchReplace(rgpr_prob))
 
         if do_crop:
             res.append(T.RandomResizedCrop(size=crop_size[0] if len(crop_size) == 1 else crop_size,

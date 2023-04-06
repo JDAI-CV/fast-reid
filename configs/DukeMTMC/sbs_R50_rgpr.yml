@@ -1,0 +1,14 @@
+_BASE_: ../Base-SBS.yml
+
+DATASETS:
+  NAMES: ("DukeMTMC",)
+  TESTS: ("DukeMTMC",)
+
+INPUT:
+  AUTOAUG:
+    ENABLED: False
+  RGPR:
+    ENABLED: True
+    PROB: 0.4
+
+OUTPUT_DIR: logs/dukemtmc/sbs_R50_rgpr

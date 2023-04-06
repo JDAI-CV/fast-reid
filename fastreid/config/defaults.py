@@ -193,6 +193,10 @@ _C.INPUT.REA.VALUE = [0.485*255, 0.456*255, 0.406*255]
 _C.INPUT.RPT = CN({"ENABLED": False})
 _C.INPUT.RPT.PROB = 0.5
 
+# Random Grayscale Patch Replace
+_C.INPUT.RGPR = CN({"ENABLED": False})
+_C.INPUT.RGPR.PROB = 0.4
+
 # -----------------------------------------------------------------------------
 # Dataset
 # -----------------------------------------------------------------------------
