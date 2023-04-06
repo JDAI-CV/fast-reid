@@ -1,21 +1,28 @@
 # Use the container
 
+### Build Container
+
 ```shell script
 cd docker/
-# Build:
-docker build -t=fastreid:v0 .
+# Build with the corresponding CUDA version
+
+# CUDA 10
+docker build -t=fastreid:v0 -f Dockerfile_CUDA10 .
+# CUDA 11
+docker build -t=fastreid:v0 -f Dockerfile_CUDA11 .
+```
+
+### Run Container
+
+```
 # Launch (requires GPUs)
-nvidia-docker run -v server_path:docker_path --name=fastreid --net=host --ipc=host -it fastreid:v0 /bin/sh
+nvidia-docker run -v ${PWD}:/home/appuser --name=fastreid --net=host --ipc=host -it fastreid:v0
 ```
 
-## Install new dependencies
+### Run Training
 
-Add the following to `Dockerfile` to make persist changes.
-```shell script
-RUN sudo apt-get update && sudo apt-get install -y vim
-```
+Next, follow the [Get Started Doc](https://github.com/JDAI-CV/fast-reid/blob/master/GETTING_STARTED.md#compile-with-cython-to-accelerate-evalution).
 
-Or run them in the container to make temporary changes.
 
 ## A more complete docker container
 
