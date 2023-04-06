@@ -81,8 +81,7 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
         # compute AP
         num_rel = raw_cmc.sum()
         tmp_cmc = raw_cmc.cumsum()
-        tmp_cmc = [x / (i + 1.) for i, x in enumerate(tmp_cmc)]
-        tmp_cmc = np.asarray(tmp_cmc) * raw_cmc
+        tmp_cmc = (tmp_cmc/np.arange(1,len(tmp_cmc)+1)) * raw_cmc
         AP = tmp_cmc.sum() / num_rel
         all_AP.append(AP)
         num_valid_q += 1.
