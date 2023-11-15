@@ -18,3 +18,4 @@ scikit-learn
 tabulate
 gdown
 faiss-gpu
+Cython

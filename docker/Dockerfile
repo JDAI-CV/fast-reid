@@ -18,13 +18,15 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1 
 RUN python3 -m pip install --upgrade pip
 
 # Set the working directory in the container
-WORKDIR /workspace
+WORKDIR /workspace/src
+RUN mkdir /workspace/src/fast-reid
 
-# Copy the requirements file into the container at /usr/src/app
-COPY requirements.txt ./
+# Copy the requirements file into the container at /workspace/src
+COPY . /workspace/src
 
 # Install any needed packages specified in requirements.txt
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN pip3 install torch==1.8.1+cu111 torchvision==0.9.1+cu111 torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
+RUN python3 -m pip install --no-cache-dir -r /workspace/src/fast-reid/docker/requirements.txt
 
-# Copy the rest of your application's code into the container
-COPY . .
+# Build Cython Eval
+RUN cd /workspace/src/fast-reid/fastreid/evaluation/rank_cylib && make all
