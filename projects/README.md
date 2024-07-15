@@ -20,7 +20,7 @@ Note that these are research projects, and therefore may not have the same level
 
 External projects in the community that use fastreid:
 
-- [FastReID of Interpreter Project](https://github.com/SheldongChen/AMD.github.io)
+- [FastReID of Interpreter Project (ICCV 2021)](https://github.com/SheldongChen/AMD.github.io)
 
 # Competitions
 
