@@ -50,8 +50,8 @@ def build_dist(feat_1: torch.Tensor, feat_2: torch.Tensor, metric: str = "euclid
 
     elif metric == "jaccard":
         feat = torch.cat((feat_1, feat_2), dim=0)
-        dist = compute_jaccard_distance(feat, k1=kwargs["k1"], k2=kwargs["k2"], search_option=0)
-        return dist[: feat_1.size(0), feat_1.size(0):]
+        dist = compute_jaccard_distance(feat,feat_1.shape[0],feat_2.shape[0], k1=kwargs["k1"], k2=kwargs["k2"], search_option=0)
+        return dist
 
 
 def k_reciprocal_neigh(initial_rank, i, k1):
@@ -62,7 +62,7 @@ def k_reciprocal_neigh(initial_rank, i, k1):
 
 
 @torch.no_grad()
-def compute_jaccard_distance(features, k1=20, k2=6, search_option=0, fp16=False):
+def compute_jaccard_distance(features, N_feat_1, N_feat_2, k1=20, k2=6, search_option=0, fp16=False):
     if search_option < 3:
         # torch.cuda.empty_cache()
         features = features.cuda()
@@ -153,17 +153,18 @@ def compute_jaccard_distance(features, k1=20, k2=6, search_option=0, fp16=False)
     for i in range(N):
         invIndex.append(np.where(V[:, i] != 0)[0])  # len(invIndex)=all_num
 
-    jaccard_dist = np.zeros((N, N), dtype=mat_type)
-    for i in range(N):
+    jaccard_dist = np.zeros((N_feat_1, N_feat_2), dtype=mat_type)
+    for i in range(N_feat_1):
         temp_min = np.zeros((1, N), dtype=mat_type)
         indNonZero = np.where(V[i, :] != 0)[0]
         indImages = [invIndex[ind] for ind in indNonZero]
         for j in range(len(indNonZero)):
-            temp_min[0, indImages[j]] = temp_min[0, indImages[j]] + np.minimum(
-                V[i, indNonZero[j]], V[indImages[j], indNonZero[j]]
-            )
+            if indImages[j]>=N_feat_1:
+                temp_min[0, indImages[j]] = temp_min[0, indImages[j]] + np.minimum(
+                    V[i, indNonZero[j]], V[indImages[j], indNonZero[j]]
+                )
 
-        jaccard_dist[i] = 1 - temp_min / (2 - temp_min)
+        jaccard_dist[i] = (1 - temp_min / (2 - temp_min))[:,N_feat_1:]
 
     del invIndex, V
 
