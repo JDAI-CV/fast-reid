@@ -15,7 +15,7 @@ from torch.backends import cudnn
 
 sys.path.append('.')
 
-from fastreid.evaluation import evaluate_rank
+from fastreid.evaluation.rank import evaluate_rank
 from fastreid.config import get_cfg
 from fastreid.utils.logger import setup_logger
 from fastreid.data import build_reid_test_loader
