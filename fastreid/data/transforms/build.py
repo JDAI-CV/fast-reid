@@ -80,13 +80,13 @@ def build_transforms(cfg, is_train=True):
         if do_affine:
             res.append(T.RandomAffine(degrees=10, translate=None, scale=[0.9, 1.1], shear=0.1, resample=False,
                                       fillcolor=0))
-        if do_augmix:
-            res.append(AugMix(prob=augmix_prob))
+#         if do_augmix:
+#             res.append(AugMix(prob=augmix_prob))
         res.append(ToTensor())
         if do_rea:
             res.append(T.RandomErasing(p=rea_prob, value=rea_value))
-        if do_rpt:
-            res.append(RandomPatch(prob_happen=rpt_prob))
+#         if do_rpt:
+#             res.append(RandomPatch(prob_happen=rpt_prob))
     else:
         size_test = cfg.INPUT.SIZE_TEST
         do_crop = cfg.INPUT.CROP.ENABLED
