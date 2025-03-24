@@ -24,6 +24,6 @@ conda install pytorch==1.6.0 torchvision tensorboard -c pytorch
 pip install -r docs/requirements.txt
 ```
 
-# Set up with Dockder
+# Set up with Docker
 
 Please check the [docker folder](docker)
