@@ -33,5 +33,6 @@ model_ts*.txt
 # editor settings
 .idea
 .vscode
+.venv
 _darcs
 .DS_Store
