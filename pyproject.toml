@@ -1,0 +1,130 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fastreid"
+version = "1.3.0"
+description = "FastReID: A PyTorch library for person re-identification, vehicle re-identification and general instance retrieval"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Lingxiao He", email = "lingxiao.he@jd.com"},
+    {name = "Xingyu Liao", email = "sherlockliao01@gmail.com"},
+]
+maintainers = [
+    {name = "Xingyu Liao", email = "sherlockliao01@gmail.com"},
+]
+keywords = [
+    "computer-vision",
+    "person-re-identification",
+    "deep-learning",
+    "pytorch",
+    "machine-learning",
+    "reid",
+    "person-search",
+    "image-retrieval",
+    "vehicle-re-identification"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.8"
+dependencies = [
+    # Core PyTorch
+    "torch>=1.9.0",
+    "torchvision>=0.10.0",
+
+    # Core scientific computing
+    "numpy>=1.19.0",
+    "scipy>=1.5.0",
+    "scikit-learn>=0.24.0",
+
+    # Image processing
+    "Pillow>=8.0.0",
+    "opencv-python>=4.5.0",
+
+    # Visualization and plotting
+    "matplotlib>=3.3.0",
+
+    # Configuration management
+    "yacs>=0.1.8",
+    "pyyaml>=5.4.0",
+
+    # Utilities
+    "termcolor>=1.1.0",
+    "tabulate>=0.8.9",
+    "tqdm>=4.60.0",
+
+    # Deep learning utilities
+    "tensorboard>=2.5.0",
+
+    # File handling
+    "h5py>=3.1.0",
+    
+    # Additional dependencies from original requirements
+    "gdown>=4.0.0",
+    "Cython>=0.29.0",
+]
+
+[project.optional-dependencies]
+# GPU support and similarity search
+gpu = [
+    "faiss-gpu>=1.7.0",
+]
+
+# CPU-only similarity search
+faiss = [
+    "faiss-cpu>=1.7.0",
+]
+
+# Development dependencies
+dev = [
+    "pytest>=6.0.0",
+    "pytest-cov>=3.0.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "flake8>=4.0.0",
+]
+
+# All optional dependencies
+all = [
+    "fastreid[gpu,faiss]",
+]
+
+[project.urls]
+Homepage = "https://github.com/JDAI-CV/fast-reid"
+Documentation = "https://fast-reid.readthedocs.io/"
+Repository = "https://github.com/JDAI-CV/fast-reid"
+"Bug Tracker" = "https://github.com/JDAI-CV/fast-reid/issues"
+
+[project.scripts]
+fastreid-train = "fastreid.tools.train:main"
+fastreid-test = "fastreid.tools.test:main"
+fastreid-demo = "fastreid.tools.demo:main"
+
+[tool.setuptools]
+packages = {find = {}}
+
+[tool.setuptools.package-data]
+"*" = ["*.yml", "*.yaml"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 100
